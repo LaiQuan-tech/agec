@@ -1,13 +1,17 @@
+import type { Metadata } from "next";
 import { getNewsHome, getPrograms } from "@/lib/data";
-import { PitchDeck } from "@/components/deck/PitchDeck";
+import { ThemedRoute } from "@/components/theme/ThemedRoute";
+import { ClassicHome } from "@/components/classic/Home";
+import { ModernHome } from "@/components/modern/Home";
 
 export const revalidate = 300;
 
+export const metadata: Metadata = {
+  title: "首頁",
+};
+
 /**
- * 首頁 (/) — Apple 風 pitch deck. The root is the full-screen 簡報
- * (components/deck/*). The 風格A/B 版網站 is untouched — its homepage lives at
- * /home (app/home/page.tsx) and its inner routes (/news, /faculty, …) are
- * unchanged. /deck stays as an equivalent alias of this deck.
+ * 首頁 (/) — 風格A/B 版網站首頁，右上角可切換經典A／現代B 主題。
  */
 export default async function HomePage() {
   const [newsHome, programs] = await Promise.all([
@@ -15,5 +19,10 @@ export default async function HomePage() {
     getPrograms(),
   ]);
 
-  return <PitchDeck newsHome={newsHome} programs={programs} />;
+  return (
+    <ThemedRoute
+      classic={<ClassicHome newsHome={newsHome} programs={programs} />}
+      modern={<ModernHome newsHome={newsHome} programs={programs} />}
+    />
+  );
 }
