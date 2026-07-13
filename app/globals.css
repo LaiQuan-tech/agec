@@ -1,26 +1,200 @@
 @import "tailwindcss";
 
+/* ==================================================================
+   Design tokens — 台大農經系網站改版
+   Source of truth: design_handoff_agec/README.md "Design Tokens".
+   Brand colors are shared between both themes. Theme-scoped tokens
+   (ink / muted / hairline / radius / heading font+weight) differ between
+   [data-theme="classic"] (風格A經典學院派) and [data-theme="modern"]
+   (風格B現代簡潔), switched at runtime by components/theme/ThemeProvider.tsx
+   via a `data-theme` attribute on <html>. Default (no attribute, or any
+   value other than "modern") resolves to the classic values below.
+   ================================================================== */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Shared brand colors — identical in both themes */
+  --brand-gold: #f4b400;
+  --gold-bright: #ffd758;
+  --gold-deep: #b8860b;
+  --gold-ink: #3a2e00;
+  --brand-green: #1e5238;
+  --green-deep: #173f2a;
+  --cream: #fdf6e3;
+  --cream-border: #f0e4be;
+  --page-bg: #ffffff;
+
+  /* Constant across both themes (README lists this alongside the
+     theme-scoped tokens, but its value doesn't change) */
+  --ink-soft: #4f4d43;
+
+  /* Theme-scoped tokens — classic (風格A) defaults. */
+  --ink: #26271f;
+  --muted: #6f6c5c;
+  --hairline: #eee7d3;
+  --radius-card: 4px; /* README range 2–6px */
+  --radius-hero: 0px;
+  --font-heading: var(--font-noto-serif-tc), "Noto Serif TC", serif;
+  --heading-weight: 700; /* README range 600–700 */
 }
 
+[data-theme="modern"] {
+  --ink: #20231d;
+  --muted: #8b9088;
+  --hairline: #eeebe0;
+  --radius-card: 17px; /* README range 16–18px */
+  --radius-hero: 22px; /* README range 20–24px */
+  --font-heading: var(--font-noto-sans-tc), "Noto Sans TC", sans-serif;
+  --heading-weight: 900;
+}
+
+/* Tailwind utility mirror for the *static-name* color tokens above, so
+   classes like bg-brand-gold / text-ink / border-hairline are available
+   too (same indirection pattern already used for --font-sans below —
+   Tailwind v4's @theme inline registers the utility but still resolves the
+   value from the plain CSS variable at paint time, so it stays reactive to
+   [data-theme] changes). --radius-card / --radius-hero / --font-heading are
+   intentionally NOT mirrored here: their token names already collide with
+   Tailwind's own `--radius-*` / `--font-*` namespaces, which risks a
+   self-referential cycle. Consume those directly, e.g.
+   style={{ borderRadius: "var(--radius-card)" }} or the arbitrary-value
+   class `rounded-[var(--radius-card)]`. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-brand-gold: var(--brand-gold);
+  --color-gold-bright: var(--gold-bright);
+  --color-gold-deep: var(--gold-deep);
+  --color-gold-ink: var(--gold-ink);
+  --color-brand-green: var(--brand-green);
+  --color-green-deep: var(--green-deep);
+  --color-cream: var(--cream);
+  --color-cream-border: var(--cream-border);
+  --color-page-bg: var(--page-bg);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-hairline: var(--hairline);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  background: var(--page-bg);
+  color: var(--ink);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-noto-sans-tc), "Noto Sans TC", sans-serif;
+}
+
+/* Small reusable utilities for token-driven styling (used by the route
+   skeleton's placeholder components and free for both themes to keep
+   using or to replace). Deliberately minimal — no fixed spacing/visual
+   opinions beyond the tokens themselves. */
+.heading-font {
+  font-family: var(--font-heading);
+  font-weight: var(--heading-weight);
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold-deep);
+}
+
+.surface-card {
+  background: var(--cream);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+}
+
+/* ==================================================================
+   Shared keyframes & interaction primitives — ported verbatim from both
+   design_handoff_agec prototypes (identical in 風格A and 風格B). See
+   README §Interactions & Behavior. Kept as plain CSS (not Tailwind
+   utilities) since these are bespoke easing curves/durations.
+   ================================================================== */
+
+@keyframes kb {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.12) translate(-2%, -2%);
+  }
+}
+
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Route/page-level entrance transition (README §1 頁面切換淡入). Apply to a
+   page's root element — Next.js unmounts/remounts each app/*\/page.tsx's
+   tree on navigation, so this naturally replays on every route change. */
+.page-in {
+  animation: pageIn 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+/* Ken Burns hero/background utility (README §4). Guarded by
+   prefers-reduced-motion so hero and quote-band backgrounds stay static
+   for users who've asked for reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .kb-bg {
+    animation: kb 22s ease-in-out infinite alternate;
+  }
+}
+
+/* Scroll-reveal primitive driven by hooks/useReveal.ts (IntersectionObserver
+   adds the "in" class once, threshold 0.12). This renames the prototypes'
+   [data-reveal]/.in attribute selector to the `.reveal`/`.reveal.in` class
+   pair per the hook's documented contract. */
+.reveal {
+  opacity: 0;
+  transform: translateY(36px);
+  transition:
+    opacity 0.95s cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 0.95s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.reveal.in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Parallax layers driven by hooks/useParallax.ts */
+[data-parallax] {
+  will-change: transform;
+}
+
+/* Defense in depth: if reduced motion is requested but an element somehow
+   ends up with `.reveal` and no `.in` (e.g. its useReveal() ref wasn't
+   attached), don't leave it permanently invisible. useReveal() already
+   handles this in JS; this is a CSS-only backstop. */
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .page-in {
+    animation: none;
+  }
 }
