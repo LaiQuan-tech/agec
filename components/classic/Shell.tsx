@@ -40,8 +40,8 @@ export function ClassicShell({ children }: { children: ReactNode }) {
         </span>
         <span className="sm:hidden">國立臺灣大學 農業經濟學系</span>
         <div className="flex items-center gap-3 md:gap-5">
-          <span className="hidden md:inline">繁體中文 · EN · 简</span>
-          <span className="hidden md:inline">網站導覽</span>
+          <span className="hidden lg:inline">繁體中文 · EN · 简</span>
+          <span className="hidden lg:inline">網站導覽</span>
           <span
             className="hidden sm:inline-block"
             style={{ border: "1px solid rgba(74,58,0,.4)", padding: "3px 10px", borderRadius: 2 }}
@@ -89,7 +89,7 @@ export function ClassicShell({ children }: { children: ReactNode }) {
           </Link>
 
           {/* desktop nav */}
-          <nav className="hidden items-center md:flex" style={{ gap: 24 }} aria-label="主導覽">
+          <nav className="hidden items-center lg:flex" style={{ gap: 24 }} aria-label="主導覽">
             {NAV_ITEMS.map((item) => {
               const active = pathname === item.href;
               return (
@@ -129,7 +129,7 @@ export function ClassicShell({ children }: { children: ReactNode }) {
           {/* mobile hamburger */}
           <button
             type="button"
-            className="flex flex-none items-center justify-center md:hidden"
+            className="flex flex-none items-center justify-center lg:hidden"
             aria-label={menuOpen ? "關閉選單" : "開啟選單"}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
@@ -143,7 +143,7 @@ export function ClassicShell({ children }: { children: ReactNode }) {
 
         {/* mobile dropdown */}
         {menuOpen && (
-          <nav className="md:hidden" aria-label="主導覽" style={{ borderTop: "1px solid var(--hairline)" }}>
+          <nav className="lg:hidden" aria-label="主導覽" style={{ borderTop: "1px solid var(--hairline)" }}>
             {NAV_ITEMS.map((item) => {
               const active = pathname === item.href;
               return (

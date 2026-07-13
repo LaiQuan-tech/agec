@@ -76,16 +76,15 @@ export function ModernShell({ children }: { children: ReactNode }) {
             <ThemeToggle />
           </nav>
 
-          {/* mobile controls */}
-          <div className="flex items-center gap-2 lg:hidden">
-            <ThemeToggle />
+          {/* mobile controls — ThemeToggle lives inside the dropdown to keep the bar uncramped */}
+          <div className="flex items-center lg:hidden">
             <button
               type="button"
               className="flex flex-none items-center justify-center"
               aria-label={menuOpen ? "關閉選單" : "開啟選單"}
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((v) => !v)}
-              style={{ width: 42, height: 42, borderRadius: 12, color: "var(--brand-green)" }}
+              style={{ width: 44, height: 44, borderRadius: 12, color: "var(--brand-green)" }}
             >
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
                 {menuOpen ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M3 6h18M3 12h18M3 18h18" />}
@@ -126,6 +125,9 @@ export function ModernShell({ children }: { children: ReactNode }) {
             >
               立即申請 →
             </Link>
+            <div className="px-6 py-4" style={{ borderTop: "1px solid var(--hairline)" }}>
+              <ThemeToggle />
+            </div>
           </nav>
         )}
       </header>

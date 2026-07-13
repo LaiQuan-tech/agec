@@ -35,8 +35,8 @@ export function HomeHero() {
       <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center md:px-[60px]">
         <div className={styles.enter} style={{ width: 44, height: 3, background: "var(--brand-gold)", borderRadius: 2, marginBottom: 26, animationDelay: ".05s" }} />
         <div
-          className={styles.enter}
-          style={{ fontFamily: SERIF, fontSize: 15, letterSpacing: ".42em", color: "var(--gold-bright)", textTransform: "uppercase", marginBottom: 20, animationDelay: ".12s" }}
+          className={`${styles.enter} text-[11px] tracking-[.16em] sm:text-[13px] sm:tracking-[.3em] lg:text-[15px] lg:tracking-[.42em]`}
+          style={{ fontFamily: SERIF, color: "var(--gold-bright)", textTransform: "uppercase", marginBottom: 20, animationDelay: ".12s" }}
         >
           Since 1919 · World-Class Agricultural Economics
         </div>

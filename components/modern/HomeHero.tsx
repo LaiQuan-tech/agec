@@ -34,13 +34,13 @@ export function HomeHero() {
       {/* left-bottom copy */}
       <div className="absolute bottom-0 left-0" style={{ padding: "clamp(28px,5vw,56px)", maxWidth: 760 }}>
         <div
-          className={styles.enter}
-          style={{ fontSize: 13, fontWeight: 700, letterSpacing: ".3em", textTransform: "uppercase", color: "var(--gold-bright)", marginBottom: 22, animationDelay: ".1s" }}
+          className={`${styles.enter} text-[11px] tracking-[.18em] sm:text-[13px] sm:tracking-[.3em]`}
+          style={{ fontWeight: 700, textTransform: "uppercase", color: "var(--gold-bright)", marginBottom: 22, animationDelay: ".1s" }}
         >
           National Taiwan University
         </div>
         <h1
-          className={`${styles.enter} text-[40px] sm:text-[52px] lg:text-[60px]`}
+          className={`${styles.enter} text-[34px] sm:text-[52px] lg:text-[60px]`}
           style={{ fontFamily: SANS, lineHeight: 1.1, fontWeight: 900, color: "#fff", margin: 0, letterSpacing: "-.01em", textShadow: "0 2px 24px rgba(20,30,20,.35)", animationDelay: ".18s" }}
         >
           農業經濟，
