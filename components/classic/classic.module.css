@@ -1,0 +1,102 @@
+/* ==================================================================
+   Component-scoped styles for 風格A 經典學院派.
+   These reproduce the interaction primitives declared inline in the
+   design prototype (design_handoff_agec/prototypes/風格A_經典學院派.dc.html
+   <style> block: .navlink / .btnY / .card / .row hover states) which are
+   NOT present in app/globals.css. Kept here (not in globals.css) to honor
+   the "edit only components/classic/" scope discipline. Colors mirror the
+   design tokens; a literal is used only where the prototype used a literal
+   with no token equivalent (row hover #fdfaf0).
+   ================================================================== */
+
+/* Nav item: relative so the active gold underline can absolutely position,
+   gold-deep tint on hover (README §Interactions Hover — A → #B8860B). */
+.navlink {
+  position: relative;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.navlink:hover {
+  color: var(--gold-deep);
+}
+
+/* Gold CTA button: lift + gold glow on hover (README §Interactions). */
+.btnY {
+  cursor: pointer;
+  transition:
+    transform 0.18s,
+    box-shadow 0.18s;
+}
+.btnY:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(244, 180, 0, 0.4);
+}
+
+/* Card: lift + soft shadow on hover (README §Interactions). */
+.card {
+  transition:
+    transform 0.22s,
+    box-shadow 0.22s;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px rgba(80, 70, 30, 0.16);
+}
+
+/* List row: faint warm background on hover (README §Interactions). */
+.row {
+  transition: background 0.2s;
+}
+.row:hover {
+  background: #fdfaf0;
+}
+
+/* Chip (news / faculty / course filters) — pill with warm hover. */
+.chip {
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+}
+.chip:hover {
+  border-color: var(--brand-gold);
+  color: var(--gold-deep);
+}
+
+/* Staggered entrance for above-the-fold content (hero copy, section intro
+   columns) where useReveal()'s scroll trigger doesn't apply. Mirrors the
+   prototype's inline `animation:riseIn .6s <delay> both`. Keyframes are
+   declared locally so CSS-Modules scoping keeps the reference self-contained
+   (independent of the global `riseIn`). Per-element delays are set inline via
+   style={{ animationDelay }}. Disabled under reduced-motion. */
+@keyframes riseInClassic {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.enter {
+  animation: riseInClassic 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enter {
+    animation: none;
+  }
+  .navlink,
+  .btnY,
+  .card,
+  .row,
+  .chip {
+    transition: none;
+  }
+  .btnY:hover,
+  .card:hover {
+    transform: none;
+  }
+}

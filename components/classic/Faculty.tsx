@@ -1,26 +1,80 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import type { Faculty } from "@/lib/data";
 import { ClassicShell } from "./Shell";
+import { GreenBanner } from "./Banners";
+import { CoverImage } from "./CoverImage";
+import { SERIF } from "./format";
+import styles from "./classic.module.css";
 
 /**
- * Placeholder for 系所成員 (/faculty) — 風格A經典學院派.
- * Real build: category chips (專任/合聘/兼任/名譽/系所同仁) → 4-column faculty
- * card grid (3:4 photo + serif/700 name + gold title + research fields).
+ * 系所成員 (/faculty) — 風格A. Green banner → category chips → 4-col portrait
+ * grid. Chips derive from the actual faculty categories (+ 全部) so filters map
+ * to real rows. Portrait falls back to /images/portrait.png when photo_url is
+ * empty (Supabase Storage host is whitelisted in next.config for real photos).
  */
 export function ClassicFaculty({ faculty }: { faculty: Faculty[] }) {
+  const categories = useMemo(
+    () => ["全部", ...Array.from(new Set(faculty.map((f) => f.category)))],
+    [faculty]
+  );
+  const [active, setActive] = useState("全部");
+  const filtered = active === "全部" ? faculty : faculty.filter((f) => f.category === active);
+
   return (
     <ClassicShell>
-      <div className="page-in mx-auto max-w-5xl px-6 py-16">
-        <p className="eyebrow">風格 A・經典學院派</p>
-        <h1 className="heading-font mt-3 text-3xl">系所成員</h1>
-        <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
-          Placeholder — 由 classic 主題 agent 依 README 規格重建
-          （components/classic/Faculty.tsx）
-        </p>
-        <pre
-          className="surface-card mt-8 overflow-x-auto p-4 text-xs leading-relaxed"
-        >
-          {JSON.stringify({ faculty }, null, 2)}
-        </pre>
+      <div className="page-in">
+        <GreenBanner eyebrow="Faculty & Staff" title="系所成員" />
+
+        <div className="mx-auto max-w-[1180px] px-5 py-10 md:px-10">
+          <div className="mb-8 flex flex-wrap gap-2.5" role="group" aria-label="成員分類篩選">
+            {categories.map((c) => {
+              const on = c === active;
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setActive(c)}
+                  aria-pressed={on}
+                  className={styles.chip}
+                  style={{
+                    fontSize: "13.5px",
+                    fontWeight: 600,
+                    padding: "8px 18px",
+                    borderRadius: 20,
+                    border: `1px solid ${on ? "transparent" : "#eadfbf"}`,
+                    background: on ? "var(--brand-gold)" : "transparent",
+                    color: on ? "var(--gold-ink)" : "var(--muted)",
+                  }}
+                >
+                  {c}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {filtered.map((f) => (
+              <article key={f.id} className={styles.card} style={{ border: "1px solid var(--hairline)", borderRadius: 6, overflow: "hidden" }}>
+                <CoverImage
+                  src={f.photo_url || "/images/portrait.png"}
+                  alt={`${f.name} 照片`}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 280px"
+                  style={{ height: 210 }}
+                />
+                <div style={{ padding: 18 }}>
+                  <div style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 600, color: "var(--brand-green)" }}>{f.name}</div>
+                  <div style={{ fontSize: 13, color: "var(--gold-deep)", fontWeight: 600, margin: "3px 0 10px" }}>{f.title}</div>
+                  <div style={{ fontSize: "12.5px", color: "var(--muted)", lineHeight: 1.6 }}>{f.fields ?? ""}</div>
+                </div>
+              </article>
+            ))}
+          </div>
+          {filtered.length === 0 && (
+            <p className="py-16 text-center" style={{ color: "var(--muted)" }}>此分類目前沒有成員。</p>
+          )}
+        </div>
       </div>
     </ClassicShell>
   );

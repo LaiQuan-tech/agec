@@ -1,27 +1,108 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import type { NewsItem } from "@/lib/data";
 import { ClassicShell } from "./Shell";
+import { GreenBanner } from "./Banners";
+import { formatNewsDate, SERIF } from "./format";
+import styles from "./classic.module.css";
 
 /**
- * Placeholder for 最新消息 (/news) — 風格A經典學院派.
- * Real build: deep-green banner → category chips (全部/最新公告/演講公告/
- * 招生資訊/求職徵才/活動剪影) → list rows (96px date block + gold category
- * tag + title, all 10 seeded rows) → pagination.
+ * 最新消息 (/news) — 風格A. Green banner → category chips → date/category/title
+ * list → (decorative) pagination. Chips are derived from the actual news
+ * categories (+ 全部) so every filter maps to real rows — the prototype's
+ * hardcoded chip labels don't match the seeded DB categories.
  */
 export function ClassicNews({ news }: { news: NewsItem[] }) {
+  const categories = useMemo(
+    () => ["全部", ...Array.from(new Set(news.map((n) => n.category)))],
+    [news]
+  );
+  const [active, setActive] = useState("全部");
+  const filtered = active === "全部" ? news : news.filter((n) => n.category === active);
+
   return (
     <ClassicShell>
-      <div className="page-in mx-auto max-w-5xl px-6 py-16">
-        <p className="eyebrow">風格 A・經典學院派</p>
-        <h1 className="heading-font mt-3 text-3xl">最新消息</h1>
-        <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
-          Placeholder — 由 classic 主題 agent 依 README 規格重建
-          （components/classic/News.tsx）
-        </p>
-        <pre
-          className="surface-card mt-8 overflow-x-auto p-4 text-xs leading-relaxed"
-        >
-          {JSON.stringify({ news }, null, 2)}
-        </pre>
+      <div className="page-in">
+        <GreenBanner eyebrow="News & Announcements" title="最新消息" />
+
+        <div className="mx-auto max-w-[1180px] px-5 py-10 md:px-10">
+          {/* category chips */}
+          <div className="mb-3 flex flex-wrap gap-2.5" role="group" aria-label="消息分類篩選">
+            {categories.map((c) => {
+              const on = c === active;
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setActive(c)}
+                  aria-pressed={on}
+                  className={styles.chip}
+                  style={{
+                    fontSize: "13.5px",
+                    fontWeight: 600,
+                    padding: "8px 18px",
+                    borderRadius: 20,
+                    border: `1px solid ${on ? "transparent" : "#eadfbf"}`,
+                    background: on ? "var(--brand-gold)" : "transparent",
+                    color: on ? "var(--gold-ink)" : "var(--muted)",
+                  }}
+                >
+                  {c}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* list */}
+          {filtered.map((n) => {
+            const d = formatNewsDate(n.published_at);
+            return (
+              <div
+                key={n.id}
+                className={`${styles.row} flex items-center gap-4 sm:gap-[22px]`}
+                style={{ padding: "20px 8px", borderBottom: "1px solid var(--hairline)" }}
+              >
+                <div className="flex-none" style={{ width: 96, fontFamily: SERIF, color: "var(--brand-green)", fontWeight: 600, fontSize: 15 }}>
+                  {d.full}
+                </div>
+                <span
+                  className="inline-block flex-none"
+                  style={{ background: "var(--brand-gold)", color: "var(--gold-ink)", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 2 }}
+                >
+                  {n.category}
+                </span>
+                <div className="min-w-0 flex-1" style={{ fontSize: 16, lineHeight: 1.5, fontWeight: 500 }}>
+                  {n.title}
+                </div>
+              </div>
+            );
+          })}
+          {filtered.length === 0 && (
+            <p className="py-16 text-center" style={{ color: "var(--muted)" }}>此分類目前沒有消息。</p>
+          )}
+
+          {/* pagination (decorative — seeded data fits one page) */}
+          <div className="mt-9 flex justify-center gap-2" aria-hidden="true">
+            {["1", "2", "3", "›"].map((p, i) => (
+              <span
+                key={p}
+                className="flex items-center justify-center"
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 3,
+                  fontWeight: i === 0 ? 700 : 400,
+                  background: i === 0 ? "var(--brand-gold)" : "transparent",
+                  color: i === 0 ? "var(--gold-ink)" : "var(--ink)",
+                  border: i === 0 ? "none" : "1px solid #eadfbf",
+                }}
+              >
+                {p}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
     </ClassicShell>
   );
