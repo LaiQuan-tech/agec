@@ -1,25 +1,21 @@
-import type { Metadata } from "next";
 import { getNewsHome, getPrograms } from "@/lib/data";
-import { ThemedRoute } from "@/components/theme/ThemedRoute";
-import { ClassicHome } from "@/components/classic/Home";
-import { ModernHome } from "@/components/modern/Home";
+import { PitchDeck } from "@/components/deck/PitchDeck";
 
 export const revalidate = 300;
 
-export const metadata: Metadata = {
-  title: "首頁",
-};
-
+/**
+ * 首頁 (/) — 投影片版. The homepage is now the full-screen, one-slide-at-a-time
+ * 簡報 (see components/deck/*). It is token-driven, so the 右上角 A/B toggle still
+ * re-skins it live (經典 襯線+直角 / 現代 黑體+大圓角). The 風格A / 風格B page
+ * components (components/classic|modern/*) remain in the repo and still power
+ * the inner routes (/news, /faculty, …); only the homepage now leads with the
+ * deck. /deck stays as an equivalent alias.
+ */
 export default async function HomePage() {
   const [newsHome, programs] = await Promise.all([
     getNewsHome(4),
     getPrograms(),
   ]);
 
-  return (
-    <ThemedRoute
-      classic={<ClassicHome newsHome={newsHome} programs={programs} />}
-      modern={<ModernHome newsHome={newsHome} programs={programs} />}
-    />
-  );
+  return <PitchDeck newsHome={newsHome} programs={programs} />;
 }
