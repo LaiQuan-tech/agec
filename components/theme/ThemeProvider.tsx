@@ -88,6 +88,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
   }, []);
 
+  // Deep-link support: a `?theme=classic|modern` query param (used by the pitch
+  // deck's 實機預覽 links) selects and persists that theme on load.
+  useEffect(() => {
+    try {
+      const param = new URLSearchParams(window.location.search).get("theme");
+      if (isTheme(param)) setTheme(param);
+    } catch {
+      // ignore (no window.location, malformed query, etc.)
+    }
+  }, [setTheme]);
+
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
