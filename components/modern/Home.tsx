@@ -1,36 +1,124 @@
+import Link from "next/link";
 import type { NewsItem, Program } from "@/lib/data";
 import { ModernShell } from "./Shell";
+import { HomeHero } from "./HomeHero";
+import { StatementBand } from "./StatementBand";
+import { Reveal } from "./Reveal";
+import { CoverImage } from "./CoverImage";
+import { formatNewsDate, SANS } from "./format";
+import styles from "./modern.module.css";
+
+const QUICK = [
+  { n: "01", href: "/admissions", title: "招生資訊", sub: "大學 · 碩 · 博 · 專班", cream: true },
+  { n: "02", href: "/courses", title: "課程地圖", sub: "學程與修業", cream: false },
+  { n: "03", href: "/faculty", title: "師資陣容", sub: "研究領域", cream: false },
+  { n: "04", href: "/journal", title: "農經期刊", sub: "出版與徵稿", cream: false },
+];
+
+const MISSION_STATS = [
+  { n: "1919", label: "學術傳承起點" },
+  { n: "450+", label: "碩博畢業系友" },
+  { n: "Top", label: "世界一流目標" },
+];
 
 /**
- * Placeholder for 首頁 (/) — 風格B現代簡潔.
- * Real build should follow design_handoff_agec/README.md §Screens/首頁 "B":
- * glass sticky header → 580px rounded parallax hero (useParallax 0.28–0.34
- * + Ken Burns via .kb-bg, border-radius: var(--radius-hero)) → 4 quick-entry
- * cards → 最新消息 (3-col cards) → 460px rounded parallax quote band
- * (useParallax 0.30) → "Our Mission" cream rounded panel → footer. Use
- * useReveal() + the `.reveal` class on each scroll-in section.
+ * 首頁 (/) — 風格B 現代簡潔. Rounded parallax hero → 4 quick-entry cards →
+ * 最新消息 (3-col cards) → rounded parallax 引言帶 → Our Mission cream panel →
+ * footer. Renders real props (newsHome/programs unused here — quick cards are
+ * fixed entry points per the prototype).
  */
-export function ModernHome({
-  newsHome,
-  programs,
-}: {
-  newsHome: NewsItem[];
-  programs: Program[];
-}) {
+export function ModernHome({ newsHome }: { newsHome: NewsItem[]; programs: Program[] }) {
+  const news3 = newsHome.slice(0, 3);
+
   return (
     <ModernShell>
-      <div className="page-in mx-auto max-w-5xl px-6 py-16">
-        <p className="eyebrow">風格 B・現代簡潔</p>
-        <h1 className="heading-font mt-3 text-3xl">首頁</h1>
-        <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
-          Placeholder — 由 modern 主題 agent 依 README 規格重建
-          （components/modern/Home.tsx）
-        </p>
-        <pre
-          className="surface-card mt-8 overflow-x-auto p-4 text-xs leading-relaxed"
-        >
-          {JSON.stringify({ newsHome, programs }, null, 2)}
-        </pre>
+      <div className="page-in mx-auto max-w-[1240px]">
+        {/* hero + quick cards */}
+        <div className="px-6 pb-16 pt-10 md:px-11">
+          <HomeHero />
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {QUICK.map((q) => (
+              <Link
+                key={q.n}
+                href={q.href}
+                className={styles.card}
+                style={{
+                  border: q.cream ? "1px solid var(--cream-border)" : "1px solid var(--hairline)",
+                  borderRadius: 18,
+                  padding: 26,
+                  background: q.cream ? "var(--cream)" : "#fff",
+                }}
+              >
+                <div style={{ fontSize: 22, marginBottom: 40, color: q.cream ? "var(--gold-deep)" : "var(--brand-green)", fontWeight: 900 }}>{q.n}</div>
+                <div style={{ fontWeight: 700, fontSize: 16, color: "var(--ink)" }}>{q.title}</div>
+                <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>{q.sub}</div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* 最新消息 */}
+        <Reveal className="px-6 pb-[72px] md:px-11">
+          <div className="mb-7 flex items-baseline justify-between">
+            <h2 style={{ fontFamily: SANS, fontSize: 30, fontWeight: 900, margin: 0, letterSpacing: "-.01em", color: "var(--ink)" }}>最新消息</h2>
+            <Link href="/news" className={styles.navlink} style={{ fontSize: 14, fontWeight: 600, color: "var(--gold-deep)" }}>
+              View all →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {news3.map((n) => {
+              const d = formatNewsDate(n.published_at);
+              return (
+                <Link
+                  key={n.id}
+                  href="/news"
+                  className={styles.card}
+                  style={{ borderRadius: 18, overflow: "hidden", border: "1px solid var(--hairline)", display: "block", background: "#fff" }}
+                >
+                  <CoverImage src={n.cover_url ?? "/images/gather.png"} alt={n.title} sizes="(max-width: 1024px) 100vw, 400px" style={{ height: 170 }} />
+                  <div style={{ padding: 22 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--gold-deep)", letterSpacing: ".08em", marginBottom: 10 }}>
+                      {n.category} · {d.md}
+                    </div>
+                    <div style={{ fontSize: "16.5px", fontWeight: 600, lineHeight: 1.55, color: "var(--ink)" }}>{n.title}</div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </Reveal>
+
+        {/* 滿版視差引言帶 */}
+        <div className="px-6 md:px-11">
+          <StatementBand />
+        </div>
+
+        {/* Our Mission */}
+        <Reveal className="px-6 pb-16 pt-6 md:px-11">
+          <div style={{ background: "var(--cream)", borderRadius: "var(--radius-hero)", padding: "clamp(40px,6vw,72px)" }}>
+            <div className="max-w-[820px]">
+              <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: ".24em", color: "var(--gold-deep)", textTransform: "uppercase", marginBottom: 18 }}>
+                Our Mission
+              </div>
+              <h3 className="text-[28px] md:text-[36px]" style={{ fontFamily: SANS, lineHeight: 1.4, fontWeight: 700, margin: "0 0 22px", letterSpacing: "-.01em", color: "var(--brand-green)" }}>
+                培育世界一流的農業經濟人才，
+                <br />
+                提升臺灣農業經濟的學術地位。
+              </h3>
+              <p style={{ fontSize: 16, lineHeight: 2, color: "#5a584c", margin: 0 }}>
+                本系以追求頂尖之教學與研究水準為發展目標，結合政策、市場、資源與永續等面向，回應糧食安全、農村發展與全球農業轉型的關鍵課題。
+              </p>
+              <div className="mt-11 flex flex-wrap gap-x-14 gap-y-6">
+                {MISSION_STATS.map((s) => (
+                  <div key={s.n}>
+                    <div style={{ fontSize: 44, fontWeight: 900, color: "var(--brand-gold)" }}>{s.n}</div>
+                    <div style={{ fontSize: 13, color: "#8a8873", marginTop: 2 }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Reveal>
       </div>
     </ModernShell>
   );

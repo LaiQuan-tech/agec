@@ -1,0 +1,98 @@
+/* ==================================================================
+   Component-scoped styles for 風格B 現代簡潔.
+   Reproduces the interaction primitives declared inline in the design
+   prototype (design_handoff_agec/prototypes/風格B_現代簡潔.dc.html <style>
+   block: .navlink / .btnY / .card / .row hover states) which are NOT in
+   app/globals.css. Kept here to honor the "edit only components/modern/"
+   scope discipline. Modern hover targets per README §Interactions:
+   nav → brand-green, card lift -5px w/ 0 20px 44px shadow, row → #faf9f4.
+   ================================================================== */
+
+.navlink {
+  position: relative;
+  cursor: pointer;
+  transition: color 0.2s;
+  white-space: nowrap;
+}
+.navlink:hover {
+  color: var(--brand-green);
+}
+
+/* Gold pill CTA: lift + gold glow on hover. */
+.btnY {
+  cursor: pointer;
+  transition:
+    transform 0.18s,
+    box-shadow 0.18s;
+}
+.btnY:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(244, 180, 0, 0.4);
+}
+
+/* Card: larger lift + softer shadow than classic (README §Interactions B). */
+.card {
+  transition:
+    transform 0.22s,
+    box-shadow 0.22s;
+}
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 44px rgba(80, 70, 30, 0.15);
+}
+
+/* List row: faint neutral background on hover. */
+.row {
+  transition: background 0.2s;
+}
+.row:hover {
+  background: #faf9f4;
+}
+
+/* Rounded filter chip with warm hover. */
+.chip {
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+}
+.chip:hover {
+  border-color: var(--brand-gold);
+  color: var(--gold-deep);
+}
+
+/* Staggered entrance for above-the-fold copy where useReveal()'s scroll
+   trigger doesn't apply. Mirrors the prototype's inline `animation:riseIn
+   .6s <delay> both`. Local keyframe keeps CSS-Modules scoping self-contained.
+   Per-element delays set inline via style={{ animationDelay }}. */
+@keyframes riseInModern {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.enter {
+  animation: riseInModern 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enter {
+    animation: none;
+  }
+  .navlink,
+  .btnY,
+  .card,
+  .row,
+  .chip {
+    transition: none;
+  }
+  .btnY:hover,
+  .card:hover {
+    transform: none;
+  }
+}
