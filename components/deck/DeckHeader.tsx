@@ -3,45 +3,50 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS } from "@/lib/nav";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { useTheme } from "@/components/theme/ThemeProvider";
+
+// Apple-authentic on Apple devices (SF Pro / PingFang), clean Noto Sans elsewhere.
+const FONT =
+  '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", var(--font-noto-sans-tc), "PingFang TC", "Noto Sans TC", sans-serif';
 
 /**
- * Fixed chrome for the slide deck: brand wordmark, full site nav (collapses on
- * narrow viewports — the deck's dot-nav and closing slide cover navigation
- * there) and the 風格A/B toggle. It floats translucently over the slides. The
- * only theme-specific touch is the masthead underline: 風格A經典學院派's 3px gold
- * rule vs 風格B現代簡潔's hairline — mirroring the two Shell headers so the deck
- * still reads as the same brand under either theme.
+ * Minimal Apple-style nav bar for the 投影片版 deck: translucent saturated-blur
+ * bar (.deck-header) with a compact wordmark and slim site nav. Intentionally
+ * chrome-light — no theme toggle — to keep the presentation clean; the inner
+ * 風格A/B pages keep their own Shell + toggle. Nav collapses under 900px (the
+ * deck's dot-nav + closing slide cover navigation there).
  */
 export function DeckHeader() {
-  const { theme } = useTheme();
   const pathname = usePathname();
 
   return (
-    <header
-      className="deck-header"
-      style={{
-        borderBottom:
-          theme === "classic"
-            ? "3px solid var(--brand-gold)"
-            : "1px solid var(--hairline)",
-      }}
-    >
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
+    <header className="deck-header">
+      <div
+        style={{
+          maxWidth: "72rem",
+          margin: "0 auto",
+          height: "48px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 1.5rem",
+        }}
+      >
         <Link
           href="/"
-          className="heading-font text-sm sm:text-lg"
-          style={{ color: "var(--brand-green)" }}
+          style={{
+            fontFamily: FONT,
+            fontSize: "0.95rem",
+            fontWeight: 600,
+            letterSpacing: "-0.01em",
+            color: "#1d1d1f",
+            textDecoration: "none",
+          }}
         >
-          國立臺灣大學 農業經濟學系
+          臺大農業經濟學系
         </Link>
 
-        <nav
-          className="hidden items-center gap-4 text-sm lg:flex"
-          aria-label="主導覽"
-        >
-          {NAV_ITEMS.map((item) => {
+        <nav className="deck-header-nav" aria-label="主導覽">
+          {NAV_ITEMS.filter((item) => item.href !== "/").map((item) => {
             const active = pathname === item.href;
             return (
               <Link
@@ -49,8 +54,11 @@ export function DeckHeader() {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 style={{
-                  color: active ? "var(--gold-deep)" : "var(--ink)",
-                  fontWeight: active ? 700 : 500,
+                  fontFamily: FONT,
+                  fontSize: "0.82rem",
+                  fontWeight: active ? 600 : 400,
+                  color: active ? "#1d1d1f" : "#6e6e73",
+                  textDecoration: "none",
                 }}
               >
                 {item.label}
@@ -58,8 +66,6 @@ export function DeckHeader() {
             );
           })}
         </nav>
-
-        <ThemeToggle />
       </div>
     </header>
   );
