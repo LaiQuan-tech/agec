@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS } from "@/lib/nav";
@@ -33,13 +34,15 @@ export function ModernShell({ children }: { children: ReactNode }) {
       >
         <div className="mx-auto flex max-w-[1240px] items-center justify-between px-6 py-4 md:px-11 md:py-5">
           <Link href="/" className={`flex items-center gap-3 ${styles.navlink}`} aria-label="回首頁">
-            <span
-              aria-hidden="true"
-              className="flex flex-none items-center justify-center"
-              style={{ width: 34, height: 34, borderRadius: 9, background: "var(--brand-gold)", color: "var(--brand-green)", fontWeight: 700, fontSize: 16 }}
-            >
-              農
-            </span>
+            <Image
+              src="/agec-mark.png"
+              alt="臺大農經系標誌"
+              width={40}
+              height={37}
+              priority
+              className="flex-none"
+              style={{ height: 36, width: "auto" }}
+            />
             <span style={{ fontWeight: 700, fontSize: "16.5px", color: "var(--ink)" }}>臺大農業經濟學系</span>
           </Link>
 
@@ -136,6 +139,9 @@ export function ModernShell({ children }: { children: ReactNode }) {
           style={{ fontSize: "13.5px", lineHeight: 1.9 }}
         >
           <div>
+            <div style={{ background: "#fff", borderRadius: 14, padding: "12px 18px", display: "inline-block", marginBottom: 18 }}>
+              <Image src="/agec-logo.png" alt="國立臺灣大學 農業經濟學系" width={138} height={60} style={{ height: 60, width: "auto" }} />
+            </div>
             <div style={{ fontFamily: SANS, color: "var(--gold-bright)", fontSize: 16, fontWeight: 700, marginBottom: 8 }}>
               臺大農業經濟學系
             </div>

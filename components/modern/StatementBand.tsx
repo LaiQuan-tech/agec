@@ -20,7 +20,7 @@ export function StatementBand() {
           <Image src="/images/fields.png" alt="" fill sizes="100vw" style={{ objectFit: "cover" }} />
         </div>
       </div>
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,rgba(18,38,26,.55),rgba(18,38,26,.8))" }} />
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,rgba(0,40,20,.55),rgba(0,40,20,.8))" }} />
 
       <div className="absolute inset-0 flex flex-col justify-center" style={{ padding: "0 clamp(28px,5vw,56px)" }}>
         <Reveal style={{ maxWidth: 720 }}>

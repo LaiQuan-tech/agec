@@ -28,7 +28,7 @@ export function HomeHero() {
 
       {/* gradient scrim */}
       <div
-        style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,rgba(30,45,32,.15),rgba(30,45,32,.62))" }}
+        style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,rgba(0,52,26,.15),rgba(0,52,26,.62))" }}
       />
 
       {/* centered copy */}

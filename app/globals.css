@@ -12,13 +12,15 @@
    ================================================================== */
 
 :root {
-  /* Shared brand colors — identical in both themes */
-  --brand-gold: #f4b400;
+  /* Shared brand colors — identical in both themes.
+     Values match the official 台大農經 identity artwork: gold #F8B62C,
+     emerald #00682F (sampled from the logo mark). */
+  --brand-gold: #f8b62c;
   --gold-bright: #ffd758;
   --gold-deep: #b8860b;
   --gold-ink: #3a2e00;
-  --brand-green: #1e5238;
-  --green-deep: #173f2a;
+  --brand-green: #00682f;
+  --green-deep: #00461f;
   --cream: #fdf6e3;
   --cream-border: #f0e4be;
   --page-bg: #ffffff;

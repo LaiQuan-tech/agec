@@ -28,7 +28,7 @@ export function HomeHero() {
 
       {/* diagonal green scrim */}
       <div
-        style={{ position: "absolute", inset: 0, background: "linear-gradient(120deg,rgba(25,45,30,.62) 0%,rgba(25,45,30,.2) 55%,transparent 100%)" }}
+        style={{ position: "absolute", inset: 0, background: "linear-gradient(120deg,rgba(0,52,26,.62) 0%,rgba(0,52,26,.2) 55%,transparent 100%)" }}
       />
 
       {/* left-bottom copy */}
