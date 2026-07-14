@@ -60,7 +60,7 @@ export function ClassicNews({ news }: { news: NewsItem[] }) {
             return (
               <div
                 key={n.id}
-                className={`${styles.row} flex items-center gap-4 sm:gap-[22px]`}
+                className={`${styles.row} flex flex-wrap items-center gap-x-4 gap-y-2 sm:flex-nowrap sm:gap-x-[22px]`}
                 style={{ padding: "20px 8px", borderBottom: "1px solid var(--hairline)" }}
               >
                 <div className="flex-none" style={{ width: 96, fontFamily: SERIF, color: "var(--brand-green)", fontWeight: 600, fontSize: 15 }}>
@@ -72,7 +72,7 @@ export function ClassicNews({ news }: { news: NewsItem[] }) {
                 >
                   {n.category}
                 </span>
-                <div className="min-w-0 flex-1" style={{ fontSize: 16, lineHeight: 1.5, fontWeight: 500 }}>
+                <div className="min-w-0 flex-1 basis-full sm:basis-auto" style={{ fontSize: 16, lineHeight: 1.5, fontWeight: 500 }}>
                   {n.title}
                 </div>
               </div>

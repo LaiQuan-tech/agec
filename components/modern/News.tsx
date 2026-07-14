@@ -67,7 +67,7 @@ export function ModernNews({ news }: { news: NewsItem[] }) {
                 >
                   {n.category}
                 </span>
-                <div className="min-w-0 flex-1" style={{ fontSize: 16, lineHeight: 1.5, fontWeight: 500, color: "var(--ink)" }}>{n.title}</div>
+                <div className="min-w-0 flex-1 basis-full sm:basis-auto" style={{ fontSize: 16, lineHeight: 1.5, fontWeight: 500, color: "var(--ink)" }}>{n.title}</div>
               </div>
             );
           })}
