@@ -33,16 +33,20 @@ export function ModernShell({ children }: { children: ReactNode }) {
         }}
       >
         <div className="mx-auto flex max-w-[1240px] items-center justify-between px-6 py-4 md:px-11 md:py-5">
-          <Link href="/" className={`flex items-center ${styles.navlink}`} aria-label="國立臺灣大學 農業經濟學系">
+          <Link href="/" className={`flex items-center gap-3 ${styles.navlink}`} aria-label="國立臺灣大學 農業經濟學系">
             <Image
-              src="/agec-logo.png"
-              alt="國立臺灣大學 農業經濟學系"
-              width={98}
-              height={42}
+              src="/agec-mark.png"
+              alt=""
+              width={50}
+              height={46}
               priority
               className="flex-none"
-              style={{ height: 42, width: "auto" }}
+              style={{ height: 44, width: "auto" }}
             />
+            <span style={{ lineHeight: 1.18 }}>
+              <span className="block" style={{ fontFamily: '"Noto Sans TC", sans-serif', fontWeight: 700, fontSize: 17, letterSpacing: ".04em", color: "var(--ink)" }}>國立臺灣大學</span>
+              <span className="block" style={{ fontFamily: '"Noto Sans TC", sans-serif', fontWeight: 700, fontSize: 17, letterSpacing: ".04em", color: "var(--ink)" }}>農業經濟學系</span>
+            </span>
           </Link>
 
           {/* desktop nav */}

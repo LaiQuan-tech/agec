@@ -25,7 +25,7 @@ export function HomeHero() {
 
   return (
     <section
-      style={{ position: "relative", borderRadius: "var(--radius-hero)", overflow: "hidden", height: "clamp(500px, 78vw, 580px)", background: "#d5cfba" }}
+      style={{ position: "relative", borderRadius: 0, overflow: "hidden", height: "100svh", background: "#d5cfba" }}
       aria-label="農業經濟學系形象影像"
     >
       {/* parallax layer (extra height to hide edges as it translates) */}

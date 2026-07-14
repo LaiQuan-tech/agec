@@ -62,16 +62,20 @@ export function ClassicShell({ children }: { children: ReactNode }) {
         }}
       >
         <div className="flex items-center justify-between px-5 py-4 md:px-10">
-          <Link href="/" className={`flex items-center ${styles.navlink}`} aria-label="國立臺灣大學 農業經濟學系">
+          <Link href="/" className={`flex items-center gap-3 ${styles.navlink}`} aria-label="國立臺灣大學 農業經濟學系">
             <Image
-              src="/agec-logo.png"
-              alt="國立臺灣大學 農業經濟學系"
-              width={112}
-              height={48}
+              src="/agec-mark.png"
+              alt=""
+              width={50}
+              height={46}
               priority
               className="flex-none"
-              style={{ height: 48, width: "auto" }}
+              style={{ height: 46, width: "auto" }}
             />
+            <span style={{ lineHeight: 1.18 }}>
+              <span className="block" style={{ fontFamily: '"Noto Sans TC", sans-serif', fontWeight: 700, fontSize: 17, letterSpacing: ".04em", color: "var(--ink)" }}>國立臺灣大學</span>
+              <span className="block" style={{ fontFamily: '"Noto Sans TC", sans-serif', fontWeight: 700, fontSize: 17, letterSpacing: ".04em", color: "var(--ink)" }}>農業經濟學系</span>
+            </span>
           </Link>
 
           {/* desktop nav */}

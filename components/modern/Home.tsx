@@ -32,11 +32,13 @@ export function ModernHome({ newsHome }: { newsHome: NewsItem[]; programs: Progr
 
   return (
     <ModernShell>
-      <div className="page-in mx-auto max-w-[1240px]">
-        {/* hero + quick cards */}
-        <div className="px-6 pb-10 pt-6 sm:pb-16 sm:pt-10 md:px-11">
-          <HomeHero />
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="page-in">
+        {/* full-bleed 全螢幕影片 hero */}
+        <HomeHero />
+        <div className="mx-auto max-w-[1240px]">
+          {/* quick cards */}
+          <div className="px-6 pb-10 pt-8 sm:pb-16 sm:pt-12 md:px-11">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {QUICK.map((q) => (
               <Link
                 key={q.n}
@@ -119,6 +121,7 @@ export function ModernHome({ newsHome }: { newsHome: NewsItem[]; programs: Progr
             </div>
           </div>
         </Reveal>
+        </div>
       </div>
     </ModernShell>
   );
