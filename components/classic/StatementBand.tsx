@@ -20,7 +20,7 @@ export function StatementBand() {
   const parallaxRef = useParallax<HTMLDivElement>(0.3);
 
   return (
-    <section style={{ position: "relative", height: 480, overflow: "hidden" }}>
+    <section style={{ position: "relative", height: "clamp(360px, 62vw, 480px)", overflow: "hidden" }}>
       <div ref={parallaxRef} style={{ position: "absolute", left: 0, right: 0, top: "-18%", height: "136%" }}>
         <div style={{ position: "absolute", inset: 0 }}>
           <Image src="/images/campus.png" alt="" fill sizes="100vw" style={{ objectFit: "cover" }} />
@@ -40,10 +40,10 @@ export function StatementBand() {
           </p>
         </Reveal>
 
-        <Reveal className="flex flex-wrap justify-center gap-y-8" style={{ columnGap: 72, marginTop: 52 }}>
+        <Reveal className="flex flex-wrap justify-center gap-y-8" style={{ columnGap: "clamp(40px, 8vw, 72px)", marginTop: "clamp(32px, 6vw, 52px)" }}>
           {STATS.map((s) => (
             <div key={s.n}>
-              <div style={{ fontFamily: SERIF, fontSize: 46, fontWeight: 700, color: "var(--gold-bright)" }}>{s.n}</div>
+              <div style={{ fontFamily: SERIF, fontSize: "clamp(38px, 9vw, 46px)", fontWeight: 700, color: "var(--gold-bright)" }}>{s.n}</div>
               <div style={{ fontSize: 13, color: "#c2d6c9", letterSpacing: ".06em", marginTop: 4 }}>{s.label}</div>
             </div>
           ))}

@@ -7,7 +7,7 @@ import { SERIF } from "./format";
  */
 export function GreenBanner({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
-    <div style={{ background: "var(--brand-green)" }} className="px-5 py-14 md:px-10">
+    <div style={{ background: "var(--brand-green)" }} className="px-5 py-10 sm:py-14 md:px-10">
       <div className="mx-auto max-w-[1180px]">
         <div style={{ fontSize: 13, letterSpacing: ".3em", color: "var(--gold-bright)", textTransform: "uppercase", fontWeight: 600 }}>
           {eyebrow}
@@ -36,7 +36,7 @@ export function ImageBanner({
   overlay: string;
 }) {
   return (
-    <div style={{ position: "relative", height: 300, overflow: "hidden", background: "#cfc9b4" }}>
+    <div style={{ position: "relative", height: "clamp(210px, 40vw, 300px)", overflow: "hidden", background: "#cfc9b4" }}>
       <Image src={src} alt="" fill priority sizes="100vw" style={{ objectFit: "cover" }} />
       <div style={{ position: "absolute", inset: 0, background: overlay }} />
       <div className="absolute inset-0 flex flex-col justify-center px-5 md:px-10">

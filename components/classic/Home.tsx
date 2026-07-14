@@ -21,8 +21,8 @@ export function ClassicHome({ newsHome, programs }: { newsHome: NewsItem[]; prog
         <HomeHero />
 
         {/* 最新消息 + 演講公告 */}
-        <Reveal className="mx-auto max-w-[1180px] px-5 pb-12 pt-16 md:px-10">
-          <div className="grid grid-cols-1 gap-[52px] lg:grid-cols-[1.6fr_1fr]">
+        <Reveal className="mx-auto max-w-[1180px] px-5 pb-10 pt-10 sm:pb-12 sm:pt-16 md:px-10">
+          <div className="grid grid-cols-1 gap-9 sm:gap-[52px] lg:grid-cols-[1.6fr_1fr]">
             {/* 最新消息 */}
             <div className={styles.enter} style={{ animationDelay: ".05s" }}>
               <div className="mb-1 flex items-baseline justify-between" style={{ borderBottom: "3px solid var(--brand-gold)", paddingBottom: 12 }}>
@@ -79,7 +79,7 @@ export function ClassicHome({ newsHome, programs }: { newsHome: NewsItem[]; prog
         </Reveal>
 
         {/* 招生資訊帶 */}
-        <Reveal style={{ background: "var(--cream)", borderTop: "1px solid var(--cream-border)", borderBottom: "1px solid var(--cream-border)", padding: "52px 0" }}>
+        <Reveal style={{ background: "var(--cream)", borderTop: "1px solid var(--cream-border)", borderBottom: "1px solid var(--cream-border)", padding: "clamp(32px, 6vw, 52px) 0" }}>
           <div className="mx-auto max-w-[1180px] px-5 md:px-10">
             <div className="mb-7 flex items-baseline gap-3.5">
               <h2 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 24, margin: 0, color: "var(--brand-green)" }}>招生資訊</h2>
@@ -105,7 +105,7 @@ export function ClassicHome({ newsHome, programs }: { newsHome: NewsItem[]; prog
         <StatementBand />
 
         {/* 系所簡介 */}
-        <Reveal className="mx-auto grid max-w-[1180px] grid-cols-1 items-center gap-12 px-5 py-20 md:grid-cols-2 md:px-10">
+        <Reveal className="mx-auto grid max-w-[1180px] grid-cols-1 items-center gap-8 sm:gap-12 px-5 py-12 sm:py-20 md:grid-cols-2 md:px-10">
           <CoverImage src="/images/students.png" alt="系所空間與師生活動" sizes="(max-width: 768px) 100vw, 560px" rounded={4} style={{ height: 320 }} />
           <div className={styles.enter} style={{ animationDelay: ".16s" }}>
             <div style={{ fontSize: 13, letterSpacing: ".24em", color: "var(--gold-deep)", fontWeight: 600, textTransform: "uppercase", marginBottom: 14 }}>

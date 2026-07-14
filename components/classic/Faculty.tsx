@@ -27,7 +27,7 @@ export function ClassicFaculty({ faculty }: { faculty: Faculty[] }) {
       <div className="page-in">
         <GreenBanner eyebrow="Faculty & Staff" title="系所成員" />
 
-        <div className="mx-auto max-w-[1180px] px-5 py-10 md:px-10">
+        <div className="mx-auto max-w-[1180px] px-5 py-8 sm:py-10 md:px-10">
           <div className="mb-8 flex flex-wrap gap-2.5" role="group" aria-label="成員分類篩選">
             {categories.map((c) => {
               const on = c === active;

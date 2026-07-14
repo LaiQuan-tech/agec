@@ -11,11 +11,11 @@ import { SANS } from "./format";
 export function ModernAbout() {
   return (
     <ModernShell>
-      <div className="page-in mx-auto max-w-[1240px] px-6 py-14 md:px-11">
+      <div className="page-in mx-auto max-w-[1240px] px-6 py-9 sm:py-14 md:px-11">
         <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: ".24em", color: "var(--gold-deep)", textTransform: "uppercase", marginBottom: 12 }}>About</div>
-        <h1 style={{ fontFamily: SANS, fontSize: 44, fontWeight: 900, margin: "0 0 40px", letterSpacing: "-.01em", color: "var(--ink)" }}>本系簡介</h1>
+        <h1 className="text-[30px] sm:text-[38px] md:text-[44px]" style={{ fontFamily: SANS, fontWeight: 900, margin: "0 0 40px", letterSpacing: "-.01em", color: "var(--ink)" }}>本系簡介</h1>
 
-        <Reveal className="mb-14 grid grid-cols-1 items-center gap-12 md:grid-cols-2">
+        <Reveal className="mb-9 sm:mb-14 grid grid-cols-1 items-center gap-8 sm:gap-12 md:grid-cols-2">
           <CoverImage src="/images/historic.png" alt="農業經濟學系歷史影像" sizes="(max-width: 768px) 100vw, 560px" rounded={20} style={{ height: 320 }} />
           <div>
             <h2 style={{ fontFamily: SANS, fontSize: 26, fontWeight: 700, color: "var(--brand-green)", lineHeight: 1.5, margin: "0 0 16px" }}>

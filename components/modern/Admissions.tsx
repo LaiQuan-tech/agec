@@ -18,11 +18,11 @@ const TIMELINE = [
 export function ModernAdmissions({ programs }: { programs: Program[] }) {
   return (
     <ModernShell>
-      <div className="page-in mx-auto max-w-[1240px] px-6 py-14 md:px-11">
+      <div className="page-in mx-auto max-w-[1240px] px-6 py-9 sm:py-14 md:px-11">
         <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: ".24em", color: "var(--gold-deep)", textTransform: "uppercase", marginBottom: 12 }}>Admissions</div>
-        <h1 style={{ fontFamily: SANS, fontSize: 44, fontWeight: 900, margin: "0 0 40px", letterSpacing: "-.01em", color: "var(--ink)" }}>招生資訊</h1>
+        <h1 className="text-[30px] sm:text-[38px] md:text-[44px]" style={{ fontFamily: SANS, fontWeight: 900, margin: "0 0 40px", letterSpacing: "-.01em", color: "var(--ink)" }}>招生資訊</h1>
 
-        <div className="mb-14 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="mb-9 sm:mb-14 grid grid-cols-1 gap-6 md:grid-cols-2">
           {programs.map((p) => (
             <div key={p.id} style={{ border: "1px solid var(--hairline)", borderRadius: 20, padding: 28, display: "flex", gap: 22, background: "#fff" }}>
               <div

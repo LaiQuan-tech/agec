@@ -23,7 +23,7 @@ export function ClassicAdmissions({ programs }: { programs: Program[] }) {
           overlay="linear-gradient(90deg,rgba(30,45,32,.72),rgba(30,45,32,.3))"
         />
 
-        <div className="mx-auto max-w-[1180px] px-5 py-14 md:px-10">
+        <div className="mx-auto max-w-[1180px] px-5 py-9 sm:py-14 md:px-10">
           {/* 學制卡 */}
           <div className="mb-14 grid grid-cols-1 gap-6 md:grid-cols-2">
             {programs.map((p) => (

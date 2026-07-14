@@ -22,9 +22,9 @@ export function ModernFaculty({ faculty }: { faculty: Faculty[] }) {
 
   return (
     <ModernShell>
-      <div className="page-in mx-auto max-w-[1240px] px-6 py-14 md:px-11">
+      <div className="page-in mx-auto max-w-[1240px] px-6 py-9 sm:py-14 md:px-11">
         <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: ".24em", color: "var(--gold-deep)", textTransform: "uppercase", marginBottom: 12 }}>Faculty</div>
-        <h1 style={{ fontFamily: SANS, fontSize: 44, fontWeight: 900, margin: "0 0 28px", letterSpacing: "-.01em", color: "var(--ink)" }}>系所成員</h1>
+        <h1 className="text-[30px] sm:text-[38px] md:text-[44px]" style={{ fontFamily: SANS, fontWeight: 900, margin: "0 0 28px", letterSpacing: "-.01em", color: "var(--ink)" }}>系所成員</h1>
 
         <div className="mb-8 flex flex-wrap gap-2">
           {categories.map((c) => {

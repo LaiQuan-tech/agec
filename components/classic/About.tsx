@@ -31,9 +31,9 @@ export function ClassicAbout() {
           overlay="linear-gradient(180deg,rgba(30,45,32,.2),rgba(30,45,32,.6))"
         />
 
-        <div className="mx-auto max-w-[1180px] px-5 py-16 md:px-10">
+        <div className="mx-auto max-w-[1180px] px-5 py-10 sm:py-16 md:px-10">
           {/* 系史 */}
-          <div className={`${styles.enter} mb-16 grid grid-cols-1 items-center gap-[52px] md:grid-cols-2`} style={{ animationDelay: ".05s" }}>
+          <div className={`${styles.enter} mb-9 sm:mb-16 grid grid-cols-1 items-center gap-9 sm:gap-[52px] md:grid-cols-2`} style={{ animationDelay: ".05s" }}>
             <div>
               <div style={EYEBROW}>History · 系史</div>
               <h2 style={{ fontFamily: SERIF, fontSize: 28, color: "var(--brand-green)", lineHeight: 1.5, margin: "0 0 18px" }}>
@@ -49,7 +49,7 @@ export function ClassicAbout() {
           {/* Mission */}
           <div
             className={styles.enter}
-            style={{ background: "var(--cream)", border: "1px solid var(--cream-border)", borderRadius: 6, padding: 44, marginBottom: 48, animationDelay: ".1s" }}
+            style={{ background: "var(--cream)", border: "1px solid var(--cream-border)", borderRadius: 6, padding: "clamp(28px, 6vw, 44px)", marginBottom: "clamp(32px, 6vw, 48px)", animationDelay: ".1s" }}
           >
             <div style={EYEBROW}>Mission · 教學與研究目標</div>
             <p className="text-[20px] md:text-[24px]" style={{ fontFamily: SERIF, lineHeight: 1.7, color: "var(--brand-green)", fontWeight: 500, margin: 0 }}>

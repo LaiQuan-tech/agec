@@ -12,12 +12,12 @@ import styles from "./modern.module.css";
 export function ModernJournal({ links }: { links: LinkItem[] }) {
   return (
     <ModernShell>
-      <div className="page-in mx-auto max-w-[1240px] px-6 py-14 md:px-11">
+      <div className="page-in mx-auto max-w-[1240px] px-6 py-9 sm:py-14 md:px-11">
         <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: ".24em", color: "var(--gold-deep)", textTransform: "uppercase", marginBottom: 12 }}>Journal</div>
-        <h1 style={{ fontFamily: SANS, fontSize: 44, fontWeight: 900, margin: "0 0 40px", letterSpacing: "-.01em", color: "var(--ink)" }}>農業與經濟期刊</h1>
+        <h1 className="text-[30px] sm:text-[38px] md:text-[44px]" style={{ fontFamily: SANS, fontWeight: 900, margin: "0 0 40px", letterSpacing: "-.01em", color: "var(--ink)" }}>農業與經濟期刊</h1>
 
-        <div className="grid grid-cols-1 items-start gap-12 md:grid-cols-[300px_1fr]">
-          <CoverImage src="/images/journal.png" alt="《農業與經濟》期刊封面" sizes="(max-width: 768px) 100vw, 300px" rounded={20} style={{ height: 380 }} />
+        <div className="grid grid-cols-1 items-start gap-8 sm:gap-12 md:grid-cols-[300px_1fr]">
+          <CoverImage src="/images/journal.png" alt="《農業與經濟》期刊封面" sizes="(max-width: 768px) 100vw, 300px" rounded={20} style={{ height: "clamp(300px, 45vw, 380px)" }} />
           <div>
             <p style={{ fontSize: 16, lineHeight: 2, color: "var(--ink-soft)", margin: "0 0 28px" }}>
               《農業與經濟》為本系發行之學術期刊，長期刊載農業經濟、資源與環境、農村發展等領域之研究成果，為國內重要的農業經濟學術園地。

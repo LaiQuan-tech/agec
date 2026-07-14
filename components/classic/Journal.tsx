@@ -12,8 +12,8 @@ export function ClassicJournal({ links }: { links: LinkItem[] }) {
       <div className="page-in">
         <GreenBanner eyebrow="Journal" title="農業與經濟期刊" />
 
-        <div className="mx-auto grid max-w-[1180px] grid-cols-1 items-start gap-12 px-5 py-14 md:grid-cols-[300px_1fr] md:px-10">
-          <CoverImage src="/images/journal.png" alt="《農業與經濟》期刊封面" sizes="(max-width: 768px) 100vw, 300px" rounded={6} style={{ height: 380 }} />
+        <div className="mx-auto grid max-w-[1180px] grid-cols-1 items-start gap-8 sm:gap-12 px-5 py-10 sm:py-14 md:grid-cols-[300px_1fr] md:px-10">
+          <CoverImage src="/images/journal.png" alt="《農業與經濟》期刊封面" sizes="(max-width: 768px) 100vw, 300px" rounded={6} style={{ height: "clamp(300px, 45vw, 380px)" }} />
 
           <div>
             <p style={{ fontSize: 16, lineHeight: 2, color: "var(--ink-soft)", margin: "0 0 28px" }}>

@@ -34,7 +34,7 @@ export function ModernHome({ newsHome }: { newsHome: NewsItem[]; programs: Progr
     <ModernShell>
       <div className="page-in mx-auto max-w-[1240px]">
         {/* hero + quick cards */}
-        <div className="px-6 pb-16 pt-10 md:px-11">
+        <div className="px-6 pb-10 pt-6 sm:pb-16 sm:pt-10 md:px-11">
           <HomeHero />
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {QUICK.map((q) => (
@@ -49,7 +49,7 @@ export function ModernHome({ newsHome }: { newsHome: NewsItem[]; programs: Progr
                   background: q.cream ? "var(--cream)" : "#fff",
                 }}
               >
-                <div style={{ fontSize: 22, marginBottom: 40, color: q.cream ? "var(--gold-deep)" : "var(--brand-green)", fontWeight: 900 }}>{q.n}</div>
+                <div style={{ fontSize: 22, marginBottom: "clamp(22px, 5vw, 40px)", color: q.cream ? "var(--gold-deep)" : "var(--brand-green)", fontWeight: 900 }}>{q.n}</div>
                 <div style={{ fontWeight: 700, fontSize: 16, color: "var(--ink)" }}>{q.title}</div>
                 <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>{q.sub}</div>
               </Link>
@@ -58,9 +58,9 @@ export function ModernHome({ newsHome }: { newsHome: NewsItem[]; programs: Progr
         </div>
 
         {/* 最新消息 */}
-        <Reveal className="px-6 pb-[72px] md:px-11">
+        <Reveal className="px-6 pb-12 sm:pb-[72px] md:px-11">
           <div className="mb-7 flex items-baseline justify-between">
-            <h2 style={{ fontFamily: SANS, fontSize: 30, fontWeight: 900, margin: 0, letterSpacing: "-.01em", color: "var(--ink)" }}>最新消息</h2>
+            <h2 className="text-[24px] sm:text-[30px]" style={{ fontFamily: SANS, fontWeight: 900, margin: 0, letterSpacing: "-.01em", color: "var(--ink)" }}>最新消息</h2>
             <Link href="/news" className={styles.navlink} style={{ fontSize: 14, fontWeight: 600, color: "var(--gold-deep)" }}>
               View all →
             </Link>
@@ -94,7 +94,7 @@ export function ModernHome({ newsHome }: { newsHome: NewsItem[]; programs: Progr
         </div>
 
         {/* Our Mission */}
-        <Reveal className="px-6 pb-16 pt-6 md:px-11">
+        <Reveal className="px-6 pb-10 pt-4 sm:pb-16 sm:pt-6 md:px-11">
           <div style={{ background: "var(--cream)", borderRadius: "var(--radius-hero)", padding: "clamp(40px,6vw,72px)" }}>
             <div className="max-w-[820px]">
               <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: ".24em", color: "var(--gold-deep)", textTransform: "uppercase", marginBottom: 18 }}>
@@ -108,10 +108,10 @@ export function ModernHome({ newsHome }: { newsHome: NewsItem[]; programs: Progr
               <p style={{ fontSize: 16, lineHeight: 2, color: "#5a584c", margin: 0 }}>
                 本系以追求頂尖之教學與研究水準為發展目標，結合政策、市場、資源與永續等面向，回應糧食安全、農村發展與全球農業轉型的關鍵課題。
               </p>
-              <div className="mt-11 flex flex-wrap gap-x-14 gap-y-6">
+              <div className="mt-8 sm:mt-11 flex flex-wrap gap-x-8 sm:gap-x-14 gap-y-6">
                 {MISSION_STATS.map((s) => (
                   <div key={s.n}>
-                    <div style={{ fontSize: 44, fontWeight: 900, color: "var(--brand-gold)" }}>{s.n}</div>
+                    <div style={{ fontSize: "clamp(34px, 9vw, 44px)", fontWeight: 900, color: "var(--brand-gold)" }}>{s.n}</div>
                     <div style={{ fontSize: 13, color: "#8a8873", marginTop: 2 }}>{s.label}</div>
                   </div>
                 ))}

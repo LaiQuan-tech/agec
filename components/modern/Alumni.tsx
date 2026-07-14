@@ -13,11 +13,11 @@ import styles from "./modern.module.css";
 export function ModernAlumni({ links }: { links: LinkItem[] }) {
   return (
     <ModernShell>
-      <div className="page-in mx-auto max-w-[1240px] px-6 py-14 md:px-11">
+      <div className="page-in mx-auto max-w-[1240px] px-6 py-9 sm:py-14 md:px-11">
         <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: ".24em", color: "var(--gold-deep)", textTransform: "uppercase", marginBottom: 12 }}>Alumni</div>
-        <h1 style={{ fontFamily: SANS, fontSize: 44, fontWeight: 900, margin: "0 0 40px", letterSpacing: "-.01em", color: "var(--ink)" }}>李總統登輝系友專區</h1>
+        <h1 className="text-[26px] sm:text-[36px] md:text-[44px]" style={{ fontFamily: SANS, fontWeight: 900, margin: "0 0 40px", letterSpacing: "-.01em", color: "var(--ink)" }}>李總統登輝系友專區</h1>
 
-        <div className="mb-12 grid grid-cols-1 items-center gap-12 md:grid-cols-2">
+        <div className="mb-8 sm:mb-12 grid grid-cols-1 items-center gap-8 sm:gap-12 md:grid-cols-2">
           <CoverImage src="/images/alumni.png" alt="系友紀念影像" sizes="(max-width: 768px) 100vw, 560px" rounded={20} style={{ height: 320 }} />
           <div>
             <h2 style={{ fontFamily: SANS, fontSize: 26, fontWeight: 700, color: "var(--brand-green)", lineHeight: 1.5, margin: "0 0 16px" }}>求學紀事與捐贈書目</h2>

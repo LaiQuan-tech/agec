@@ -16,7 +16,7 @@ export function HomeHero() {
 
   return (
     <section
-      style={{ position: "relative", height: 660, overflow: "hidden", background: "#cfc9b4" }}
+      style={{ position: "relative", height: "clamp(560px, 85vw, 660px)", overflow: "hidden", background: "#cfc9b4" }}
       aria-label="農業經濟學系形象影像"
     >
       {/* parallax layer (extra height to hide edges as it translates) */}

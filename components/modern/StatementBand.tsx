@@ -14,7 +14,7 @@ export function StatementBand() {
   const parallaxRef = useParallax<HTMLDivElement>(0.3);
 
   return (
-    <section style={{ position: "relative", height: 460, borderRadius: "var(--radius-hero)", overflow: "hidden" }}>
+    <section style={{ position: "relative", height: "clamp(360px, 60vw, 460px)", borderRadius: "var(--radius-hero)", overflow: "hidden" }}>
       <div ref={parallaxRef} style={{ position: "absolute", left: 0, right: 0, top: "-18%", height: "136%" }}>
         <div style={{ position: "absolute", inset: 0 }}>
           <Image src="/images/fields.png" alt="" fill sizes="100vw" style={{ objectFit: "cover" }} />

@@ -12,8 +12,8 @@ export function ClassicAlumni({ links }: { links: LinkItem[] }) {
       <div className="page-in">
         <GreenBanner eyebrow="Alumni" title="李總統登輝系友專區" />
 
-        <div className="mx-auto max-w-[1180px] px-5 py-14 md:px-10">
-          <div className="mb-12 grid grid-cols-1 items-center gap-12 md:grid-cols-2">
+        <div className="mx-auto max-w-[1180px] px-5 py-9 sm:py-14 md:px-10">
+          <div className="mb-8 sm:mb-12 grid grid-cols-1 items-center gap-8 sm:gap-12 md:grid-cols-2">
             <CoverImage src="/images/alumni.png" alt="系友紀念影像" sizes="(max-width: 768px) 100vw, 560px" rounded={6} style={{ height: 320 }} />
             <div>
               <h2 style={{ fontFamily: SERIF, fontSize: 26, color: "var(--brand-green)", lineHeight: 1.5, margin: "0 0 16px" }}>

@@ -28,7 +28,7 @@ export function ClassicCourses({ courses }: { courses: Course[] }) {
       <div className="page-in">
         <GreenBanner eyebrow="Courses" title="課程資訊" />
 
-        <div className="mx-auto max-w-[1180px] px-5 py-10 md:px-10">
+        <div className="mx-auto max-w-[1180px] px-5 py-8 sm:py-10 md:px-10">
           <div className="mb-7 flex flex-wrap gap-2.5" role="group" aria-label="學制篩選">
             {tabs.map((t) => {
               const on = t === active;

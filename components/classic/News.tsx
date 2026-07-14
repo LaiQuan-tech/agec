@@ -26,7 +26,7 @@ export function ClassicNews({ news }: { news: NewsItem[] }) {
       <div className="page-in">
         <GreenBanner eyebrow="News & Announcements" title="最新消息" />
 
-        <div className="mx-auto max-w-[1180px] px-5 py-10 md:px-10">
+        <div className="mx-auto max-w-[1180px] px-5 py-8 sm:py-10 md:px-10">
           {/* category chips */}
           <div className="mb-3 flex flex-wrap gap-2.5" role="group" aria-label="消息分類篩選">
             {categories.map((c) => {
