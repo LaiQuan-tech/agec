@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useParallax } from "@/hooks/useParallax";
 import { SERIF } from "./format";
@@ -13,6 +13,15 @@ import styles from "./classic.module.css";
  */
 export function HomeHero() {
   const parallaxRef = useParallax<HTMLDivElement>(0.34);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = true; // reliably muted so autoplay is allowed (React muted-prop quirk)
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      v.play().catch(() => {});
+    }
+  }, []);
 
   return (
     <section
@@ -21,9 +30,19 @@ export function HomeHero() {
     >
       {/* parallax layer (extra height to hide edges as it translates) */}
       <div ref={parallaxRef} style={{ position: "absolute", left: 0, right: 0, top: "-18%", height: "136%" }}>
-        <div className="kb-bg" style={{ position: "absolute", inset: 0 }}>
-          <Image src="/images/hero.png" alt="" fill priority sizes="100vw" style={{ objectFit: "cover" }} />
-        </div>
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster="/hero-poster.jpg"
+          aria-hidden="true"
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+        >
+          <source src="/hero.mp4" type="video/mp4" />
+        </video>
       </div>
 
       {/* gradient scrim */}
