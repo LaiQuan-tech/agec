@@ -49,9 +49,14 @@ export type Program = {
   sort_order: number;
 };
 
+/**
+ * `section` groups link cards by the page that renders them. 'journal' rows
+ * remain in the table from the original seed but no route reads them any more —
+ * 農經期刊 was replaced by 學生專區 ('students') in the 2026 IA revision.
+ */
 export type LinkItem = {
   id: number;
-  section: "journal" | "alumni";
+  section: "students" | "alumni" | "journal";
   label: string;
   url: string | null;
   sort_order: number;
@@ -142,9 +147,9 @@ export async function getPrograms(): Promise<Program[]> {
   return data ?? [];
 }
 
-/** Link cards for a section ('journal' | 'alumni'), in display order. */
+/** Link cards for a section ('students' | 'alumni'), in display order. */
 export async function getLinks(
-  section: "journal" | "alumni"
+  section: LinkItem["section"]
 ): Promise<LinkItem[]> {
   const supabase = createServerClient();
   const { data, error } = await supabase

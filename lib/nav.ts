@@ -16,6 +16,6 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/faculty", label: "系所成員" },
   { href: "/admissions", label: "招生資訊" },
   { href: "/courses", label: "課程資訊" },
-  { href: "/journal", label: "農經期刊" },
+  { href: "/students", label: "學生專區" },
   { href: "/alumni", label: "系友專區" },
 ];

@@ -12,7 +12,7 @@ const QUICK = [
   { n: "01", href: "/admissions", title: "招生資訊", sub: "大學 · 碩 · 博 · 專班", cream: true },
   { n: "02", href: "/courses", title: "課程地圖", sub: "學程與修業", cream: false },
   { n: "03", href: "/faculty", title: "師資陣容", sub: "研究領域", cream: false },
-  { n: "04", href: "/journal", title: "農經期刊", sub: "出版與徵稿", cream: false },
+  { n: "04", href: "/students", title: "學生專區", sub: "系學會", cream: false },
 ];
 
 const MISSION_STATS = [

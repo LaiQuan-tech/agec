@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     default: "國立臺灣大學 農業經濟學系",
   },
   description:
-    "國立臺灣大學農業經濟學系（Dept. of Agricultural Economics, NTU）官方網站：最新消息、本系簡介、系所成員、招生資訊、課程資訊、農經期刊與系友專區。",
+    "國立臺灣大學農業經濟學系（Dept. of Agricultural Economics, NTU）官方網站：最新消息、本系簡介、系所成員、招生資訊、課程資訊、學生專區與系友專區。",
 };
 
 export default function RootLayout({
