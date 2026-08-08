@@ -200,3 +200,148 @@ body {
     animation: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Admin area.
+
+   The root layout mounts ThemeProvider, so [data-theme="modern"] would
+   otherwise reach into the admin and change --ink / --muted / --hairline /
+   --radius-card depending on which theme the last visitor picked. Re-pinning
+   them here keeps the admin looking identical in both themes. The brand colours
+   (--brand-gold / --brand-green / --cream / --gold-*) are shared by both themes
+   already, so they're deliberately inherited rather than redeclared.
+
+   --font-heading is NOT inherited: it flips serif/sans with the theme.
+   --------------------------------------------------------------------------- */
+[data-admin] {
+  --ink: #1f2124;
+  --ink-soft: #4b5058;
+  --muted: #6b7280;
+  --hairline: #e5e7eb;
+  --radius-card: 8px;
+  --page-bg: #ffffff;
+
+  color: var(--ink);
+  font-family: var(--font-noto-sans-tc), "Noto Sans TC", sans-serif;
+}
+
+/* ---------------------------------------------------------------------------
+   Blog article body.
+
+   One stylesheet shared by the public article page and the TipTap editor, so
+   "what you see" in the admin really is "what you get" on the site. Written by
+   hand against the existing tokens rather than pulling in
+   @tailwindcss/typography, which would need its defaults overridden anyway.
+
+   The tag list mirrors the sanitizer allow-list in lib/admin/sanitize.ts —
+   anything not listed there can never reach this CSS.
+   --------------------------------------------------------------------------- */
+.post-body {
+  color: var(--ink);
+  font-size: 16.5px;
+  line-height: 1.9;
+}
+
+.post-body > * + * {
+  margin-top: 1.1em;
+}
+
+.post-body h2,
+.post-body h3,
+.post-body h4 {
+  font-family: var(--font-heading);
+  font-weight: var(--heading-weight);
+  color: var(--brand-green);
+  line-height: 1.4;
+}
+
+.post-body h2 {
+  font-size: 1.5em;
+  margin-top: 2em;
+}
+
+.post-body h3 {
+  font-size: 1.22em;
+  margin-top: 1.7em;
+}
+
+.post-body h4 {
+  font-size: 1.05em;
+  margin-top: 1.5em;
+}
+
+.post-body a {
+  color: var(--brand-green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.post-body a:hover {
+  color: var(--gold-deep);
+}
+
+.post-body strong {
+  font-weight: 700;
+}
+
+.post-body ul,
+.post-body ol {
+  padding-left: 1.5em;
+}
+
+.post-body ul {
+  list-style: disc;
+}
+
+.post-body ol {
+  list-style: decimal;
+}
+
+.post-body li + li {
+  margin-top: 0.4em;
+}
+
+.post-body blockquote {
+  border-left: 3px solid var(--brand-gold);
+  padding: 0.2em 0 0.2em 1.1em;
+  color: var(--ink-soft);
+}
+
+.post-body code {
+  font-size: 0.9em;
+  background: var(--cream);
+  border: 1px solid var(--cream-border);
+  border-radius: 3px;
+  padding: 0.1em 0.35em;
+}
+
+.post-body pre {
+  background: var(--cream);
+  border: 1px solid var(--cream-border);
+  border-radius: var(--radius-card);
+  padding: 1em;
+  overflow-x: auto;
+}
+
+.post-body pre code {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.post-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-card);
+}
+
+.post-body hr {
+  border: 0;
+  border-top: 1px solid var(--hairline);
+  margin: 2em 0;
+}
+
+/* TipTap's empty editor would otherwise collapse to zero height. */
+.post-body.ProseMirror:focus {
+  outline: none;
+}

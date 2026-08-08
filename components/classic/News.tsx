@@ -73,6 +73,14 @@ export function ClassicNews({ news }: { news: NewsItem[] }) {
                   {n.category}
                 </span>
                 <div className="min-w-0 flex-1 basis-full sm:basis-auto" style={{ fontSize: 16, lineHeight: 1.5, fontWeight: 500 }}>
+                  {n.is_pinned && (
+                    <span
+                      className="mr-2 inline-block align-[1px]"
+                      style={{ background: "var(--brand-green)", color: "#fff", fontSize: 11, fontWeight: 700, padding: "2px 7px", borderRadius: 2 }}
+                    >
+                      置頂
+                    </span>
+                  )}
                   {n.title}
                 </div>
               </div>
