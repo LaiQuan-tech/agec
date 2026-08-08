@@ -4,8 +4,9 @@ import { createServerClient } from "@/lib/supabase/server";
  * Typed data-access layer for the site's Supabase content tables.
  * All functions are server-only (they call createServerClient(), which uses
  * the service-role key) and are meant to be awaited from Server Components —
- * see app/*\/page.tsx for usage. Every table already has RLS enabled with a
- * public-read policy; schema is live and must NOT be modified from the app.
+ * see app/*\/page.tsx for usage. Every table has RLS enabled with a public-read
+ * policy. Schema changes go through supabase/migrations/ and are applied via
+ * the SQL editor — the app never executes DDL.
  *
  * On query error, functions log to the server console and return an empty
  * array rather than throwing, so a transient DB hiccup degrades a section to
@@ -65,12 +66,13 @@ export type LinkItem = {
 const NEWS_COLUMNS =
   "id, published_at, category, title, body, cover_url, is_pinned";
 
-/** All news items, newest first. Used by /news (10 seeded rows). */
+/** All news items: pinned first, then newest. Used by /news. */
 export async function getNews(): Promise<NewsItem[]> {
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from("news")
     .select(NEWS_COLUMNS)
+    .order("is_pinned", { ascending: false })
     .order("published_at", { ascending: false })
     .returns<NewsItem[]>();
 
@@ -81,12 +83,13 @@ export async function getNews(): Promise<NewsItem[]> {
   return data ?? [];
 }
 
-/** Top `limit` news items, newest first. Used by the home page's 最新消息 panel. */
+/** Top `limit` news items: pinned first, then newest. Home page 最新消息 panel. */
 export async function getNewsHome(limit: number): Promise<NewsItem[]> {
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from("news")
     .select(NEWS_COLUMNS)
+    .order("is_pinned", { ascending: false })
     .order("published_at", { ascending: false })
     .limit(limit)
     .returns<NewsItem[]>();
