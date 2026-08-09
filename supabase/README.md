@@ -18,13 +18,30 @@
 
 | # | 檔案 | 內容 | 已執行 |
 |---|---|---|---|
-| 0 | `checks/00_preflight.sql` | **先跑這支**（唯讀）。列出既有 policy，確認沒有會與白名單 OR 疊加的舊寫入 policy | ⬜ |
-| 1 | `migrations/20260814090000_posts_table.sql` | 建 `posts` 表、constraints、indexes、`updated_at` trigger | ⬜ |
-| 2 | `migrations/20260814090100_admin_allowlist.sql` | 建 `admin_users` 白名單表與 `is_admin()` 函式 | ⬜ |
-| 3 | **人工步驟** | 在 Dashboard 建系辦帳號後，執行檔案末尾註解裡的 `insert into admin_users` | ⬜ |
-| 4 | `migrations/20260814090200_rls_policies.sql` | 六張表的讀寫 policy | ⬜ |
-| 5 | `migrations/20260814090300_storage_buckets.sql` | `blog` bucket、四個 bucket 的大小與 mime 限制、objects policy | ⬜ |
-| 6 | `checks/verify_rls.sql` | 驗收（唯讀），逐段對照 FAIL 判準 | ⬜ |
+| 0 | `checks/00_preflight.sql` | 唯讀。列出既有 policy | ✅ 2026-08-09 |
+| 1 | `migrations/20260814090000_posts_table.sql` | 建 `posts` 表、constraints、indexes、`updated_at` trigger | ✅ 2026-08-09 |
+| 2 | `migrations/20260814090100_admin_allowlist.sql` | 建 `admin_users` 白名單表與 `is_admin()` 函式 | ✅ 2026-08-09 |
+| 3 | **人工步驟** | 在 Dashboard 建系辦帳號後，執行檔案末尾註解裡的 `insert into admin_users` | ⬜ **待辦** |
+| 4 | `migrations/20260814090200_rls_policies.sql` | 六張表的讀寫 policy | ✅ 2026-08-09 |
+| 5 | `migrations/20260814090300_storage_buckets.sql` | `blog` bucket、四個 bucket 的大小與 mime 限制、objects policy | ✅ 2026-08-09 |
+| 6 | `checks/verify_rls.sql` | 驗收（唯讀），逐段對照 FAIL 判準 | ✅ 2026-08-09 全數 PASS |
+
+## 2026-08-09 執行紀錄
+
+preflight 發現五張表都有一條名為 `auth write` 的 policy：
+
+```
+cmd=ALL   using = (auth.role() = 'authenticated')
+```
+
+配上當時開著的 `disable_signup`，代表任何人註冊一個帳號就能對 news /
+faculty / courses / programs / links 任意增刪改。這是實際可利用的，不是
+理論風險。`rls_policies` 的 DO block 已將這五條移除。
+
+移除後以「模擬 authenticated 身分」實測（未建立任何帳號，用
+`set_config('role','authenticated')` 加隨機 uuid claims）：寫入 news /
+posts、更新 faculty、刪除 links、讀取或竄改 `admin_users` 全部被擋，
+公開讀取不受影響。資料筆數在測試前後一致（10/8/6/5/7）。
 
 ## Dashboard 上要手動做的事（SQL 做不到）
 
