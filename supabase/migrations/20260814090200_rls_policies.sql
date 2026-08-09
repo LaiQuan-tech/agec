@@ -66,6 +66,41 @@ create policy "admin read all posts" on public.posts
   using ((select public.is_admin()));
 
 -- ------------------------------------------------------------
+-- 先清掉任何「不是白名單」的既有寫入 policy
+--
+-- 這段是白名單能不能成立的關鍵。RLS 的多條 policy 之間是 OR，所以只要
+-- 表上還留著一條舊的寬鬆寫入 policy（例如原 DEPLOYMENT.md 規劃的
+-- auth.role() = 'authenticated'），它就會與下面的白名單 policy 疊加，
+-- 任何註冊過的人依然寫得進去 —— 白名單等於沒做。
+--
+-- 下面用名稱與 cmd 判斷：保留 SELECT 類（公開讀本來就該在）與我們自己
+-- 建的 "admin %"，其餘寫入類一律移除，並逐條 RAISE NOTICE 讓執行者看到
+-- 到底刪了什麼。前台走 service_role 完全繞過 RLS，刪這些不影響前台。
+-- ------------------------------------------------------------
+do $$
+declare
+  pol record;
+begin
+  for pol in
+    select schemaname, tablename, policyname
+    from pg_policies
+    where (
+      (schemaname = 'public'
+       and tablename in ('news','faculty','courses','programs','links','posts'))
+      or (schemaname = 'storage' and tablename = 'objects')
+    )
+      and cmd in ('ALL','INSERT','UPDATE','DELETE')
+      and policyname not like 'admin %'
+  loop
+    raise notice '移除既有寫入 policy：%.% → %',
+      pol.schemaname, pol.tablename, pol.policyname;
+    execute format('drop policy %I on %I.%I',
+      pol.policyname, pol.schemaname, pol.tablename);
+  end loop;
+end
+$$;
+
+-- ------------------------------------------------------------
 -- 寫入：六張表一律只開給白名單
 -- ------------------------------------------------------------
 drop policy if exists "admin write news" on public.news;
