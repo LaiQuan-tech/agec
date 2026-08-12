@@ -21,7 +21,7 @@
 | 0 | `checks/00_preflight.sql` | 唯讀。列出既有 policy | ✅ 2026-08-09 |
 | 1 | `migrations/20260814090000_posts_table.sql` | 建 `posts` 表、constraints、indexes、`updated_at` trigger | ✅ 2026-08-09 |
 | 2 | `migrations/20260814090100_admin_allowlist.sql` | 建 `admin_users` 白名單表與 `is_admin()` 函式 | ✅ 2026-08-09 |
-| 3 | **人工步驟** | 在 Dashboard 建系辦帳號後，執行檔案末尾註解裡的 `insert into admin_users` | ⬜ **待辦** |
+| 3 | **人工步驟** | 在 Dashboard 建系辦帳號後，執行檔案末尾註解裡的 `insert into admin_users` | ✅ 2026-08-12 |
 | 4 | `migrations/20260814090200_rls_policies.sql` | 六張表的讀寫 policy | ✅ 2026-08-09 |
 | 5 | `migrations/20260814090300_storage_buckets.sql` | `blog` bucket、四個 bucket 的大小與 mime 限制、objects policy | ✅ 2026-08-09 |
 | 6 | `checks/verify_rls.sql` | 驗收（唯讀），逐段對照 FAIL 判準 | ✅ 2026-08-09 全數 PASS |
@@ -49,6 +49,15 @@ posts、更新 faculty、刪除 links、讀取或竄改 `admin_users` 全部被�
    目前是開著的，任何人拿公開的 anon key 都能自行註冊成 `authenticated`。`admin_users` 白名單已經讓這件事不足以取得寫入權，但沒有理由留著。
 2. **Authentication → Users → Add user**，建 2–3 個系辦帳號，**勾選 Auto Confirm User**。
    建完把 email 填進步驟 3 的 insert 語句。
+
+   2026-08-12 已用 Admin API（service role）建好第一個帳號並加進白名單：
+
+   | email | user_id | 備註 |
+   |---|---|---|
+   | `armand7951@gmail.com` | `1b60935c-5cff-4f24-83e4-3f5b685f1234` | 系辦/開發者，`email_confirm` 已設 |
+
+   密碼是暫用的弱密碼，交付系辦前務必在 Dashboard 改掉。系辦自己的帳號請照同一步驟再建：
+   建完 auth 使用者 → `insert into public.admin_users`（語句在 migration 檔尾）。
 
 ## 為什麼寫入權限用白名單而不是 `to authenticated`
 
