@@ -1,12 +1,11 @@
 /**
  * Wrapper shared by /login and /admin.
  *
- * The root layout mounts ThemeProvider, which writes `data-theme` onto <html>
- * and swaps --ink / --muted / --hairline / --radius-card. That's correct for the
- * public site but would make the admin change appearance depending on which
- * theme a visitor last picked. The `data-admin` attribute re-pins those tokens
- * (see the [data-admin] block in app/globals.css); brand colours are shared
- * across both themes and are inherited unchanged.
+ * The public site's tokens (--ink / --muted / --hairline / --radius-card …)
+ * are declared on :root in app/globals.css and would otherwise style the admin
+ * with the same warm editorial palette. The `data-admin` attribute re-pins them
+ * to the admin's neutral greys (see the [data-admin] block in app/globals.css);
+ * brand colours are shared and inherited unchanged.
  */
 export default function AdminRootLayout({
   children,

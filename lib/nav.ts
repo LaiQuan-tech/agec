@@ -5,9 +5,8 @@ export type NavItem = {
 
 /**
  * Canonical 8-item site navigation (design_handoff_agec/README.md §資訊架構).
- * Both theme Shells (components/classic/Shell.tsx, components/modern/Shell.tsx)
- * import this so the route list and Chinese labels never drift out of sync
- * between the two themes.
+ * components/classic/Shell.tsx imports this for both the desktop nav and the
+ * mobile dropdown, so the route list and Chinese labels can never drift apart.
  */
 export const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "首頁" },

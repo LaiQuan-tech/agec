@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS } from "@/lib/nav";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { SERIF } from "./format";
 import styles from "./classic.module.css";
 
@@ -48,7 +47,6 @@ export function ClassicShell({ children }: { children: ReactNode }) {
           >
             教職員登入
           </span>
-          <ThemeToggle />
         </div>
       </div>
 

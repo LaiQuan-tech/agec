@@ -31,9 +31,9 @@ export function ClassicAlumni({ links }: { links: LinkItem[] }) {
                 <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 600, color: "var(--brand-green)" }}>{a.label}</div>
               );
               const cardStyle = { border: "1px solid var(--hairline)", borderRadius: 6, padding: 22, display: "block" as const };
-              // '#' is the placeholder the seed rows use for "no link yet"; the
-              // modern theme already treats it as plain text, and /admin/links
-              // tells the staff it renders as a non-clickable card.
+              // '#' is the placeholder the seed rows use for "no link yet", so
+              // it renders as a non-clickable card — which is what /admin/links
+              // tells the staff to expect.
               return a.url && a.url !== "#" ? (
                 <a key={a.id} href={a.url} target="_blank" rel="noopener noreferrer" className={styles.card} style={cardStyle}>
                   {inner}

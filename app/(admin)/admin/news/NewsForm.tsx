@@ -12,7 +12,6 @@ export type NewsFormValues = {
   published_at: string;
   category: string;
   title: string;
-  cover_url: string;
   is_pinned: boolean;
 };
 
@@ -91,23 +90,6 @@ export function NewsForm({
               </datalist>
             </Field>
           </div>
-
-          <Field
-            htmlFor="cover_url"
-            label="縮圖網址"
-            error={state.fieldErrors?.cover_url}
-            hint="首頁「最新消息」卡片的縮圖。留空會用預設圖片；內頁的消息列表不顯示縮圖。"
-          >
-            <Input
-              id="cover_url"
-              name="cover_url"
-              type="url"
-              defaultValue={initial.cover_url}
-              maxLength={500}
-              placeholder="https://…"
-              aria-invalid={Boolean(state.fieldErrors?.cover_url)}
-            />
-          </Field>
 
           <Field
             htmlFor="is_pinned"

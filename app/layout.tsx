@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { Noto_Serif_TC, Noto_Sans_TC } from "next/font/google";
-import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import "./globals.css";
 
-// 風格A經典學院派 heading font — see --font-heading in app/globals.css.
+// Heading font — see --font-heading in app/globals.css.
 const notoSerifTC = Noto_Serif_TC({
   variable: "--font-noto-serif-tc",
   weight: ["400", "500", "600", "700", "900"],
@@ -11,7 +10,7 @@ const notoSerifTC = Noto_Serif_TC({
   display: "swap",
 });
 
-// 風格B現代簡潔 heading font, and body copy font for both themes.
+// Body copy font for the public site, and the admin's only font.
 const notoSansTC = Noto_Sans_TC({
   variable: "--font-noto-sans-tc",
   weight: ["300", "400", "500", "700", "900"],
@@ -38,9 +37,7 @@ export default function RootLayout({
       lang="zh-Hant"
       className={`${notoSerifTC.variable} ${notoSansTC.variable}`}
     >
-      <body className="min-h-screen antialiased">
-        <ThemeProvider>{children}</ThemeProvider>
-      </body>
+      <body className="min-h-screen antialiased">{children}</body>
     </html>
   );
 }

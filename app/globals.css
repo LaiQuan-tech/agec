@@ -3,18 +3,15 @@
 /* ==================================================================
    Design tokens — 台大農經系網站改版
    Source of truth: design_handoff_agec/README.md "Design Tokens".
-   Brand colors are shared between both themes. Theme-scoped tokens
-   (ink / muted / hairline / radius / heading font+weight) differ between
-   [data-theme="classic"] (風格A經典學院派) and [data-theme="modern"]
-   (風格B現代簡潔), switched at runtime by components/theme/ThemeProvider.tsx
-   via a `data-theme` attribute on <html>. Default (no attribute, or any
-   value other than "modern") resolves to the classic values below.
+   The site ships a single look: 風格A 經典學院派 (components/classic/).
+   Every token below lives on :root and applies site-wide; the admin
+   re-pins a handful of them under [data-admin] near the bottom of this
+   file.
    ================================================================== */
 
 :root {
-  /* Shared brand colors — identical in both themes.
-     Values match the official 台大農經 identity artwork: gold #F8B62C,
-     emerald #00682F (sampled from the logo mark). */
+  /* Brand colors — match the official 台大農經 identity artwork:
+     gold #F8B62C, emerald #00682F (sampled from the logo mark). */
   --brand-gold: #f8b62c;
   --gold-bright: #ffd758;
   --gold-deep: #b8860b;
@@ -25,11 +22,8 @@
   --cream-border: #f0e4be;
   --page-bg: #ffffff;
 
-  /* Constant across both themes (README lists this alongside the
-     theme-scoped tokens, but its value doesn't change) */
   --ink-soft: #4f4d43;
 
-  /* Theme-scoped tokens — classic (風格A) defaults. */
   --ink: #26271f;
   --muted: #6f6c5c;
   --hairline: #eee7d3;
@@ -39,22 +33,12 @@
   --heading-weight: 700; /* README range 600–700 */
 }
 
-[data-theme="modern"] {
-  --ink: #20231d;
-  --muted: #8b9088;
-  --hairline: #eeebe0;
-  --radius-card: 17px; /* README range 16–18px */
-  --radius-hero: 22px; /* README range 20–24px */
-  --font-heading: var(--font-noto-sans-tc), "Noto Sans TC", sans-serif;
-  --heading-weight: 900;
-}
-
 /* Tailwind utility mirror for the *static-name* color tokens above, so
    classes like bg-brand-gold / text-ink / border-hairline are available
    too (same indirection pattern already used for --font-sans below —
    Tailwind v4's @theme inline registers the utility but still resolves the
-   value from the plain CSS variable at paint time, so it stays reactive to
-   [data-theme] changes). --radius-card / --radius-hero / --font-heading are
+   value from the plain CSS variable at paint time, so scoped overrides such
+   as [data-admin] still win). --radius-card / --radius-hero / --font-heading are
    intentionally NOT mirrored here: their token names already collide with
    Tailwind's own `--radius-*` / `--font-*` namespaces, which risks a
    self-referential cycle. Consume those directly, e.g.
@@ -87,9 +71,9 @@ body {
 }
 
 /* Small reusable utilities for token-driven styling (used by the route
-   skeleton's placeholder components and free for both themes to keep
-   using or to replace). Deliberately minimal — no fixed spacing/visual
-   opinions beyond the tokens themselves. */
+   skeleton's placeholder components, still used by components/classic).
+   Deliberately minimal — no fixed spacing/visual opinions beyond the
+   tokens themselves. */
 .heading-font {
   font-family: var(--font-heading);
   font-weight: var(--heading-weight);
@@ -110,8 +94,8 @@ body {
 }
 
 /* ==================================================================
-   Shared keyframes & interaction primitives — ported verbatim from both
-   design_handoff_agec prototypes (identical in 風格A and 風格B). See
+   Shared keyframes & interaction primitives — ported verbatim from the
+   design_handoff_agec prototypes. See
    README §Interactions & Behavior. Kept as plain CSS (not Tailwind
    utilities) since these are bespoke easing curves/durations.
    ================================================================== */
@@ -204,14 +188,14 @@ body {
 /* ---------------------------------------------------------------------------
    Admin area.
 
-   The root layout mounts ThemeProvider, so [data-theme="modern"] would
-   otherwise reach into the admin and change --ink / --muted / --hairline /
-   --radius-card depending on which theme the last visitor picked. Re-pinning
-   them here keeps the admin looking identical in both themes. The brand colours
-   (--brand-gold / --brand-green / --cream / --gold-*) are shared by both themes
-   already, so they're deliberately inherited rather than redeclared.
+   The admin runs its own neutral greys instead of the public site's warm
+   editorial palette, so --ink / --ink-soft / --muted / --hairline /
+   --radius-card / --page-bg are re-pinned here. The brand colours
+   (--brand-gold / --brand-green / --cream / --gold-*) are shared with the
+   public site, so they're deliberately inherited rather than redeclared.
 
-   --font-heading is NOT inherited: it flips serif/sans with the theme.
+   --font-heading is NOT inherited: the admin is sans-serif throughout, while
+   the public site's headings are serif.
    --------------------------------------------------------------------------- */
 [data-admin] {
   --ink: #1f2124;

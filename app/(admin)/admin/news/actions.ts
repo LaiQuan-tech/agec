@@ -14,34 +14,29 @@ type NewsInput = {
   published_at: string;
   category: string;
   title: string;
-  cover_url: string | null;
   is_pinned: boolean;
 };
 
 /**
- * `body` exists on the table but is deliberately absent from the form: no
- * public news component renders it, so offering it would let staff type content
- * that never appears. Long-form content goes to the blog instead.
+ * `body` and `cover_url` exist on the table but are deliberately absent from
+ * the form: no public news component renders either, so offering them would let
+ * staff type content that never appears. Long-form content goes to the blog.
  *
- * `cover_url` is offered, because components/modern/Home.tsx does render it as
- * the thumbnail on the home page news cards (falling back to a stock image).
+ * cover_url briefly was offered, back when the 風格B home page rendered it as a
+ * card thumbnail. That theme is gone, and components/classic/Home.tsx and
+ * components/classic/News.tsx both list news as date / category / title only —
+ * so the field went back out with it. Restore it only alongside a classic
+ * component that actually displays the image.
  */
 function parse(form: FormData): { values?: NewsInput; fieldErrors?: Record<string, string> } {
   const publishedAt = date(form, "published_at", "發佈日期", { required: true });
   const category = text(form, "category", "分類", { required: true, max: 20 });
   const title = text(form, "title", "標題", { required: true, max: 200 });
-  const coverUrl = text(form, "cover_url", "縮圖網址", { max: 500 });
-
-  const coverError =
-    coverUrl.error ?? (coverUrl.value && !/^(https?:\/\/|\/)/.test(coverUrl.value)
-      ? "縮圖網址請以 http://、https:// 或 / 開頭"
-      : undefined);
 
   const fieldErrors = collect({
     published_at: publishedAt.error,
     category: category.error,
     title: title.error,
-    cover_url: coverError,
   });
   if (fieldErrors) return { fieldErrors };
 
@@ -50,7 +45,6 @@ function parse(form: FormData): { values?: NewsInput; fieldErrors?: Record<strin
       published_at: publishedAt.value!,
       category: category.value!,
       title: title.value!,
-      cover_url: coverUrl.value,
       is_pinned: boolean(form, "is_pinned"),
     },
   };

@@ -13,7 +13,6 @@ type Row = {
   published_at: string;
   category: string;
   title: string;
-  cover_url: string | null;
   is_pinned: boolean;
 };
 
@@ -34,7 +33,7 @@ export default async function EditNewsPage({
 
   const { data, error } = await supabase
     .from("news")
-    .select("id, published_at, category, title, cover_url, is_pinned")
+    .select("id, published_at, category, title, is_pinned")
     .eq("id", numericId)
     .maybeSingle<Row>();
 
@@ -71,7 +70,6 @@ export default async function EditNewsPage({
           published_at: data.published_at.slice(0, 10),
           category: data.category,
           title: data.title,
-          cover_url: data.cover_url ?? "",
           is_pinned: data.is_pinned,
         }}
       />

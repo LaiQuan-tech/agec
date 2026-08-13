@@ -19,9 +19,9 @@ export default async function LoginPage({
 }) {
   const { next, error } = await searchParams;
 
-  // Deliberately not wrapped in ClassicShell/ModernShell — those are client
-  // components carrying the full public chrome (nav, footer, theme toggle),
-  // none of which belongs on a login screen.
+  // Deliberately not wrapped in ClassicShell — it is a client component
+  // carrying the full public chrome (nav, footer), none of which belongs on a
+  // login screen.
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-12">
       <div
