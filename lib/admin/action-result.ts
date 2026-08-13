@@ -17,12 +17,18 @@ export type ActionState = {
 
 export const idleState: ActionState = { ok: false };
 
-/** Postgres error shape as surfaced by supabase-js. */
+/**
+ * Postgres error shape as surfaced by supabase-js.
+ *
+ * Note there is no `constraint` field: PostgrestError carries only code /
+ * message / details / hint, and the constraint name arrives inside `message`
+ * ('duplicate key value violates unique constraint "posts_slug_key"'). Matching
+ * on a `constraint` property compiles fine and silently never fires.
+ */
 type PostgresErrorLike = {
   code?: string;
   message?: string;
   details?: string | null;
-  constraint?: string;
 };
 
 const CONSTRAINT_MESSAGES: Record<string, string> = {
@@ -41,8 +47,9 @@ const CONSTRAINT_MESSAGES: Record<string, string> = {
 export function toChineseError(error: PostgresErrorLike): string {
   console.error("[admin] write failed:", error.code, error.message, error.details);
 
-  const byConstraint = error.constraint && CONSTRAINT_MESSAGES[error.constraint];
-  if (byConstraint) return byConstraint;
+  const message = error.message ?? "";
+  const named = Object.keys(CONSTRAINT_MESSAGES).find((name) => message.includes(name));
+  if (named) return CONSTRAINT_MESSAGES[named];
 
   switch (error.code) {
     case "23505":

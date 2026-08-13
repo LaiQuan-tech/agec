@@ -7,7 +7,22 @@ export const metadata: Metadata = { title: "新增連結卡片" };
 export const dynamic = "force-dynamic";
 
 export default async function NewLinkPage() {
-  await requireAdminOrRedirect();
+  const { supabase } = await requireAdminOrRedirect();
+
+  // Default to the end of the 學生專區 list, matching /admin/faculty and
+  // /admin/programs. A plain 0 would give every new card the same sort_order,
+  // and getLinks() only orders by that column — so the front-end order of the
+  // tied cards would be whatever Postgres felt like returning.
+  const { data, error } = await supabase
+    .from("links")
+    .select("sort_order")
+    .eq("section", "students")
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ sort_order: number }>();
+
+  if (error) console.error("[admin/links] next sort_order lookup failed:", error.message);
+  const nextSortOrder = (data?.sort_order ?? 0) + 1;
 
   return (
     <div className="flex flex-col gap-5">
@@ -17,9 +32,7 @@ export default async function NewLinkPage() {
       <LinkForm
         action={createLink}
         submitLabel="新增"
-        // Defaults to 學生專區 and 0: the section is the more common of the two,
-        // and a new card sitting at the top is easy to spot and reorder.
-        initial={{ section: "students", label: "", url: "", sort_order: 0 }}
+        initial={{ section: "students", label: "", url: "", sort_order: nextSortOrder }}
       />
     </div>
   );

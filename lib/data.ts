@@ -108,6 +108,10 @@ export async function getFaculty(): Promise<Faculty[]> {
     .from("faculty")
     .select("id, name, title, category, fields, photo_url, sort_order")
     .order("sort_order", { ascending: true })
+    // Tiebreaker: sort_order is not unique, and without this two members sharing
+    // one value can swap places between requests — and between the public page
+    // and the admin list, which orders the same way.
+    .order("id", { ascending: true })
     .returns<Faculty[]>();
 
   if (error) {
@@ -160,6 +164,7 @@ export async function getLinks(
     .select("id, section, label, url, sort_order")
     .eq("section", section)
     .order("sort_order", { ascending: true })
+    .order("id", { ascending: true })
     .returns<LinkItem[]>();
 
   if (error) {

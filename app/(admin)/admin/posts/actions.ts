@@ -19,7 +19,13 @@ import {
 import { POST_STATUSES, taipeiDateStamp, type PostStatus } from "./constants";
 
 type PostInput = {
-  slug: string;
+  /**
+   * null when the field was left blank. Resolving it is deliberately left to
+   * the caller: a new post gets a generated slug, but an edit must keep the one
+   * it already has, or clearing the field would silently move a published post
+   * to a new URL and break every link to it.
+   */
+  slug: string | null;
   title: string;
   excerpt: string | null;
   cover_url: string | null;
@@ -161,7 +167,7 @@ function parse(form: FormData): { values?: PostInput; fieldErrors?: Record<strin
 
   return {
     values: {
-      slug: slug.value ?? generateSlug(),
+      slug: slug.value,
       title: title.value!,
       excerpt: excerpt.value,
       cover_url: coverUrl.value,
@@ -188,7 +194,7 @@ export async function createPost(_prev: ActionState, form: FormData): Promise<Ac
       .from("posts")
       // created_by is an audit column: set once, here, and never touched by an
       // edit — otherwise it records the last editor, not the author.
-      .insert({ ...values!, created_by: userId })
+      .insert({ ...values!, slug: values!.slug ?? generateSlug(), created_by: userId })
       .select("id, slug")
       .single();
     if (error) return { ok: false, message: toChineseError(error) };
@@ -223,10 +229,16 @@ export async function updatePost(_prev: ActionState, form: FormData): Promise<Ac
       .eq("id", id)
       .maybeSingle<{ slug: string }>();
 
-    const { error } = await supabase.from("posts").update(values!).eq("id", id);
+    // Blank means "leave the address alone", not "give me a new one".
+    const slug = values!.slug ?? existing?.slug ?? generateSlug();
+
+    const { error } = await supabase
+      .from("posts")
+      .update({ ...values!, slug })
+      .eq("id", id);
     if (error) return { ok: false, message: toChineseError(error) };
 
-    revalidateFor("posts", existing?.slug, values!.slug);
+    revalidateFor("posts", existing?.slug, slug);
     return { ok: true, message: "已儲存" };
   } catch (error) {
     const authState = toAuthErrorState(error);

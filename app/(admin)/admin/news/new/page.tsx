@@ -21,7 +21,13 @@ export default async function NewNewsPage() {
       <NewsForm
         action={createNews}
         submitLabel="新增"
-        initial={{ published_at: today, category: "最新公告", title: "", is_pinned: false }}
+        initial={{
+          published_at: today,
+          category: "最新公告",
+          title: "",
+          cover_url: "",
+          is_pinned: false,
+        }}
       />
     </div>
   );

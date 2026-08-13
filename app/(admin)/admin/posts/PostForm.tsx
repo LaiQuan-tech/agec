@@ -62,7 +62,7 @@ export function PostForm({
             htmlFor="slug"
             label="網址代稱"
             error={state.fieldErrors?.slug}
-            hint="文章網址的最後一段，只能用小寫英文、數字與連字號。留空會自動產生，例如 post-20260814-a3f9。已經公開分享過的文章請不要再改，舊網址會失效。"
+            hint="文章網址的最後一段，只能用小寫英文、數字與連字號。新增時留空會自動產生，例如 post-20260814-a3f9；編輯時清空則沿用原本的網址。已經公開分享過的文章請不要再改，舊網址會失效。"
           >
             <Input
               id="slug"
