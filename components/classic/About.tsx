@@ -16,7 +16,9 @@ const EYEBROW = {
 const STATS = [
   { n: "1919", label: "學術傳承起點" },
   { n: "450+", label: "碩博畢業系友" },
-  { n: "5", label: "大學至國際專班學制" },
+  // Kept in step with the programs table by hand — this is a design stat, not a
+  // count query. 國際專班 was dropped in the 2026 IA revision, leaving four.
+  { n: "4", label: "大學至在職專班學制" },
 ];
 
 /** 本系簡介 (/about) — 風格A. Image banner → 系史 → Mission 卡 → 三格統計. */
