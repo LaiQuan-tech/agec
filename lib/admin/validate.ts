@@ -101,6 +101,40 @@ export function requireId(form: FormData): number {
   return id;
 }
 
+/**
+ * The wall-clock string `<input type="datetime-local">` submits
+ * (`YYYY-MM-DDTHH:mm`), turned into something a `timestamptz` column can store.
+ *
+ * The submitted value carries no offset, so writing it straight through would
+ * leave Postgres to interpret it in the server's timezone — UTC in production —
+ * and a post scheduled for 09:00 would go live at 17:00. The department, its
+ * staff and its readers are all in Taiwan, so the offset is stated outright
+ * rather than inferred from wherever the request happened to be served.
+ */
+const TAIPEI_UTC_OFFSET = "+08:00";
+
+export function datetimeLocal(
+  form: FormData,
+  key: string,
+  label: string,
+  opts: { required?: boolean } = {}
+): { value: string | null; error?: string } {
+  const raw = String(form.get(key) ?? "").trim();
+  if (!raw) {
+    return opts.required ? { value: null, error: `請選擇${label}` } : { value: null };
+  }
+  // Seconds are optional: browsers omit them unless the input has a step that
+  // asks for them.
+  const parts = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})(:\d{2})?$/.exec(raw);
+  if (!parts) return { value: null, error: `${label}格式不正確` };
+
+  const value = `${parts[1]}T${parts[2]}${parts[3] ?? ":00"}${TAIPEI_UTC_OFFSET}`;
+  if (Number.isNaN(Date.parse(value))) {
+    return { value: null, error: `${label}不是有效的日期時間` };
+  }
+  return { value };
+}
+
 /** Collects non-empty errors; returns undefined when everything passed. */
 export function collect(entries: Record<string, string | undefined>): FieldErrors | undefined {
   const errors: FieldErrors = {};
