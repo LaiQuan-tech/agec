@@ -14,7 +14,10 @@ const AFFECTED_ROUTES = {
   faculty: ["/faculty"],
   courses: ["/courses"],
   programs: ["/", "/admissions"],
-  links: ["/students", "/alumni"],
+  // One entry per LinkItem["section"] that a page reads. Missing a route here
+  // is the failure this file exists to prevent: the office saves a link, the
+  // page keeps serving its ISR copy, and they save again.
+  links: ["/students", "/courses", "/admissions", "/alumni"],
   posts: ["/blog"],
 } as const;
 

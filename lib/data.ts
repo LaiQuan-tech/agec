@@ -66,13 +66,18 @@ export type Program = {
 };
 
 /**
- * `section` groups link cards by the page that renders them. 'journal' rows
- * remain in the table from the original seed but no route reads them any more —
- * 農經期刊 was replaced by 學生專區 ('students') in the 2026 IA revision.
+ * `section` groups link cards by the page whose `.resource-row` renders them.
+ * The column is plain text with no CHECK constraint, so this union is the only
+ * thing keeping the four live values in step with the four pages that query
+ * them — widen it here before seeding a fifth.
+ *
+ * 'journal' rows remain in the table from the original seed but no route reads
+ * them any more: 農經期刊 was replaced by 學生專區 in the 2026 IA revision.
+ * They stay listed in /admin/links so the office can clear them out.
  */
 export type LinkItem = {
   id: number;
-  section: "students" | "alumni" | "journal";
+  section: "students" | "alumni" | "courses" | "admissions" | "journal";
   label: string;
   url: string | null;
   sort_order: number;

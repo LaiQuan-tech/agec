@@ -4,14 +4,22 @@ import type { LinkItem } from "@/lib/data";
  * The sections a link card may be assigned to.
  *
  * A closed <select> rather than the free-text <datalist> the news categories
- * use: LinkItem["section"] is a TypeScript union and only /students and
- * /alumni read the table, so a section typed by hand would be a row no page
- * can ever render.
+ * use: LinkItem["section"] is a TypeScript union and only the four pages listed
+ * here render the table, so a section typed by hand would be a row no page can
+ * ever show.
+ *
+ * `alumni` stays selectable although the ported /alumni no longer renders a
+ * `.resource-row` — the two existing rows would otherwise become uneditable.
  *
  * Lives outside actions.ts because a `"use server"` file may only export async
  * functions; exporting these from there is a build error.
  */
-export const LINK_SECTIONS = ["students", "alumni"] as const;
+export const LINK_SECTIONS = [
+  "students",
+  "courses",
+  "admissions",
+  "alumni",
+] as const;
 
 export type EditableSection = (typeof LINK_SECTIONS)[number];
 
@@ -22,6 +30,8 @@ export type EditableSection = (typeof LINK_SECTIONS)[number];
  */
 const SECTION_LABELS: Record<LinkItem["section"], string> = {
   students: "學生專區",
+  courses: "課程資訊",
+  admissions: "招生資訊",
   alumni: "系友專區",
   journal: "農經期刊（未使用）",
 };
@@ -37,6 +47,8 @@ export function sectionLabel(section: string): string {
 
 const SECTION_PATHS: Record<EditableSection, string> = {
   students: "/students",
+  courses: "/courses",
+  admissions: "/admissions",
   alumni: "/alumni",
 };
 

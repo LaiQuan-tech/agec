@@ -1,4 +1,4 @@
-import type { Course, Program } from "@/lib/data";
+import type { Course, LinkItem, Program } from "@/lib/data";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
@@ -50,13 +50,15 @@ const DOCUMENTS = [
 ];
 
 /**
- * `.resource-row` — 常用表格.
- *
- * ⚠️ Also static for now. Shape-wise this is a perfect fit for getLinks()
- * (label + url only), but the table has no `section = 'courses'` rows and the
- * `LinkItem["section"]` union does not accept that value either.
+ * `.resource-row` — 常用表格. Falls back to the reference site's four labels
+ * when the section has no rows, so the four-column grid never renders empty.
  */
-const FORMS = ["選課相關表格", "學位考試申請", "離校程序表格", "研究計畫申請"];
+const FORMS_FALLBACK = [
+  "選課相關表格",
+  "學位考試申請",
+  "離校程序表格",
+  "研究計畫申請",
+].map((label, i) => ({ id: -(i + 1), label, url: null }));
 
 /**
  * `.software-line` — A-class. site.css pins this to `repeat(7,1fr)` at desktop
@@ -67,10 +69,14 @@ const SOFTWARE = ["STATA", "R", "PYTHON", "SAS", "SPSS", "MATLAB", "GAMS"];
 export function Courses({
   courses,
   programs,
+  links,
 }: {
   courses: Course[];
   programs: Program[];
+  links: LinkItem[];
 }) {
+  const forms = links.length > 0 ? links : FORMS_FALLBACK;
+
   /**
    * The reference site hard-codes five tabs (全部 + four programs), the last of
    * which reads 在職專班. The DB now stores 碩士在職專班 and the 國際專班 row
@@ -180,9 +186,9 @@ export function Courses({
                 height, so every cell stays an <a> even though the reference
                 site's hrefs are all placeholders. */}
             <div className="resource-row">
-              {FORMS.map((form) => (
-                <a href="#" key={form}>
-                  {form} <span>↗</span>
+              {forms.map((form) => (
+                <a href={form.url ?? "#"} key={form.id}>
+                  {form.label} <span>↗</span>
                 </a>
               ))}
             </div>
