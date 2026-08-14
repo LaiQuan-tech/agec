@@ -78,9 +78,11 @@ export function InteriorHero({
             <p>{titleEn}</p>
             <h1>{title}</h1>
           </div>
-          <span className="route-number">
-            {routeNo} / {ROUTE_TOTAL}
-          </span>
+          {/* One interpolation, not three. Written as `{routeNo} / {ROUTE_TOTAL}`
+              React emits three text nodes, and the browser shapes the run in
+              three pieces — measurably 0.016px wider than the reference at the
+              600 and 375 breakpoints. Joining them first makes it one run. */}
+          <span className="route-number">{`${routeNo} / ${ROUTE_TOTAL}`}</span>
         </div>
         <p className="interior-lead">{lead}</p>
       </div>
