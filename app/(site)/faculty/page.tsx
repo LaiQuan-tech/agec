@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getFaculty } from "@/lib/data";
-import { ClassicFaculty } from "@/components/classic/Faculty";
+import { Faculty } from "@/components/site/Faculty";
 
 export const revalidate = 300;
 
@@ -9,7 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default async function FacultyPage() {
+  // One query for all 37 people; the component splits them by `category` into
+  // the four card layouts — see components/site/Faculty.tsx.
   const faculty = await getFaculty();
 
-  return <ClassicFaculty faculty={faculty} />;
+  return <Faculty faculty={faculty} />;
 }
