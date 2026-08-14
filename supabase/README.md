@@ -25,6 +25,19 @@
 | 4 | `migrations/20260814090200_rls_policies.sql` | 六張表的讀寫 policy | ✅ 2026-08-09 |
 | 5 | `migrations/20260814090300_storage_buckets.sql` | `blog` bucket、四個 bucket 的大小與 mime 限制、objects policy | ✅ 2026-08-09 |
 | 6 | `checks/verify_rls.sql` | 驗收（唯讀），逐段對照 FAIL 判準 | ✅ 2026-08-09 全數 PASS |
+| 7 | `migrations/20260814090400_faculty_extend.sql` | `faculty` 加 `name_en`、`experience` 兩欄（另有一行防禦性的 `email` if not exists）；註解記錄 7 種 category 對應的卡片版型 | ⬜ 待執行 |
+| 8 | `migrations/20260814090500_faculty_seed_2026.sql` | 師資頁 37 筆人員資料（22 主卡 + 客座 1 + 名譽 5 + 退休 6 + 行政 3）。以姓名為自然鍵 upsert，不刪任何資料 | ⬜ 待執行 |
+| 9 | **人工步驟** | 清掉 `faculty` 原本的 8 筆佔位假資料。語句在第 8 支檔案末尾的註解區塊，**先跑 select 版本確認清單再改成 delete** | ⬜ 待執行 |
+
+第 7、8 支必須照順序跑（seed 依賴 extend 新增的兩個欄位）。兩支都在本機
+PostgreSQL 18 上連跑兩次驗證過：第二次不會產生重複列，欄位值與參考站
+`faculty.html` 逐欄比對 37/37 相符，23 個 `photo_url` 全部對得到
+`public/images/faculty/` 的實體檔案。
+
+第 9 步為什麼不寫進 migration：第 8 支是以姓名比對做 upsert，只會覆蓋名字
+對得上的佔位資料，對不上的會留在表上（實測 8 筆裡有 7 筆會留下），讓師資頁
+多出幾張沒照片、分類也對不上篩選標籤的卡片。刪除不可逆，且系辦若已自行在
+後台新增過真的師資也會被同一條 `where` 掃到，所以交給人工確認。
 
 ## 2026-08-09 執行紀錄
 

@@ -23,12 +23,27 @@ export type NewsItem = {
   is_pinned: boolean;
 };
 
+/**
+ * One row per person on /faculty — which is four different card layouts, not
+ * one. `category` selects the layout (專任/合聘/兼任師資 = standard card,
+ * 客座教師, 名譽教授/退休師資, 行政同仁), and which fields carry a value
+ * follows from that: the legacy categories have no photo and no `fields` but
+ * do have `name_en` + `experience`, while the standard cards are the reverse.
+ * Every optional field is genuinely absent for some category, so render sites
+ * must handle null rather than assume a shape.
+ */
 export type Faculty = {
   id: number;
   name: string;
+  /** English name. Only 客座/名譽/退休 rows carry one (12 of 37). */
+  name_en: string | null;
   title: string;
   category: string;
   fields: string | null;
+  /** Public mailbox. Present for all but the visiting professor (36 of 37). */
+  email: string | null;
+  /** Long-form career summary, 名譽教授 and 退休師資 only (11 of 37). */
+  experience: string | null;
   photo_url: string | null;
   sort_order: number;
 };
@@ -101,12 +116,14 @@ export async function getNewsHome(limit: number): Promise<NewsItem[]> {
   return data ?? [];
 }
 
-/** All faculty members, in display order. Used by /faculty (8 seeded rows). */
+/** All faculty members, in display order. Used by /faculty (37 rows). */
 export async function getFaculty(): Promise<Faculty[]> {
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from("faculty")
-    .select("id, name, title, category, fields, photo_url, sort_order")
+    .select(
+      "id, name, name_en, title, category, fields, email, experience, photo_url, sort_order"
+    )
     .order("sort_order", { ascending: true })
     // Tiebreaker: sort_order is not unique, and without this two members sharing
     // one value can swap places between requests — and between the public page
