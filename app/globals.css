@@ -66,8 +66,13 @@ body {
   color: var(--ink);
 }
 
+/* The var() carries its own fallback because --font-noto-sans-tc is declared on
+   the [data-admin] wrapper (see app/(admin)/layout.tsx), not on :root — without
+   it the whole declaration would be invalid at computed-value time and body
+   would silently drop to Preflight's default stack. */
 body {
-  font-family: var(--font-noto-sans-tc), "Noto Sans TC", sans-serif;
+  font-family: var(--font-noto-sans-tc, "Noto Sans TC"), "Noto Sans TC",
+    sans-serif;
 }
 
 /* Small reusable utilities for token-driven styling (used by the route
