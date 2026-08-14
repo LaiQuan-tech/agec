@@ -53,11 +53,6 @@ const LOCAL_NAV = [
   { href: "#section-5", label: "徵才" },
 ];
 
-/** The reference feature card carries a one-line standfirst under its title.
- *  `news.body` is the matching column but is null for every seeded row, so this
- *  keeps the card's text stack the same height as the original. */
-const FEATURE_LEAD = "本系最新公告與活動紀錄，點閱以掌握完整資訊。";
-
 /** Reference feature image, used whenever the first row has no cover_url. */
 const FEATURE_FALLBACK_IMAGE = "/images/courtyard.jpg";
 
@@ -102,7 +97,11 @@ export function News({ news }: { news: NewsItem[] }) {
                       FEATURED · {formatNewsDate(feature.published_at).full}
                     </span>
                     <h3>{feature.title}</h3>
-                    <p>{feature.body ?? FEATURE_LEAD}</p>
+                    {/* The reference card carries a standfirst here. `body` is
+                        the matching column and is null for every current row —
+                        the paragraph is dropped rather than filled with invented
+                        copy, since this is a real department's public site. */}
+                    {feature.body ? <p>{feature.body}</p> : null}
                     {/* href="#" as on the reference site: neither site has a
                         single-post page. */}
                     <a href="#">閱讀完整消息 →</a>

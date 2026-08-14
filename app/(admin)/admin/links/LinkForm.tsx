@@ -100,7 +100,7 @@ export function LinkForm({
             htmlFor="url"
             label="連結網址"
             error={state.fieldErrors?.url}
-            hint="留空或填 # 就是純文字卡片，前台不會做成可點的連結"
+            hint="留空的卡片仍然看得到，但點下去不會前往任何頁面，所以請盡量填上網址"
           >
             <Input
               id="url"
