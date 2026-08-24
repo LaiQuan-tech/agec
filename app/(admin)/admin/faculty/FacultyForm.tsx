@@ -4,15 +4,28 @@ import Link from "next/link";
 import type { ActionState } from "@/lib/admin/action-result";
 import { FormShell } from "@/components/admin/ui/FormShell";
 import { Field } from "@/components/admin/ui/Field";
-import { Input } from "@/components/admin/ui/Input";
+import { Input, Textarea } from "@/components/admin/ui/Input";
 import { FACULTY_CATEGORIES } from "./constants";
 
 export type FacultyFormValues = {
   id?: number;
   name: string;
+  /** Empty string stands in for a null column, so the inputs stay uncontrolled. */
+  name_en: string;
   title: string;
+  title_en: string;
   category: string;
   fields: string;
+  fields_en: string;
+  /**
+   * Read-only here. `experience` has never had a Chinese input on this form,
+   * but it is rendered on the 名譽教授 / 退休師資 cards and the 2026 seed filled
+   * it in for 11 people — so it is shown as reference text above the English
+   * box, which would otherwise be a translation field with nothing on screen to
+   * translate from. Empty for everyone else, and then the whole block is hidden.
+   */
+  experience: string;
+  experience_en: string;
   photo_url: string;
   sort_order: number;
 };
@@ -74,6 +87,45 @@ export function FacultyForm({
             </Field>
           </div>
 
+          {/* A second two-column row mirroring the one above, so 英文姓名 sits
+              under 姓名 and 英文職稱 under 職稱 at desktop width. */}
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field
+              htmlFor="name_en"
+              label="姓名 Name (English)"
+              error={state.fieldErrors?.name_en}
+              // Unlike every other English field on the site this one is not a
+              // fallback — it is an extra line beside the Chinese name, shown in
+              // both language versions. Saying "留空會顯示中文" here would be wrong.
+              hint="客座教師、名譽教授、退休師資的卡片會在中文姓名下面多印一行英文姓名，中英文版都看得到；其他分類不會顯示這一行。"
+            >
+              <Input
+                id="name_en"
+                name="name_en"
+                defaultValue={initial.name_en}
+                maxLength={100}
+                lang="en"
+                aria-invalid={Boolean(state.fieldErrors?.name_en)}
+              />
+            </Field>
+
+            <Field
+              htmlFor="title_en"
+              label="職稱 Title (English)"
+              error={state.fieldErrors?.title_en}
+              hint="留空的話，英文版網頁會直接顯示中文職稱，所以不必一次全部翻完。"
+            >
+              <Input
+                id="title_en"
+                name="title_en"
+                defaultValue={initial.title_en}
+                maxLength={100}
+                lang="en"
+                aria-invalid={Boolean(state.fieldErrors?.title_en)}
+              />
+            </Field>
+          </div>
+
           <div className="grid gap-5 sm:grid-cols-2">
             <Field
               htmlFor="category"
@@ -131,6 +183,64 @@ export function FacultyForm({
               aria-invalid={Boolean(state.fieldErrors?.fields)}
             />
           </Field>
+
+          <Field
+            htmlFor="fields_en"
+            label="研究領域 Research fields (English)"
+            error={state.fieldErrors?.fields_en}
+            hint="留空的話，英文版網頁會直接顯示上面的中文。多個領域請用逗號分隔。"
+          >
+            <Input
+              id="fields_en"
+              name="fields_en"
+              defaultValue={initial.fields_en}
+              maxLength={400}
+              lang="en"
+              aria-invalid={Boolean(state.fieldErrors?.fields_en)}
+            />
+          </Field>
+
+          {/* Only rendered when this person actually has a 經歷 to translate.
+              The Chinese side is reference text, not an input: it is filled from
+              the 2026 seed and this form has never offered a way to edit it.
+              Showing an empty English box with no Chinese beside it would be a
+              translation field pointing at nothing. */}
+          {initial.experience ? (
+            <Field
+              htmlFor="experience_en"
+              label="經歷 Experience (English)"
+              error={state.fieldErrors?.experience_en}
+              hint="留空的話，英文版網頁會直接顯示上面的中文經歷。中文經歷目前無法在後台修改，需要改請告知維護人員。"
+            >
+              <p
+                className="rounded-md border px-3 py-2 text-[13px] leading-relaxed"
+                style={{
+                  borderColor: "var(--hairline)",
+                  background: "var(--hairline)",
+                  color: "var(--ink-soft)",
+                }}
+              >
+                <span className="font-medium">目前的中文經歷：</span>
+                {initial.experience}
+              </p>
+              <Textarea
+                id="experience_en"
+                name="experience_en"
+                defaultValue={initial.experience_en}
+                rows={3}
+                maxLength={500}
+                lang="en"
+                aria-invalid={Boolean(state.fieldErrors?.experience_en)}
+              />
+            </Field>
+          ) : (
+            // parse() reads every column out of the submitted form, so a field
+            // that isn't on the page submits nothing and is written back as
+            // null. Without this the act of opening and saving a person with no
+            // 經歷 would quietly wipe an experience_en set directly in the
+            // database. Carrying the current value keeps saving a no-op.
+            <input type="hidden" name="experience_en" value={initial.experience_en} />
+          )}
 
           <Field
             htmlFor="photo_url"

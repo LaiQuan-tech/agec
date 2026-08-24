@@ -12,6 +12,7 @@ export type ProgramFormValues = {
   /** Empty string stands in for a null column, so the inputs stay uncontrolled. */
   name_en: string;
   description: string;
+  description_en: string;
   sort_order: number;
 };
 
@@ -60,11 +61,13 @@ export function ProgramForm({
           </Field>
 
           <div className="grid gap-5 sm:grid-cols-2">
+            {/* Sits in the grid immediately under 學制名稱, which is where the
+                English twin belongs — no separate row needed. */}
             <Field
               htmlFor="name_en"
-              label="英文名稱"
+              label="學制名稱 Program name (English)"
               error={state.fieldErrors?.name_en}
-              hint="留空就不會顯示英文那一行"
+              hint="留空的話，英文版網頁會直接顯示中文。課程頁英文版的學制分頁名稱也是取這一欄，所以填了這裡，那邊就一起變英文。"
             >
               <Input
                 id="name_en"
@@ -107,6 +110,23 @@ export function ProgramForm({
               rows={4}
               maxLength={500}
               aria-invalid={Boolean(state.fieldErrors?.description)}
+            />
+          </Field>
+
+          <Field
+            htmlFor="description_en"
+            label="簡介 Description (English)"
+            error={state.fieldErrors?.description_en}
+            hint="留空的話，英文版網頁會直接顯示上面的中文，所以不必一次全部翻完。"
+          >
+            <Textarea
+              id="description_en"
+              name="description_en"
+              defaultValue={initial.description_en}
+              rows={4}
+              maxLength={1000}
+              lang="en"
+              aria-invalid={Boolean(state.fieldErrors?.description_en)}
             />
           </Field>
         </>

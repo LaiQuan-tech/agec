@@ -11,9 +11,15 @@ export const dynamic = "force-dynamic";
 type Row = {
   id: number;
   name: string;
+  name_en: string | null;
   title: string;
+  title_en: string | null;
   category: string;
   fields: string | null;
+  fields_en: string | null;
+  /** Read-only on the form; selected so the English box has something to show. */
+  experience: string | null;
+  experience_en: string | null;
   photo_url: string | null;
   sort_order: number;
 };
@@ -35,7 +41,9 @@ export default async function EditFacultyPage({
 
   const { data, error } = await supabase
     .from("faculty")
-    .select("id, name, title, category, fields, photo_url, sort_order")
+    .select(
+      "id, name, name_en, title, title_en, category, fields, fields_en, experience, experience_en, photo_url, sort_order"
+    )
     .eq("id", numericId)
     .maybeSingle<Row>();
 
@@ -70,9 +78,14 @@ export default async function EditFacultyPage({
         initial={{
           id: data.id,
           name: data.name,
+          name_en: data.name_en ?? "",
           title: data.title,
+          title_en: data.title_en ?? "",
           category: data.category,
           fields: data.fields ?? "",
+          fields_en: data.fields_en ?? "",
+          experience: data.experience ?? "",
+          experience_en: data.experience_en ?? "",
           photo_url: data.photo_url ?? "",
           sort_order: data.sort_order,
         }}

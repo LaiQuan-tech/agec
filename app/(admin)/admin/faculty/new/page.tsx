@@ -31,9 +31,16 @@ export default async function NewFacultyPage() {
         submitLabel="新增"
         initial={{
           name: "",
+          name_en: "",
           title: "",
+          title_en: "",
           category: "專任師資",
           fields: "",
+          fields_en: "",
+          // No Chinese 經歷 input exists, so a brand-new person never has one to
+          // translate — FacultyForm hides the English box on an empty value.
+          experience: "",
+          experience_en: "",
           photo_url: "",
           sort_order: nextSortOrder,
         }}

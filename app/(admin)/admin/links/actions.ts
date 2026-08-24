@@ -14,6 +14,7 @@ import { LINK_SECTIONS, type EditableSection } from "./constants";
 type LinkInput = {
   section: EditableSection;
   label: string;
+  label_en: string | null;
   url: string | null;
   sort_order: number;
 };
@@ -22,16 +23,24 @@ type LinkInput = {
  * `section` goes through oneOf() rather than text(): the column is plain text,
  * so the database would accept anything, and a value outside the union would
  * create a row no public page queries for.
+ *
+ * `label_en` is never required. text() already returns null for a blank field,
+ * which is exactly what the fallback in lib/i18n's pick() needs — it treats a
+ * blank English value as "not translated yet" and serves the Chinese instead.
+ * Writing "" would work by luck (pick() trims first) but would make an emptied
+ * field look different from a never-filled one in the database.
  */
 function parse(form: FormData): { values?: LinkInput; fieldErrors?: Record<string, string> } {
   const section = oneOf(form, "section", "區塊", LINK_SECTIONS, { required: true });
   const label = text(form, "label", "卡片文字", { required: true, max: 100 });
+  const labelEn = text(form, "label_en", "英文卡片文字", { max: 200 });
   const url = text(form, "url", "連結網址", { max: 500 });
   const sortOrder = number(form, "sort_order", "排序", { min: 0, max: 9999 });
 
   const fieldErrors = collect({
     section: section.error,
     label: label.error,
+    label_en: labelEn.error,
     url: url.error,
     sort_order: sortOrder.error,
   });
@@ -41,6 +50,7 @@ function parse(form: FormData): { values?: LinkInput; fieldErrors?: Record<strin
     values: {
       section: section.value!,
       label: label.value!,
+      label_en: labelEn.value,
       // Empty stays null; '#' is kept as-is because the seed data uses it and
       // the public card treats both the same way.
       url: url.value,

@@ -4,6 +4,7 @@ import { requireAdminOrRedirect } from "@/lib/admin/auth";
 import { Button } from "@/components/admin/ui/Button";
 import { EmptyState, Table, TBody, TD, TH, THead, TR } from "@/components/admin/ui/Table";
 import { DeleteButton } from "@/components/admin/ui/DeleteButton";
+import { EnBadge, enProgress } from "../_components/EnBadge";
 import { isEditableSection, sectionLabel } from "./constants";
 import { deleteLink } from "./actions";
 
@@ -14,6 +15,7 @@ type Row = {
   id: number;
   section: string;
   label: string;
+  label_en: string | null;
   url: string | null;
   sort_order: number;
 };
@@ -29,7 +31,7 @@ export default async function LinksListPage() {
   // they can see them here.
   const { data, error } = await supabase
     .from("links")
-    .select("id, section, label, url, sort_order")
+    .select("id, section, label, label_en, url, sort_order")
     .order("section", { ascending: true })
     .order("sort_order", { ascending: true })
     .returns<Row[]>();
@@ -79,6 +81,7 @@ export default async function LinksListPage() {
             <TH className="w-[70px]">排序</TH>
             <TH>卡片文字</TH>
             <TH>連結</TH>
+            <TH className="w-[80px]">英文</TH>
             <TH className="w-[130px]">操作</TH>
           </THead>
           <TBody>
@@ -86,6 +89,8 @@ export default async function LinksListPage() {
               const retired = !isEditableSection(row.section);
               // Matches the public card: '#' and null both render as plain text.
               const isPlainCard = !row.url || row.url === "#";
+              // The URL is language-neutral, so 卡片文字 is the only pair here.
+              const en = enProgress([[row.label, row.label_en]]);
 
               return (
                 <TR key={row.id}>
@@ -117,6 +122,9 @@ export default async function LinksListPage() {
                         {row.url}
                       </span>
                     )}
+                  </TD>
+                  <TD>
+                    <EnBadge filled={en.filled} total={en.total} />
                   </TD>
                   <TD>
                     <div className="flex items-center gap-1">

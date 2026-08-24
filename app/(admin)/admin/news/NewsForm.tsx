@@ -11,7 +11,10 @@ export type NewsFormValues = {
   id?: number;
   published_at: string;
   category: string;
+  /** Empty string stands in for a null column, so the inputs stay uncontrolled. */
+  category_en: string;
   title: string;
+  title_en: string;
   is_pinned: boolean;
 };
 
@@ -46,6 +49,22 @@ export function NewsForm({
               required
               maxLength={200}
               aria-invalid={Boolean(state.fieldErrors?.title)}
+            />
+          </Field>
+
+          <Field
+            htmlFor="title_en"
+            label="標題 Title (English)"
+            error={state.fieldErrors?.title_en}
+            hint="留空的話，英文版網頁會直接顯示上面的中文，所以不必一次全部翻完。"
+          >
+            <Input
+              id="title_en"
+              name="title_en"
+              defaultValue={initial.title_en}
+              maxLength={300}
+              lang="en"
+              aria-invalid={Boolean(state.fieldErrors?.title_en)}
             />
           </Field>
 
@@ -90,6 +109,25 @@ export function NewsForm({
               </datalist>
             </Field>
           </div>
+
+          {/* Outside the two-column grid on purpose: 發佈日期 occupies the other
+              half, so an English twin placed inside it would land beside the
+              date rather than under the 分類 it translates. */}
+          <Field
+            htmlFor="category_en"
+            label="分類 Category (English)"
+            error={state.fieldErrors?.category_en}
+            hint="留空的話，英文版網頁會直接顯示中文分類。同一個中文分類請固定用同一種英文寫法。"
+          >
+            <Input
+              id="category_en"
+              name="category_en"
+              defaultValue={initial.category_en}
+              maxLength={40}
+              lang="en"
+              aria-invalid={Boolean(state.fieldErrors?.category_en)}
+            />
+          </Field>
 
           <Field
             htmlFor="is_pinned"

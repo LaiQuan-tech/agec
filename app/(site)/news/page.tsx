@@ -1,15 +1,12 @@
 import type { Metadata } from "next";
-import { getNews } from "@/lib/data";
-import { News } from "@/components/site/News";
+import { NewsRoute } from "@/components/site/pages";
+import { routeMetadata } from "@/lib/site-routes";
 
 export const revalidate = 300;
 
-export const metadata: Metadata = {
-  title: "最新消息",
-};
+export const metadata: Metadata = routeMetadata("/news", "zh");
 
-export default async function NewsPage() {
-  const news = await getNews();
-
-  return <News news={news} />;
+/** 最新消息 (/news) */
+export default function Page() {
+  return <NewsRoute lang="zh" />;
 }

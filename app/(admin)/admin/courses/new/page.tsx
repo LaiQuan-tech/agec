@@ -18,7 +18,15 @@ export default async function NewCoursePage() {
       <CourseForm
         action={createCourse}
         submitLabel="新增"
-        initial={{ code: "", name: "", credit: 3, ctype: "選修", program: "大學部" }}
+        initial={{
+          code: "",
+          name: "",
+          name_en: "",
+          credit: 3,
+          ctype: "選修",
+          ctype_en: "",
+          program: "大學部",
+        }}
       />
     </div>
   );

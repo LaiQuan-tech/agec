@@ -4,6 +4,7 @@ import { requireAdminOrRedirect } from "@/lib/admin/auth";
 import { Button } from "@/components/admin/ui/Button";
 import { EmptyState, Table, TBody, TD, TH, THead, TR } from "@/components/admin/ui/Table";
 import { DeleteButton } from "@/components/admin/ui/DeleteButton";
+import { EnBadge, enProgress } from "../_components/EnBadge";
 import { deleteCourse } from "./actions";
 
 export const metadata: Metadata = { title: "課程資訊" };
@@ -13,8 +14,10 @@ type Row = {
   id: number;
   code: string;
   name: string;
+  name_en: string | null;
   credit: number;
   ctype: string;
+  ctype_en: string | null;
   program: string;
 };
 
@@ -25,7 +28,7 @@ export default async function CoursesListPage() {
   // public /courses tabs and tables show them.
   const { data, error } = await supabase
     .from("courses")
-    .select("id, code, name, credit, ctype, program")
+    .select("id, code, name, name_en, credit, ctype, ctype_en, program")
     .order("program", { ascending: true })
     .order("code", { ascending: true })
     .returns<Row[]>();
@@ -76,39 +79,52 @@ export default async function CoursesListPage() {
             <TH>課程名稱</TH>
             <TH className="w-[70px]">學分</TH>
             <TH className="w-[80px]">類型</TH>
+            <TH className="w-[80px]">英文</TH>
             <TH className="w-[130px]">操作</TH>
           </THead>
           <TBody>
-            {rows.map((row) => (
-              <TR key={row.id}>
-                <TD>
-                  <span
-                    className="rounded px-1.5 py-0.5 text-[12px]"
-                    style={{ background: "var(--cream)", color: "var(--gold-deep)" }}
-                  >
-                    {row.program}
-                  </span>
-                </TD>
-                <TD className="whitespace-nowrap tabular-nums">{row.code}</TD>
-                <TD>
-                  <Link href={`/admin/courses/${row.id}`} className="hover:underline underline-offset-2">
-                    {row.name}
-                  </Link>
-                </TD>
-                <TD className="tabular-nums">{row.credit}</TD>
-                <TD>{row.ctype}</TD>
-                <TD>
-                  <div className="flex items-center gap-1">
-                    <Link href={`/admin/courses/${row.id}`}>
-                      <Button variant="ghost" size="sm">
-                        編輯
-                      </Button>
+            {rows.map((row) => {
+              // 學制 is excluded on purpose: it stays Chinese as the matching key
+              // into programs.name, and its English label lives on that table.
+              const en = enProgress([
+                [row.name, row.name_en],
+                [row.ctype, row.ctype_en],
+              ]);
+
+              return (
+                <TR key={row.id}>
+                  <TD>
+                    <span
+                      className="rounded px-1.5 py-0.5 text-[12px]"
+                      style={{ background: "var(--cream)", color: "var(--gold-deep)" }}
+                    >
+                      {row.program}
+                    </span>
+                  </TD>
+                  <TD className="whitespace-nowrap tabular-nums">{row.code}</TD>
+                  <TD>
+                    <Link href={`/admin/courses/${row.id}`} className="hover:underline underline-offset-2">
+                      {row.name}
                     </Link>
-                    <DeleteButton action={deleteCourse} id={row.id} itemLabel={row.name} />
-                  </div>
-                </TD>
-              </TR>
-            ))}
+                  </TD>
+                  <TD className="tabular-nums">{row.credit}</TD>
+                  <TD>{row.ctype}</TD>
+                  <TD>
+                    <EnBadge filled={en.filled} total={en.total} />
+                  </TD>
+                  <TD>
+                    <div className="flex items-center gap-1">
+                      <Link href={`/admin/courses/${row.id}`}>
+                        <Button variant="ghost" size="sm">
+                          編輯
+                        </Button>
+                      </Link>
+                      <DeleteButton action={deleteCourse} id={row.id} itemLabel={row.name} />
+                    </div>
+                  </TD>
+                </TR>
+              );
+            })}
           </TBody>
         </Table>
       )}

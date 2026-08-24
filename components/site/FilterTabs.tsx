@@ -14,25 +14,38 @@ import { useState } from "react";
  *
  * There is no URL/hash state: a reload always returns to the first tab.
  */
+export type FilterTab = {
+  /**
+   * The value handed to `onChange`. Kept separate from `label` because
+   * /faculty matches it against `faculty.category`, which is always Chinese
+   * (it selects the card layout, so it is never translated) while the label
+   * the visitor reads is not. Collapsing the two would make every English tab
+   * match nothing and silently empty the grid.
+   */
+  value: string;
+  /** Visible text, in the page's language. */
+  label: string;
+};
+
 export function FilterTabs({
   tabs,
   className,
   ariaLabel,
   onChange,
 }: {
-  /** Visible labels. The first one starts active. */
-  tabs: string[];
+  /** Tabs in display order. The first one starts active. */
+  tabs: FilterTab[];
   /** Extra class, e.g. "faculty-filters". */
   className?: string;
   ariaLabel: string;
   /**
    * Omit for the cosmetic-only case. When present, receives the clicked
-   * label — /faculty compares it against `faculty.category` by exact string
-   * match, with "全部" meaning no filter.
+   * tab's `value` — /faculty compares it against `faculty.category` by exact
+   * string match, with "全部" meaning no filter.
    */
-  onChange?: (tab: string) => void;
+  onChange?: (value: string) => void;
 }) {
-  const [active, setActive] = useState(tabs[0]);
+  const [active, setActive] = useState(tabs[0]?.value);
 
   return (
     <div
@@ -42,16 +55,16 @@ export function FilterTabs({
     >
       {tabs.map((tab) => (
         <button
-          key={tab}
+          key={tab.value}
           type="button"
-          className={tab === active ? "active" : ""}
-          aria-pressed={tab === active}
+          className={tab.value === active ? "active" : ""}
+          aria-pressed={tab.value === active}
           onClick={() => {
-            setActive(tab);
-            onChange?.(tab);
+            setActive(tab.value);
+            onChange?.(tab.value);
           }}
         >
-          {tab}
+          {tab.label}
         </button>
       ))}
     </div>

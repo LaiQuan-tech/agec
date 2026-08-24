@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { htmlLang, translate, type Lang } from "@/lib/i18n";
+import { SHARED } from "@/lib/i18n/shared";
 import { SiteLoader } from "./SiteLoader";
 import { SiteHeader } from "./SiteHeader";
 import { SiteFooter } from "./SiteFooter";
@@ -25,22 +27,36 @@ import { SiteFooter } from "./SiteFooter";
  * `interior-page`.
  */
 export function SiteShell({
+  lang,
   variant,
   children,
 }: {
+  lang: Lang;
   variant: "home" | "interior";
   children: ReactNode;
 }) {
+  const t = translate(SHARED, lang);
+
   return (
     <>
-      <SiteLoader />
-      <main className={variant === "interior" ? "interior-page" : undefined}>
+      <SiteLoader lang={lang} />
+      {/* `lang` sits on <main>, not <html>.
+          app/layout.tsx is shared by the public site and the admin, and it is
+          statically rendered — reading the pathname there to vary the <html>
+          attribute would make every page dynamic and lose ISR. A `lang` on an
+          ancestor element is the spec-sanctioned override and covers the whole
+          visible page, because the header, content and footer all live inside
+          this <main>. */}
+      <main
+        lang={htmlLang(lang)}
+        className={variant === "interior" ? "interior-page" : undefined}
+      >
         <a className="skip-link" href="#content">
-          跳至主要內容
+          {t.skipToContent}
         </a>
-        <SiteHeader />
+        <SiteHeader lang={lang} />
         {children}
-        <SiteFooter />
+        <SiteFooter lang={lang} />
       </main>
     </>
   );

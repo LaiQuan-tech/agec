@@ -1,3 +1,5 @@
+import { translate, type Lang } from "@/lib/i18n";
+import { ALUMNI } from "@/lib/i18n/alumni";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
@@ -7,7 +9,8 @@ import { NextRoute } from "./NextRoute";
 /**
  * 系友專區 (/alumni) — route 08 / 08.
  *
- * All four sections are hard-coded A-class copy. Two of them need explaining:
+ * All four sections are hard-coded A-class copy, held in lib/i18n/alumni.ts.
+ * Two of them need explaining:
  *
  *   `#section-2` `.story-grid` — PORT-REPORT §2.3 marks this B-class
  *   (`getLinks("alumni")`) but flags 形狀不符, and the mismatch is fatal rather
@@ -28,39 +31,17 @@ import { NextRoute } from "./NextRoute";
  *   `#section-3` — the only章節 in the whole site with no
  *   `header.inner-section-title`; the section's `.container` carries
  *   `.donation-grid` directly. Do not add a SectionTitle here.
+ *
+ * The three headings the reference site breaks across two lines keep their
+ * `<br />` in both languages, so each is two dictionary entries rather than
+ * one string — English would not break where Chinese does.
  */
-
-/** `.story-grid` — 3 cards, fixed 3-up grid. See the note above. */
-const STORIES = [
-  {
-    eyebrow: "2026.07.06 · 系友榮耀",
-    title: "四位系友榮獲第 8 屆百大青年農民",
-    action: "閱讀消息 ↗",
-  },
-  {
-    eyebrow: "ALUMNI GATHERING",
-    title: "跨世代交流，讓經驗成為共同資產",
-    action: "近期活動 ↗",
-  },
-  {
-    eyebrow: "STAY CONNECTED",
-    title: "更新系友資料，與母系保持聯繫",
-    action: "聯絡我們 ↗",
-  },
-];
 
 /**
- * `.archive-grid` — 3 cards. `article:first-child{border-left}` paints the
- * grid's left edge, so the count is baked into the borders: a 4th entry would
- * wrap onto a second row with no left border at all.
+ * `.alumni-sectors` — 5 tags; `grid-template-columns:repeat(5,1fr)`.
+ * Not in the dictionary: uppercase Latin in the reference design, identical in
+ * both languages, exactly like `SectionTitle`'s eyebrow.
  */
-const ARCHIVE_ITEMS = [
-  { no: "01", title: "求學紀事", body: "從農經學習到公共服務的生命軌跡" },
-  { no: "02", title: "捐贈書目", body: "中文、英文、日文著作與期刊典藏" },
-  { no: "03", title: "影像史料", body: "珍貴照片與重要紀念活動紀錄" },
-];
-
-/** `.alumni-sectors` — 5 tags; `grid-template-columns:repeat(5,1fr)`. */
 const SECTORS = [
   "GOVERNMENT",
   "ACADEMIA",
@@ -69,27 +50,22 @@ const SECTORS = [
   "INTERNATIONAL",
 ];
 
-export function Alumni() {
+export function Alumni({ lang }: { lang: Lang }) {
+  const t = translate(ALUMNI, lang);
+
   return (
-    <SiteShell variant="interior">
+    <SiteShell lang={lang} variant="interior">
       <InteriorHero
+        lang={lang}
         slug="alumni"
-        title="系友專區"
-        titleEn="Alumni"
+        titleZh={ALUMNI.title.zh}
+        titleEn={ALUMNI.title.en}
         routeNo="08"
-        lead="連結跨世代農經人，分享專業歷程、保存共同記憶，並以回饋延續下一代的學習與研究。"
-        imageAlt="臺大椰林大道與騎乘腳踏車的學生"
+        lead={t.hero.lead}
+        imageAlt={t.hero.imageAlt}
       />
 
-      <LocalNav
-        label="系友專區"
-        items={[
-          { href: "#section-1", label: "傑出系友" },
-          { href: "#section-2", label: "系友動態" },
-          { href: "#section-3", label: "支持農經" },
-          { href: "#section-4", label: "李登輝系友專區" },
-        ]}
-      />
+      <LocalNav lang={lang} label={t.nav.label} items={t.nav.items} />
 
       <div className="interior-content">
         <section className="inner-section" id="section-1">
@@ -99,12 +75,12 @@ export function Alumni() {
               eyebrow="DISTINGUISHED ALUMNI"
               heading={
                 <>
-                  農經人的影響力
+                  {t.section1.heading.line1}
                   <br />
-                  遍及產官學研
+                  {t.section1.heading.line2}
                 </>
               }
-              description="從公共政策、學術研究到金融與農企業，系友以專業回應社會需求，也成為下一代的典範。"
+              description={t.section1.description}
             />
             {/* Exactly two children: `.alumni-feature` is a .85fr/1.15fr grid
                 whose text column is addressed as `.alumni-feature>div` and whose
@@ -113,17 +89,18 @@ export function Alumni() {
               <div>
                 <span>PUBLIC LEADERSHIP</span>
                 <h3>
-                  以農經訓練理解土地、
+                  {t.section1.feature.heading.line1}
                   <br />
-                  產業與人的關係。
+                  {t.section1.feature.heading.line2}
                 </h3>
-                <p>
-                  傑出系友專區將以人物故事呈現專業歷程與社會影響，建立可持續累積的系友知識典藏。
-                </p>
+                <p>{t.section1.feature.body}</p>
                 {/* Placeholder anchor, as on the reference site. */}
-                <a href="#">探索系友故事 →</a>
+                <a href="#">{t.section1.feature.cta}</a>
               </div>
-              <img src="/images/building.jpg" alt="臺大農業綜合館" />
+              <img
+                src="/images/building.jpg"
+                alt={t.section1.feature.imageAlt}
+              />
             </div>
             <div className="alumni-sectors">
               {SECTORS.map((sector) => (
@@ -137,9 +114,13 @@ export function Alumni() {
           <div className="container">
             {/* No description on this one — the reference site's second <div>
                 holds only the <h2>. */}
-            <SectionTitle no="02" eyebrow="ALUMNI NEWS" heading="持續發生的系友情誼" />
+            <SectionTitle
+              no="02"
+              eyebrow="ALUMNI NEWS"
+              heading={t.section2.heading}
+            />
             <div className="story-grid">
-              {STORIES.map((story) => (
+              {t.section2.stories.map((story) => (
                 <a key={story.title} href="#">
                   <small>{story.eyebrow}</small>
                   <h3>{story.title}</h3>
@@ -157,17 +138,15 @@ export function Alumni() {
             <div>
               <p className="eyebrow light">SUPPORT AGEC</p>
               <h2>
-                讓一份支持，
+                {t.section3.heading.line1}
                 <br />
-                成為下一代的機會。
+                {t.section3.heading.line2}
               </h2>
             </div>
             <div>
-              <p>
-                系友捐贈支持獎助學金、國際交流、研究設備與學生活動，讓農經教育持續回應新時代的挑戰。
-              </p>
+              <p>{t.section3.body}</p>
               <a className="button gold" href="#">
-                前往捐贈專區 ↗
+                {t.section3.cta}
               </a>
             </div>
           </div>
@@ -178,13 +157,13 @@ export function Alumni() {
             <SectionTitle
               no="04"
               eyebrow="LEE TENG-HUI ARCHIVE"
-              heading="李登輝系友專區"
-              description="彙整求學紀事、珍貴照片、著作、捐贈書目與紀念活動，保存系友與母系之間的歷史連結。"
+              heading={t.section4.heading}
+              description={t.section4.description}
             />
             {/* `<article>` is the only selector `.archive-grid` uses for its
                 cards (border / min-height / padding all hang off it). */}
             <div className="archive-grid">
-              {ARCHIVE_ITEMS.map((item) => (
+              {t.section4.items.map((item) => (
                 <article key={item.no}>
                   <span>{item.no}</span>
                   <h3>{item.title}</h3>
@@ -196,7 +175,7 @@ export function Alumni() {
         </section>
       </div>
 
-      <NextRoute />
+      <NextRoute lang={lang} />
     </SiteShell>
   );
 }

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { localizePath, translate, type Lang } from "@/lib/i18n";
+import { HOME_HERO } from "@/lib/i18n/home";
 
 /**
  * `section.hero#top` — the home page's two-slide carousel, ported from site.js
@@ -23,9 +25,9 @@ import Link from "next/link";
  *    reject it routinely and an unhandled rejection would surface in the console.
  */
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
-const GATE_ALT = "國立臺灣大學正門與校園景觀";
 
-export function HomeHero() {
+export function HomeHero({ lang }: { lang: Lang }) {
+  const t = translate(HOME_HERO, lang);
   const [index, setIndex] = useState(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -76,7 +78,7 @@ export function HomeHero() {
           />
           <img
             src="/images/hero-desktop/hero-gate.jpg"
-            alt={index === 1 ? GATE_ALT : ""}
+            alt={index === 1 ? t.gateAlt : ""}
           />
         </picture>
       </div>
@@ -85,27 +87,32 @@ export function HomeHero() {
 
       <div className="container hero-content" id="content">
         <div className="hero-copy">
+          {/* Latin-caps kicker, not copy: printed the same on both sites. */}
           <p className="eyebrow light">AGRICULTURAL ECONOMICS · NTU</p>
           <h1>
-            以經濟洞見，
+            {t.titleLine1}
             <br />
-            回應世界的
+            {t.titleLine2}
             <br />
-            農業挑戰。
+            {t.titleLine3}
           </h1>
-          <p className="hero-lead">
-            培育具備經濟分析、農業專業與國際視野的人才，從臺灣出發，連結土地、市場與全球。
-          </p>
+          <p className="hero-lead">{t.lead}</p>
           <div className="hero-actions">
-            <Link className="button gold" href="/about">
-              探索本系 <span>↗</span>
+            <Link className="button gold" href={localizePath("/about", lang)}>
+              {t.explore} <span>↗</span>
             </Link>
-            <Link className="text-action" href="/admissions">
-              招生資訊 <span>→</span>
+            <Link
+              className="text-action"
+              href={localizePath("/admissions", lang)}
+            >
+              {t.admissions} <span>→</span>
             </Link>
           </div>
         </div>
-        <div className="hero-index" aria-label="研究關鍵領域">
+        {/* The four terms are English on the reference site's Chinese page and
+            are set in 9px Latin caps with a rule before each one — a device,
+            not a sentence, so /en prints exactly the same four. */}
+        <div className="hero-index" aria-label={t.indexLabel}>
           <span>FOOD SYSTEMS</span>
           <span>CLIMATE &amp; LAND</span>
           <span>TRADE &amp; POLICY</span>
@@ -113,6 +120,7 @@ export function HomeHero() {
         </div>
       </div>
 
+      {/* Also English on both sites, for the same reason. */}
       <div className="hero-foot container">
         <span>Nearly a century of inquiry</span>
         <span className="scroll-cue">
@@ -120,13 +128,17 @@ export function HomeHero() {
         </span>
       </div>
 
-      <div className="hero-pagination" role="group" aria-label="首頁主視覺切換">
+      <div
+        className="hero-pagination"
+        role="group"
+        aria-label={t.paginationLabel}
+      >
         {[0, 1].map((i) => (
           <button
             key={i}
             type="button"
             className={index === i ? "active" : ""}
-            aria-label={`顯示第 ${i + 1} 張主視覺`}
+            aria-label={t.slide.replace("{n}", String(i + 1))}
             aria-pressed={index === i}
             onClick={() => setIndex(i)}
           >

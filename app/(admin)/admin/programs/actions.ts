@@ -14,25 +14,35 @@ type ProgramInput = {
   name: string;
   name_en: string | null;
   description: string | null;
+  description_en: string | null;
   sort_order: number;
 };
 
 /**
  * `name` is the only required column. The optional ones are written back as
- * null rather than "" so an emptied field behaves like a never-filled one —
- * the public cards test them with `p.name_en && …`, which an empty string
- * would pass while rendering nothing.
+ * null rather than "" so an emptied field behaves like a never-filled one.
+ *
+ * That matters most for the two English columns: lib/i18n's pick() reads a
+ * blank English value as "not translated yet" and serves the Chinese instead,
+ * so null is what "no English yet" is supposed to look like on this table.
+ *
+ * `name_en` carries a second job beyond this row's own card — getCourses()
+ * resolves each course's English 學制 label through it, so filling it in here
+ * also translates a tab on /en/courses. It is still optional; blank simply
+ * leaves that tab in Chinese.
  */
 function parse(form: FormData): { values?: ProgramInput; fieldErrors?: Record<string, string> } {
   const name = text(form, "name", "學制名稱", { required: true, max: 50 });
-  const nameEn = text(form, "name_en", "英文名稱", { max: 120 });
+  const nameEn = text(form, "name_en", "英文學制名稱", { max: 120 });
   const description = text(form, "description", "簡介", { max: 500 });
+  const descriptionEn = text(form, "description_en", "英文簡介", { max: 1000 });
   const sortOrder = number(form, "sort_order", "顯示順序", { min: 0, max: 999 });
 
   const fieldErrors = collect({
     name: name.error,
     name_en: nameEn.error,
     description: description.error,
+    description_en: descriptionEn.error,
     sort_order: sortOrder.error,
   });
   if (fieldErrors) return { fieldErrors };
@@ -42,6 +52,7 @@ function parse(form: FormData): { values?: ProgramInput; fieldErrors?: Record<st
       name: name.value!,
       name_en: nameEn.value,
       description: description.value,
+      description_en: descriptionEn.value,
       // The column defaults to 0; a blank field means "no preference", not an error.
       sort_order: sortOrder.value ?? 0,
     },

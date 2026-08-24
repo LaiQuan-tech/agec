@@ -13,6 +13,7 @@ type Row = {
   name: string;
   name_en: string | null;
   description: string | null;
+  description_en: string | null;
   sort_order: number;
 };
 
@@ -33,7 +34,7 @@ export default async function EditProgramPage({
 
   const { data, error } = await supabase
     .from("programs")
-    .select("id, name, name_en, description, sort_order")
+    .select("id, name, name_en, description, description_en, sort_order")
     .eq("id", numericId)
     .maybeSingle<Row>();
 
@@ -70,6 +71,7 @@ export default async function EditProgramPage({
           name: data.name,
           name_en: data.name_en ?? "",
           description: data.description ?? "",
+          description_en: data.description_en ?? "",
           sort_order: data.sort_order,
         }}
       />

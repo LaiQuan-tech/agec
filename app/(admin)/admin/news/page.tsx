@@ -4,6 +4,7 @@ import { requireAdminOrRedirect } from "@/lib/admin/auth";
 import { Button } from "@/components/admin/ui/Button";
 import { EmptyState, Table, TBody, TD, TH, THead, TR } from "@/components/admin/ui/Table";
 import { DeleteButton } from "@/components/admin/ui/DeleteButton";
+import { EnBadge, enProgress } from "../_components/EnBadge";
 import { deleteNews } from "./actions";
 
 export const metadata: Metadata = { title: "最新消息" };
@@ -13,7 +14,9 @@ type Row = {
   id: number;
   published_at: string;
   category: string;
+  category_en: string | null;
   title: string;
+  title_en: string | null;
   is_pinned: boolean;
 };
 
@@ -24,7 +27,7 @@ export default async function NewsListPage() {
   // site: pinned first, then newest.
   const { data, error } = await supabase
     .from("news")
-    .select("id, published_at, category, title, is_pinned")
+    .select("id, published_at, category, category_en, title, title_en, is_pinned")
     .order("is_pinned", { ascending: false })
     .order("published_at", { ascending: false })
     .returns<Row[]>();
@@ -74,38 +77,50 @@ export default async function NewsListPage() {
             <TH className="w-[110px]">分類</TH>
             <TH>標題</TH>
             <TH className="w-[70px]">置頂</TH>
+            <TH className="w-[80px]">英文</TH>
             <TH className="w-[130px]">操作</TH>
           </THead>
           <TBody>
-            {rows.map((row) => (
-              <TR key={row.id}>
-                <TD className="whitespace-nowrap tabular-nums">{row.published_at.slice(0, 10)}</TD>
-                <TD>
-                  <span
-                    className="rounded px-1.5 py-0.5 text-[12px]"
-                    style={{ background: "var(--cream)", color: "var(--gold-deep)" }}
-                  >
-                    {row.category}
-                  </span>
-                </TD>
-                <TD>
-                  <Link href={`/admin/news/${row.id}`} className="hover:underline underline-offset-2">
-                    {row.title}
-                  </Link>
-                </TD>
-                <TD>{row.is_pinned ? "是" : ""}</TD>
-                <TD>
-                  <div className="flex items-center gap-1">
-                    <Link href={`/admin/news/${row.id}`}>
-                      <Button variant="ghost" size="sm">
-                        編輯
-                      </Button>
+            {rows.map((row) => {
+              // 日期 and 置頂 are language-neutral; only these two translate.
+              const en = enProgress([
+                [row.title, row.title_en],
+                [row.category, row.category_en],
+              ]);
+
+              return (
+                <TR key={row.id}>
+                  <TD className="whitespace-nowrap tabular-nums">{row.published_at.slice(0, 10)}</TD>
+                  <TD>
+                    <span
+                      className="rounded px-1.5 py-0.5 text-[12px]"
+                      style={{ background: "var(--cream)", color: "var(--gold-deep)" }}
+                    >
+                      {row.category}
+                    </span>
+                  </TD>
+                  <TD>
+                    <Link href={`/admin/news/${row.id}`} className="hover:underline underline-offset-2">
+                      {row.title}
                     </Link>
-                    <DeleteButton action={deleteNews} id={row.id} itemLabel={row.title} />
-                  </div>
-                </TD>
-              </TR>
-            ))}
+                  </TD>
+                  <TD>{row.is_pinned ? "是" : ""}</TD>
+                  <TD>
+                    <EnBadge filled={en.filled} total={en.total} />
+                  </TD>
+                  <TD>
+                    <div className="flex items-center gap-1">
+                      <Link href={`/admin/news/${row.id}`}>
+                        <Button variant="ghost" size="sm">
+                          編輯
+                        </Button>
+                      </Link>
+                      <DeleteButton action={deleteNews} id={row.id} itemLabel={row.title} />
+                    </div>
+                  </TD>
+                </TR>
+              );
+            })}
           </TBody>
         </Table>
       )}

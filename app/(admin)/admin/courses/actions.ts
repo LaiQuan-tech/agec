@@ -13,8 +13,10 @@ import { collect, number, requireId, text } from "@/lib/admin/validate";
 type CourseInput = {
   code: string;
   name: string;
+  name_en: string | null;
   credit: number;
   ctype: string;
+  ctype_en: string | null;
   program: string;
 };
 
@@ -22,19 +24,35 @@ type CourseInput = {
  * `program` and `ctype` are plain text columns with a datalist in front of
  * them, so they are validated as free text rather than with oneOf() — see
  * constants.ts for why the list is open.
+ *
+ * There is no `program_en`, by design: `program` is a text foreign key into
+ * `programs.name`, and getCourses() both sorts and tab-filters by matching the
+ * two. Translating it here would break that match the moment one side was
+ * translated and the other was not — silently, with the course dropping to the
+ * bottom of the table and its tab selecting nothing. The English display name
+ * comes from `programs.name_en` instead, edited under /admin/programs.
+ *
+ * `name_en` and `ctype_en` are never required. text() returns null for a blank
+ * field, which is what lib/i18n's pick() reads as "not translated yet" before
+ * falling back to the Chinese; "" would work by luck (pick() trims) but would
+ * make an emptied field look different from a never-filled one.
  */
 function parse(form: FormData): { values?: CourseInput; fieldErrors?: Record<string, string> } {
   const code = text(form, "code", "課號", { required: true, max: 30 });
   const name = text(form, "name", "課程名稱", { required: true, max: 200 });
+  const nameEn = text(form, "name_en", "英文課程名稱", { max: 300 });
   const credit = number(form, "credit", "學分", { required: true, min: 0, max: 20 });
   const ctype = text(form, "ctype", "類型", { required: true, max: 20 });
+  const ctypeEn = text(form, "ctype_en", "英文類型", { max: 40 });
   const program = text(form, "program", "學制", { required: true, max: 30 });
 
   const fieldErrors = collect({
     code: code.error,
     name: name.error,
+    name_en: nameEn.error,
     credit: credit.error,
     ctype: ctype.error,
+    ctype_en: ctypeEn.error,
     program: program.error,
   });
   if (fieldErrors) return { fieldErrors };
@@ -43,8 +61,10 @@ function parse(form: FormData): { values?: CourseInput; fieldErrors?: Record<str
     values: {
       code: code.value!,
       name: name.value!,
+      name_en: nameEn.value,
       credit: credit.value!,
       ctype: ctype.value!,
+      ctype_en: ctypeEn.value,
       program: program.value!,
     },
   };

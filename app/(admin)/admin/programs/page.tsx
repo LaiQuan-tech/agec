@@ -4,6 +4,7 @@ import { requireAdminOrRedirect } from "@/lib/admin/auth";
 import { Button } from "@/components/admin/ui/Button";
 import { EmptyState, Table, TBody, TD, TH, THead, TR } from "@/components/admin/ui/Table";
 import { DeleteButton } from "@/components/admin/ui/DeleteButton";
+import { EnBadge, enProgress } from "../_components/EnBadge";
 import { deleteProgram } from "./actions";
 
 export const metadata: Metadata = { title: "招生學制" };
@@ -14,6 +15,7 @@ type Row = {
   name: string;
   name_en: string | null;
   description: string | null;
+  description_en: string | null;
   sort_order: number;
 };
 
@@ -30,7 +32,7 @@ export default async function ProgramsListPage() {
   // the public pages.
   const { data, error } = await supabase
     .from("programs")
-    .select("id, name, name_en, description, sort_order")
+    .select("id, name, name_en, description, description_en, sort_order")
     .order("sort_order", { ascending: true })
     .returns<Row[]>();
 
@@ -79,31 +81,44 @@ export default async function ProgramsListPage() {
             <TH className="w-[160px]">學制名稱</TH>
             <TH className="w-[200px]">英文名稱</TH>
             <TH>簡介</TH>
+            <TH className="w-[80px]">英文</TH>
             <TH className="w-[130px]">操作</TH>
           </THead>
           <TBody>
-            {rows.map((row) => (
-              <TR key={row.id}>
-                <TD className="tabular-nums">{row.sort_order}</TD>
-                <TD>
-                  <Link href={`/admin/programs/${row.id}`} className="hover:underline underline-offset-2">
-                    {row.name}
-                  </Link>
-                </TD>
-                <TD style={{ color: "var(--muted)" }}>{row.name_en ?? ""}</TD>
-                <TD style={{ color: "var(--muted)" }}>{summarize(row.description)}</TD>
-                <TD>
-                  <div className="flex items-center gap-1">
-                    <Link href={`/admin/programs/${row.id}`}>
-                      <Button variant="ghost" size="sm">
-                        編輯
-                      </Button>
+            {rows.map((row) => {
+              // 簡介 only counts once it has Chinese text to translate; a program
+              // with no description is not "missing" an English one.
+              const en = enProgress([
+                [row.name, row.name_en],
+                [row.description, row.description_en],
+              ]);
+
+              return (
+                <TR key={row.id}>
+                  <TD className="tabular-nums">{row.sort_order}</TD>
+                  <TD>
+                    <Link href={`/admin/programs/${row.id}`} className="hover:underline underline-offset-2">
+                      {row.name}
                     </Link>
-                    <DeleteButton action={deleteProgram} id={row.id} itemLabel={row.name} />
-                  </div>
-                </TD>
-              </TR>
-            ))}
+                  </TD>
+                  <TD style={{ color: "var(--muted)" }}>{row.name_en ?? ""}</TD>
+                  <TD style={{ color: "var(--muted)" }}>{summarize(row.description)}</TD>
+                  <TD>
+                    <EnBadge filled={en.filled} total={en.total} />
+                  </TD>
+                  <TD>
+                    <div className="flex items-center gap-1">
+                      <Link href={`/admin/programs/${row.id}`}>
+                        <Button variant="ghost" size="sm">
+                          編輯
+                        </Button>
+                      </Link>
+                      <DeleteButton action={deleteProgram} id={row.id} itemLabel={row.name} />
+                    </div>
+                  </TD>
+                </TR>
+              );
+            })}
           </TBody>
         </Table>
       )}

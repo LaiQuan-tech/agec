@@ -29,7 +29,13 @@ export default async function NewProgramPage() {
       <ProgramForm
         action={createProgram}
         submitLabel="新增"
-        initial={{ name: "", name_en: "", description: "", sort_order: nextSortOrder }}
+        initial={{
+          name: "",
+          name_en: "",
+          description: "",
+          description_en: "",
+          sort_order: nextSortOrder,
+        }}
       />
     </div>
   );

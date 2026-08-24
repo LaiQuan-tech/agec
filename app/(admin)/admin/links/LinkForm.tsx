@@ -12,6 +12,8 @@ export type LinkFormValues = {
   /** Empty when editing a row whose section is retired and has no option. */
   section: string;
   label: string;
+  /** Empty string stands in for a null column, so the input stays uncontrolled. */
+  label_en: string;
   url: string;
   sort_order: number;
 };
@@ -47,6 +49,22 @@ export function LinkForm({
               required
               maxLength={100}
               aria-invalid={Boolean(state.fieldErrors?.label)}
+            />
+          </Field>
+
+          <Field
+            htmlFor="label_en"
+            label="卡片文字 Card label (English)"
+            error={state.fieldErrors?.label_en}
+            hint="留空的話，英文版網頁會直接顯示上面的中文，所以不必一次全部翻完。"
+          >
+            <Input
+              id="label_en"
+              name="label_en"
+              defaultValue={initial.label_en}
+              maxLength={200}
+              lang="en"
+              aria-invalid={Boolean(state.fieldErrors?.label_en)}
             />
           </Field>
 

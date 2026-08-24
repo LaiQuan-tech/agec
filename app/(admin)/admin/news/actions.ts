@@ -13,30 +13,38 @@ import { boolean, collect, date, requireId, text } from "@/lib/admin/validate";
 type NewsInput = {
   published_at: string;
   category: string;
+  category_en: string | null;
   title: string;
+  title_en: string | null;
   is_pinned: boolean;
 };
 
 /**
  * `body` and `cover_url` exist on the table but are deliberately absent from
- * the form: no public news component renders either, so offering them would let
- * staff type content that never appears. Long-form content goes to the blog.
+ * the form. cover_url is rendered nowhere: it briefly was offered, back when
+ * the 風格B home page used it as a card thumbnail, and went out with that
+ * theme. `body` is the standfirst on the single featured card in
+ * components/site/News.tsx and is null for every row today, so the paragraph is
+ * simply dropped — long-form content goes to the blog instead. Restore either
+ * only alongside a component that actually displays it.
  *
- * cover_url briefly was offered, back when the 風格B home page rendered it as a
- * card thumbnail. That theme is gone, and components/classic/Home.tsx and
- * components/classic/News.tsx both list news as date / category / title only —
- * so the field went back out with it. Restore it only alongside a classic
- * component that actually displays the image.
+ * That omission is why there is no `body_en` here either, although the column
+ * exists: with no Chinese `body` to translate, an English-only standfirst would
+ * appear on /en/news and nowhere else. Add the pair together or not at all.
  */
 function parse(form: FormData): { values?: NewsInput; fieldErrors?: Record<string, string> } {
   const publishedAt = date(form, "published_at", "發佈日期", { required: true });
   const category = text(form, "category", "分類", { required: true, max: 20 });
+  const categoryEn = text(form, "category_en", "英文分類", { max: 40 });
   const title = text(form, "title", "標題", { required: true, max: 200 });
+  const titleEn = text(form, "title_en", "英文標題", { max: 300 });
 
   const fieldErrors = collect({
     published_at: publishedAt.error,
     category: category.error,
+    category_en: categoryEn.error,
     title: title.error,
+    title_en: titleEn.error,
   });
   if (fieldErrors) return { fieldErrors };
 
@@ -45,6 +53,12 @@ function parse(form: FormData): { values?: NewsInput; fieldErrors?: Record<strin
       published_at: publishedAt.value!,
       category: category.value!,
       title: title.value!,
+      // The English columns are never required. text() hands back null for a
+      // blank field, which is what lib/i18n's pick() reads as "not translated
+      // yet" before falling back to the Chinese value; storing "" instead would
+      // make an emptied field indistinguishable from a never-filled one.
+      category_en: categoryEn.value,
+      title_en: titleEn.value,
       is_pinned: boolean(form, "is_pinned"),
     },
   };

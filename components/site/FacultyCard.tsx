@@ -1,4 +1,6 @@
 import type { Faculty } from "@/lib/data";
+import { translate, type Lang } from "@/lib/i18n";
+import { categoryLabel, fill, FACULTY } from "@/lib/i18n/faculty";
 
 /**
  * `.faculty-grid article` — the standard portrait card, used by both
@@ -19,10 +21,12 @@ import type { Faculty } from "@/lib/data";
  * circle's antialiased edge, so it must stay the portrait div's only child.
  */
 export function FacultyCard({
+  lang,
   member,
   showCategory,
   visible = true,
 }: {
+  lang: Lang;
   member: Faculty;
   /** `#section-1` renders `.faculty-category`; `#section-2` omits it. */
   showCategory: boolean;
@@ -34,6 +38,8 @@ export function FacultyCard({
    */
   visible?: boolean;
 }) {
+  const t = translate(FACULTY, lang);
+
   return (
     <article style={visible ? undefined : { display: "none" }}>
       {/* `has-photo` clears the green fill; `no-photo` keeps it and lets the
@@ -41,8 +47,16 @@ export function FacultyCard({
           all 22 cards, but photo_url is nullable, so the fallback is real. */}
       <div className={`faculty-portrait ${member.photo_url ? "has-photo" : "no-photo"}`}>
         {member.photo_url ? (
-          // alt is composed as {姓名}{職稱}形象照 on every one of the 22 cards.
-          <img src={member.photo_url} alt={`${member.name}${member.title}形象照`} />
+          // alt is composed as {姓名}{職稱}形象照 on every one of the 22 cards;
+          // English keeps the same two facts in English word order — see
+          // FACULTY.cardPortraitAlt.
+          <img
+            src={member.photo_url}
+            alt={fill(t.cardPortraitAlt, {
+              name: member.name,
+              title: member.title,
+            })}
+          />
         ) : (
           member.name.slice(0, 1)
         )}
@@ -50,7 +64,14 @@ export function FacultyCard({
       <p>{member.title}</p>
       <h3>{member.name}</h3>
       {showCategory ? (
-        <span className="faculty-category">{member.category}</span>
+        // `category` itself is never translated — it selects the card layout —
+        // so the chip goes through the dictionary. Unlike the reference site,
+        // nothing reads this text back: site.js matched the filter against the
+        // chip's textContent, while FacultyFilterGrid compares the data, so the
+        // visible label is free to change language.
+        <span className="faculty-category">
+          {categoryLabel(member.category, lang)}
+        </span>
       ) : null}
       {member.fields ? (
         <span className="faculty-field">{member.fields}</span>

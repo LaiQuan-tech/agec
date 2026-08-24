@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { translate, type Lang } from "@/lib/i18n";
+import { COMMON } from "@/lib/i18n/common";
 
 /**
  * Opening curtain, ported from site.js lines 20–28.
@@ -16,7 +18,8 @@ import { useEffect, useState } from "react";
  *  - Next.js client navigations never fire `load` again, so this renders once
  *    per full page load only — which is also the reference site's behaviour.
  */
-export function SiteLoader() {
+export function SiteLoader({ lang }: { lang: Lang }) {
+  const t = translate(COMMON, lang);
   const [complete, setComplete] = useState(false);
   const [mounted, setMounted] = useState(true);
 
@@ -57,7 +60,7 @@ export function SiteLoader() {
           which stay scoped to the SVG document this way. Inlining the markup
           would leak those animation names into the page's global namespace. */}
       <img src="/brand/agec_loader.svg" alt="" width={120} height={120} />
-      <span className="sr-only">頁面載入中</span>
+      <span className="sr-only">{t.loading}</span>
     </div>
   );
 }

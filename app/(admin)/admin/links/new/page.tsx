@@ -32,7 +32,7 @@ export default async function NewLinkPage() {
       <LinkForm
         action={createLink}
         submitLabel="新增"
-        initial={{ section: "students", label: "", url: "", sort_order: nextSortOrder }}
+        initial={{ section: "students", label: "", label_en: "", url: "", sort_order: nextSortOrder }}
       />
     </div>
   );

@@ -21,3 +21,19 @@ export const FACULTY_CATEGORIES = [
   "退休師資",
   "行政同仁",
 ] as const;
+
+/**
+ * The three categories whose card renders `name_en` as its own line under the
+ * Chinese name. Authoritative source is the column comment written by
+ * supabase/migrations/20260814090400_faculty_extend.sql: "客座／名譽／退休師資的
+ * 卡片會獨立顯示這一行；專任、合聘、兼任與行政同仁不需要，留 null。"
+ *
+ * Used by the list page so the English-progress badge doesn't hold a 專任師資
+ * permanently short of a field their card would never show anyway.
+ */
+export const NAME_EN_CATEGORIES: readonly string[] = ["客座教師", "名譽教授", "退休師資"];
+
+/** Whether this row's card shows an English name line at all. */
+export function showsNameEn(category: string): boolean {
+  return NAME_EN_CATEGORIES.includes(category);
+}

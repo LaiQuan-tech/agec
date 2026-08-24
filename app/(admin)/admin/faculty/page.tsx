@@ -4,6 +4,8 @@ import { requireAdminOrRedirect } from "@/lib/admin/auth";
 import { Button } from "@/components/admin/ui/Button";
 import { EmptyState, Table, TBody, TD, TH, THead, TR } from "@/components/admin/ui/Table";
 import { DeleteButton } from "@/components/admin/ui/DeleteButton";
+import { EnBadge, enProgress } from "../_components/EnBadge";
+import { showsNameEn } from "./constants";
 import { deleteFaculty } from "./actions";
 
 export const metadata: Metadata = { title: "系所成員" };
@@ -12,9 +14,14 @@ export const dynamic = "force-dynamic";
 type Row = {
   id: number;
   name: string;
+  name_en: string | null;
   title: string;
+  title_en: string | null;
   category: string;
   fields: string | null;
+  fields_en: string | null;
+  experience: string | null;
+  experience_en: string | null;
   sort_order: number;
 };
 
@@ -26,7 +33,9 @@ export default async function FacultyListPage() {
   // list from reshuffling between reloads.
   const { data, error } = await supabase
     .from("faculty")
-    .select("id, name, title, category, fields, sort_order")
+    .select(
+      "id, name, name_en, title, title_en, category, fields, fields_en, experience, experience_en, sort_order"
+    )
     .order("sort_order", { ascending: true })
     .order("id", { ascending: true })
     .returns<Row[]>();
@@ -77,50 +86,68 @@ export default async function FacultyListPage() {
             <TH className="w-[110px]">職稱</TH>
             <TH className="w-[110px]">分類</TH>
             <TH>研究領域</TH>
+            <TH className="w-[80px]">英文</TH>
             <TH className="w-[130px]">操作</TH>
           </THead>
           <TBody>
-            {rows.map((row) => (
-              <TR key={row.id}>
-                <TD className="tabular-nums">{row.sort_order}</TD>
-                <TD>
-                  <Link href={`/admin/faculty/${row.id}`} className="hover:underline underline-offset-2">
-                    {row.name}
-                  </Link>
-                </TD>
-                <TD className="whitespace-nowrap">{row.title}</TD>
-                <TD>
-                  <span
-                    className="rounded px-1.5 py-0.5 text-[12px]"
-                    style={{ background: "var(--cream)", color: "var(--gold-deep)" }}
-                  >
-                    {row.category}
-                  </span>
-                </TD>
-                <TD>
-                  {/* Research fields run long; the full text is on the edit page,
-                      so the cell shows a clipped single line with the rest in a
-                      tooltip rather than stretching the table. */}
-                  <span
-                    className="block max-w-[260px] truncate"
-                    title={row.fields ?? undefined}
-                    style={{ color: "var(--muted)" }}
-                  >
-                    {row.fields ?? ""}
-                  </span>
-                </TD>
-                <TD>
-                  <div className="flex items-center gap-1">
-                    <Link href={`/admin/faculty/${row.id}`}>
-                      <Button variant="ghost" size="sm">
-                        編輯
-                      </Button>
+            {rows.map((row) => {
+              // Which fields count depends on the row: 研究領域 is null for every
+              // 名譽教授, 經歷 is null for every 專任師資, and the English name
+              // line only exists on three of the seven card layouts. Pairing each
+              // English column with the Chinese that would be translated keeps a
+              // person from sitting permanently below a score they can't reach.
+              const en = enProgress([
+                [showsNameEn(row.category) ? row.name : null, row.name_en],
+                [row.title, row.title_en],
+                [row.fields, row.fields_en],
+                [row.experience, row.experience_en],
+              ]);
+
+              return (
+                <TR key={row.id}>
+                  <TD className="tabular-nums">{row.sort_order}</TD>
+                  <TD>
+                    <Link href={`/admin/faculty/${row.id}`} className="hover:underline underline-offset-2">
+                      {row.name}
                     </Link>
-                    <DeleteButton action={deleteFaculty} id={row.id} itemLabel={row.name} />
-                  </div>
-                </TD>
-              </TR>
-            ))}
+                  </TD>
+                  <TD className="whitespace-nowrap">{row.title}</TD>
+                  <TD>
+                    <span
+                      className="rounded px-1.5 py-0.5 text-[12px]"
+                      style={{ background: "var(--cream)", color: "var(--gold-deep)" }}
+                    >
+                      {row.category}
+                    </span>
+                  </TD>
+                  <TD>
+                    {/* Research fields run long; the full text is on the edit page,
+                        so the cell shows a clipped single line with the rest in a
+                        tooltip rather than stretching the table. */}
+                    <span
+                      className="block max-w-[260px] truncate"
+                      title={row.fields ?? undefined}
+                      style={{ color: "var(--muted)" }}
+                    >
+                      {row.fields ?? ""}
+                    </span>
+                  </TD>
+                  <TD>
+                    <EnBadge filled={en.filled} total={en.total} />
+                  </TD>
+                  <TD>
+                    <div className="flex items-center gap-1">
+                      <Link href={`/admin/faculty/${row.id}`}>
+                        <Button variant="ghost" size="sm">
+                          編輯
+                        </Button>
+                      </Link>
+                      <DeleteButton action={deleteFaculty} id={row.id} itemLabel={row.name} />
+                    </div>
+                  </TD>
+                </TR>
+              );
+            })}
           </TBody>
         </Table>
       )}

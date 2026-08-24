@@ -11,8 +11,15 @@ export type CourseFormValues = {
   id?: number;
   code: string;
   name: string;
+  /** Empty string stands in for a null column, so the inputs stay uncontrolled. */
+  name_en: string;
   credit: number;
   ctype: string;
+  ctype_en: string;
+  /**
+   * Chinese only, and there is deliberately no `program_en` twin — see the
+   * hint on the 學制 field below and the comment in constants.ts.
+   */
   program: string;
 };
 
@@ -50,6 +57,22 @@ export function CourseForm({
             />
           </Field>
 
+          <Field
+            htmlFor="name_en"
+            label="課程名稱 Course title (English)"
+            error={state.fieldErrors?.name_en}
+            hint="留空的話，英文版網頁會直接顯示上面的中文，所以不必一次全部翻完。"
+          >
+            <Input
+              id="name_en"
+              name="name_en"
+              defaultValue={initial.name_en}
+              maxLength={300}
+              lang="en"
+              aria-invalid={Boolean(state.fieldErrors?.name_en)}
+            />
+          </Field>
+
           <div className="grid gap-5 sm:grid-cols-2">
             <Field
               htmlFor="code"
@@ -73,7 +96,7 @@ export function CourseForm({
               label="學制"
               required
               error={state.fieldErrors?.program}
-              hint="前台的課程分頁就是依這個欄位分的，名稱請與現有課程一致"
+              hint="前台的課程分頁就是依這個欄位分的，名稱請與現有課程一致。這一欄固定填中文，英文版頁面顯示的學制名稱是到「招生學制」那一頁的「英文名稱」去取的。"
             >
               <Input
                 id="program"
@@ -135,6 +158,26 @@ export function CourseForm({
               </datalist>
             </Field>
           </div>
+
+          {/* Outside the 2×2 grid: as a fifth cell it would flow under 學分,
+              not under the 類型 it translates. 學制 has no English twin here on
+              purpose — courses.program is a text foreign key into programs.name
+              and the English display name is read from programs.name_en. */}
+          <Field
+            htmlFor="ctype_en"
+            label="類型 Course type (English)"
+            error={state.fieldErrors?.ctype_en}
+            hint="留空的話，英文版網頁會直接顯示中文（必修／選修）。同一個中文類型請固定用同一種英文寫法。"
+          >
+            <Input
+              id="ctype_en"
+              name="ctype_en"
+              defaultValue={initial.ctype_en}
+              maxLength={40}
+              lang="en"
+              aria-invalid={Boolean(state.fieldErrors?.ctype_en)}
+            />
+          </Field>
         </>
       )}
     </FormShell>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE_ORIGIN } from "@/lib/site-routes";
 
 /**
  * The root layout deliberately imports NO stylesheet and loads NO font.
@@ -24,6 +25,9 @@ import type { Metadata } from "next";
  */
 
 export const metadata: Metadata = {
+  // Required for the hreflang alternates in lib/site-routes.ts: Next only
+  // emits absolute alternate URLs, and without a base it cannot build them.
+  metadataBase: new URL(SITE_ORIGIN),
   title: {
     template: "%s | 國立臺灣大學 農業經濟學系",
     default: "國立臺灣大學 農業經濟學系",

@@ -13,6 +13,7 @@ type Row = {
   id: number;
   section: string;
   label: string;
+  label_en: string | null;
   url: string | null;
   sort_order: number;
 };
@@ -34,7 +35,7 @@ export default async function EditLinkPage({
 
   const { data, error } = await supabase
     .from("links")
-    .select("id, section, label, url, sort_order")
+    .select("id, section, label, label_en, url, sort_order")
     .eq("id", numericId)
     .maybeSingle<Row>();
 
@@ -84,6 +85,7 @@ export default async function EditLinkPage({
           id: data.id,
           section: editable ? data.section : "",
           label: data.label,
+          label_en: data.label_en ?? "",
           url: data.url ?? "",
           sort_order: data.sort_order,
         }}

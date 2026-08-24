@@ -12,8 +12,10 @@ type Row = {
   id: number;
   code: string;
   name: string;
+  name_en: string | null;
   credit: number;
   ctype: string;
+  ctype_en: string | null;
   program: string;
 };
 
@@ -34,7 +36,7 @@ export default async function EditCoursePage({
 
   const { data, error } = await supabase
     .from("courses")
-    .select("id, code, name, credit, ctype, program")
+    .select("id, code, name, name_en, credit, ctype, ctype_en, program")
     .eq("id", numericId)
     .maybeSingle<Row>();
 
@@ -70,8 +72,10 @@ export default async function EditCoursePage({
           id: data.id,
           code: data.code,
           name: data.name,
+          name_en: data.name_en ?? "",
           credit: data.credit,
           ctype: data.ctype,
+          ctype_en: data.ctype_en ?? "",
           program: data.program,
         }}
       />

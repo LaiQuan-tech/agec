@@ -1,18 +1,29 @@
 import Link from "next/link";
 import { ROUTE_TOTAL } from "./nav";
+import { localizePath, translate, type Lang } from "@/lib/i18n";
+import { SHARED } from "@/lib/i18n/shared";
 
 export type InteriorHeroProps = {
+  lang: Lang;
   /** Slug used for both hero images, e.g. "about" → images/hero-*\/about.jpg. */
   slug: string;
-  /** Chinese page title — also the breadcrumb's trailing segment. */
-  title: string;
-  /** English kicker above the <h1>, e.g. "About AGEC". */
+  /** Chinese page title. */
+  titleZh: string;
+  /**
+   * English page title, e.g. "About AGEC".
+   *
+   * Both languages are always passed because the hero shows both: whichever
+   * one is not the current language becomes the small kicker above the <h1>.
+   * The reference site prints the English title over the Chinese one, and
+   * mirroring that on /en keeps the block's two-line rhythm instead of
+   * leaving a gap where the kicker was.
+   */
   titleEn: string;
   /** "NN" half of the route number; the "/ 08" denominator is added here. */
   routeNo: string;
-  /** Standfirst paragraph under the title row. */
+  /** Standfirst paragraph under the title row, already in the right language. */
   lead: string;
-  /** alt text for the hero photo. */
+  /** alt text for the hero photo, already in the right language. */
   imageAlt: string;
   /**
    * Set for the two routes whose hero is a looping video instead of a
@@ -30,14 +41,19 @@ export type InteriorHeroProps = {
  * which is where the art direction switches.
  */
 export function InteriorHero({
+  lang,
   slug,
-  title,
+  titleZh,
   titleEn,
   routeNo,
   lead,
   imageAlt,
   video,
 }: InteriorHeroProps) {
+  const t = translate(SHARED, lang);
+  const title = lang === "en" ? titleEn : titleZh;
+  const kicker = lang === "en" ? titleZh : titleEn;
+
   return (
     <section className="interior-hero" id="content">
       {video ? (
@@ -67,7 +83,7 @@ export function InteriorHero({
       <div className="interior-text-scrim" aria-hidden="true" />
       <div className="container interior-hero-content">
         <div className="breadcrumb">
-          <Link href="/">首頁</Link>
+          <Link href={localizePath("/", lang)}>{t.home}</Link>
           <span>/</span>
           <span>{title}</span>
         </div>
@@ -75,7 +91,7 @@ export function InteriorHero({
             route number is addressed as its second child. */}
         <div className="interior-title-row">
           <div>
-            <p>{titleEn}</p>
+            <p>{kicker}</p>
             <h1>{title}</h1>
           </div>
           {/* One interpolation, not three. Written as `{routeNo} / {ROUTE_TOTAL}`

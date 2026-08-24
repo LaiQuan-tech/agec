@@ -1,4 +1,6 @@
 import type { Course, LinkItem, Program } from "@/lib/data";
+import { translate, type Lang } from "@/lib/i18n";
+import { COURSES } from "@/lib/i18n/courses";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
@@ -14,68 +16,47 @@ import { FilterTabs } from "./FilterTabs";
  * doubles as the poster. `InteriorHero` handles that via its `video` prop.
  *
  * Two blocks read the DB (B-class): `.course-table` from getCourses and the
- * `.filter-tabs` labels from getPrograms. The rest is static copy (A-class) —
- * see the notes on DOCUMENTS / FORMS below.
- */
-
-/**
- * `.document-grid` — 修業規定 PDF cards.
+ * `.filter-tabs` labels from getPrograms. The rest is static copy (A-class)
+ * and lives in lib/i18n/courses.ts.
  *
- * ⚠️ Static on purpose, for now. These want `links.section = 'course_docs'`
- * plus a description and a file-type badge, but the `links` table has neither
- * those rows nor those columns, and `LinkItem["section"]` has no 'course_docs'
- * member. Copy is reproduced verbatim from the reference site so the port is
- * visually complete; move it to the DB once the schema gains those fields.
- *
- * site.css lays this out as `repeat(4,1fr)` → `repeat(2,1fr)` → `1fr`, so a
- * fifth card is safe geometrically but breaks the 2x2 pairing at 1180px.
+ * ⚠️ This page joins two tables on a *text* key — `courses.program` against
+ * `programs.name` — in two places (the sort and the tabs). Both must match on
+ * the Chinese value: `Program.name` is the translated display name, so keying
+ * either of them on it works in Chinese and silently fails in English. See
+ * `programRank` and `tabs` below.
  */
-const DOCUMENTS = [
-  {
-    title: "大學部修業規定",
-    description: "畢業學分、必修課程與跨域修課說明",
-  },
-  {
-    title: "碩士班修業規定",
-    description: "修業年限、學位考試與論文相關規範",
-  },
-  {
-    title: "博士班修業規定",
-    description: "資格考核、研究訓練與學位要求",
-  },
-  {
-    title: "在職專班修業規定",
-    description: "課程安排、專題研究與畢業要求",
-  },
-];
-
-/**
- * `.resource-row` — 常用表格. Falls back to the reference site's four labels
- * when the section has no rows, so the four-column grid never renders empty.
- */
-const FORMS_FALLBACK = [
-  "選課相關表格",
-  "學位考試申請",
-  "離校程序表格",
-  "研究計畫申請",
-].map((label, i) => ({ id: -(i + 1), label, url: null }));
 
 /**
  * `.software-line` — A-class. site.css pins this to `repeat(7,1fr)` at desktop
  * (then 4, then 2), so the seven entries are a layout constant, not data.
+ * Not in the dictionary: they are product names, identical in both languages.
  */
 const SOFTWARE = ["STATA", "R", "PYTHON", "SAS", "SPSS", "MATLAB", "GAMS"];
 
 export function Courses({
+  lang,
   courses,
   programs,
   links,
 }: {
+  lang: Lang;
   courses: Course[];
   programs: Program[];
   links: LinkItem[];
 }) {
-  const forms = links.length > 0 ? links : FORMS_FALLBACK;
+  const t = translate(COURSES, lang);
+
+  /**
+   * `.resource-row` — 常用表格. Falls back to the reference site's four labels
+   * when the section has no rows, so the four-column grid never renders empty.
+   * DB rows arrive from lib/data.ts already resolved to the page's language,
+   * the fallback comes from the dictionary — `label` is ready to print either
+   * way, and must not be translated again here.
+   */
+  const forms: { id: number; label: string; url: string | null }[] =
+    links.length > 0
+      ? links
+      : t.formsFallback.map((label, i) => ({ id: -(i + 1), label, url: null }));
 
   /**
    * The reference site hard-codes five tabs (全部 + four programs), the last of
@@ -84,8 +65,19 @@ export function Courses({
    * `programs` instead of copied — a hard-coded list would drift the moment the
    * client edits a program name, and these tabs are cosmetic anyway (see
    * FilterTabs: site.js never filtered the table).
+   *
+   * `value` is the Chinese name and `label` the translated one, per FilterTab:
+   * the value is a match key against `courses.program`, which is always
+   * Chinese. "全部" keeps its Chinese value in both languages for the same
+   * reason — it is the sentinel, not a label.
    */
-  const tabs = ["全部", ...programs.map((program) => program.name)];
+  const tabs = [
+    { value: "全部", label: t.tabs.all },
+    ...programs.map((program) => ({
+      value: program.name_zh,
+      label: program.name,
+    })),
+  ];
 
   /**
    * getCourses() orders by `program` ascending, and Postgres collates the four
@@ -94,8 +86,13 @@ export function Courses({
    * the programs. Re-key the sort on the program's own `sort_order` so the
    * table reads 大學部 → 碩士班 → 博士班 → 在職專班 like the reference site.
    * Unknown program strings sort last rather than silently jumping to the top.
+   *
+   * ⚠️ The map is keyed on `name_zh`, never `name`. `Course.program` is always
+   * the Chinese value; on /en `Program.name` is the English one, so keying on
+   * it would make every lookup miss, drop every course to MAX_SAFE_INTEGER and
+   * leave the table in raw Postgres collation order — with no error anywhere.
    */
-  const programRank = new Map(programs.map((p) => [p.name, p.sort_order]));
+  const programRank = new Map(programs.map((p) => [p.name_zh, p.sort_order]));
   const rows = [...courses].sort((a, b) => {
     const rankA = programRank.get(a.program) ?? Number.MAX_SAFE_INTEGER;
     const rankB = programRank.get(b.program) ?? Number.MAX_SAFE_INTEGER;
@@ -103,47 +100,40 @@ export function Courses({
   });
 
   return (
-    <SiteShell variant="interior">
+    <SiteShell lang={lang} variant="interior">
       <InteriorHero
+        lang={lang}
         slug="courses"
-        title="課程資訊"
-        titleEn="Courses & Curriculum"
+        titleZh={COURSES.title.zh}
+        titleEn={COURSES.title.en}
         routeNo="06"
-        lead="以經濟理論為基礎，連結資料分析、政策、產業、環境與國際視野，建立可自由探索的學習路徑。"
-        imageAlt="農經系課堂與學生討論"
+        lead={t.hero.lead}
+        imageAlt={t.hero.imageAlt}
         video="/videos/courses.mp4"
       />
-      <LocalNav
-        label="課程資訊"
-        items={[
-          { href: "#section-1", label: "各學制課程表" },
-          { href: "#section-2", label: "修業規定" },
-          { href: "#section-3", label: "常用表格" },
-          { href: "#section-4", label: "學習資源" },
-        ]}
-      />
+      <LocalNav lang={lang} label={t.nav.label} items={t.nav.items} />
       <div className="interior-content">
         <section className="inner-section" id="section-1">
           <div className="container">
             <SectionTitle
               no="01"
               eyebrow="CURRICULUM"
-              heading="各學制課程表"
-              description="依學制與課程類別快速篩選，完整課程內容及實際開課情形以最新公告為準。"
+              heading={t.section1.heading}
+              description={t.section1.description}
             />
             {/* No `onChange`: on the reference site these tabs only light up. */}
-            <FilterTabs tabs={tabs} ariaLabel="課程學制篩選" />
+            <FilterTabs tabs={tabs} ariaLabel={t.tabs.ariaLabel} />
             {/* `.course-table` is a 6-column grid declared on `.course-head`
                 and on `.course-table>a` directly — every row must be an <a>
                 holding exactly five <span>s plus the trailing <i>, or the
                 columns stop lining up. */}
             <div className="course-table" role="table">
               <div className="course-head" role="row">
-                <span>課號</span>
-                <span>課程名稱</span>
-                <span>學分</span>
-                <span>學制</span>
-                <span>類別</span>
+                <span>{t.table.code}</span>
+                <span>{t.table.name}</span>
+                <span>{t.table.credit}</span>
+                <span>{t.table.program}</span>
+                <span>{t.table.ctype}</span>
               </div>
               {rows.map((course) => (
                 // href="#" matches the reference site: there are no
@@ -152,7 +142,10 @@ export function Courses({
                   <span>{course.code}</span>
                   <span>{course.name}</span>
                   <span>{course.credit}</span>
-                  <span>{course.program}</span>
+                  {/* `program_label`, not `program`: the latter is the Chinese
+                      match key the sort above needs and would print Chinese
+                      into an otherwise English table. */}
+                  <span>{course.program_label}</span>
                   <span>{course.ctype}</span>
                   <i>↗</i>
                 </a>
@@ -163,16 +156,32 @@ export function Courses({
 
         <section className="inner-section tint" id="section-2">
           <div className="container">
-            <SectionTitle no="02" eyebrow="DEGREE REQUIREMENTS" heading="修業規定" />
+            <SectionTitle
+              no="02"
+              eyebrow="DEGREE REQUIREMENTS"
+              heading={t.section2.heading}
+            />
+            {/* `.document-grid` — 修業規定 PDF cards.
+                ⚠️ Static on purpose, for now. These want
+                `links.section = 'course_docs'` plus a description and a
+                file-type badge, but the `links` table has neither those rows
+                nor those columns, and `LinkItem["section"]` has no
+                'course_docs' member. Copy is reproduced verbatim from the
+                reference site so the port is visually complete; move it to the
+                DB once the schema gains those fields.
+
+                site.css lays this out as `repeat(4,1fr)` → `repeat(2,1fr)` →
+                `1fr`, so a fifth card is safe geometrically but breaks the 2x2
+                pairing at 1180px. */}
             <div className="document-grid">
-              {DOCUMENTS.map((doc) => (
+              {t.documents.map((doc) => (
                 <a href="#" key={doc.title}>
                   {/* `.document-grid>a>span` is the gold file-type badge —
                       it has to be a direct child span. */}
                   <span>PDF</span>
                   <h3>{doc.title}</h3>
                   <p>{doc.description}</p>
-                  <i>下載 ↗</i>
+                  <i>{t.download}</i>
                 </a>
               ))}
             </div>
@@ -181,7 +190,7 @@ export function Courses({
 
         <section className="inner-section" id="section-3">
           <div className="container">
-            <SectionTitle no="03" eyebrow="FORMS" heading="常用表格" />
+            <SectionTitle no="03" eyebrow="FORMS" heading={t.section3.heading} />
             {/* `.resource-row a` carries the cell borders and the 120px min
                 height, so every cell stays an <a> even though the reference
                 site's hrefs are all placeholders. */}
@@ -200,7 +209,7 @@ export function Courses({
             <SectionTitle
               no="04"
               eyebrow="LEARNING RESOURCES"
-              heading="讓資料成為理解世界的工具"
+              heading={t.section4.heading}
             />
             <div className="software-line">
               {SOFTWARE.map((name) => (
@@ -210,7 +219,7 @@ export function Courses({
           </div>
         </section>
       </div>
-      <NextRoute />
+      <NextRoute lang={lang} />
     </SiteShell>
   );
 }

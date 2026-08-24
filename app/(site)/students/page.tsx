@@ -1,15 +1,12 @@
 import type { Metadata } from "next";
-import { getLinks } from "@/lib/data";
-import { Students } from "@/components/site/Students";
+import { StudentsRoute } from "@/components/site/pages";
+import { routeMetadata } from "@/lib/site-routes";
 
 export const revalidate = 300;
 
-export const metadata: Metadata = {
-  title: "學生專區",
-};
+export const metadata: Metadata = routeMetadata("/students", "zh");
 
-export default async function StudentsPage() {
-  const links = await getLinks("students");
-
-  return <Students links={links} />;
+/** 學生專區 (/students) */
+export default function Page() {
+  return <StudentsRoute lang="zh" />;
 }

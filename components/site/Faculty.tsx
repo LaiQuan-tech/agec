@@ -1,4 +1,6 @@
 import type { Faculty as FacultyMember } from "@/lib/data";
+import { translate, type Lang } from "@/lib/i18n";
+import { categoryLabel, fill, FACULTY } from "@/lib/i18n/faculty";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
@@ -6,6 +8,7 @@ import { SectionTitle } from "./SectionTitle";
 import { NextRoute } from "./NextRoute";
 import { FacultyCard } from "./FacultyCard";
 import { FacultyFilterGrid } from "./FacultyFilterGrid";
+import type { FilterTab } from "./FilterTabs";
 
 /**
  * 系所成員 (/faculty) — route 04 / 08. The most layout-heavy of the eight
@@ -27,6 +30,11 @@ import { FacultyFilterGrid } from "./FacultyFilterGrid";
  * is 13th but uses `23-…jpg`, and `13-…jpg` belongs to the visiting professor,
  * who is 23rd). Filenames therefore always come from the row's `photo_url` —
  * never from an array index.
+ *
+ * ⚠️ `category` is the one column lib/data.ts does not translate: the four
+ * constants below and the filter both compare it against Chinese literals. Run
+ * it through `categoryLabel()` wherever a visitor reads it, and never through
+ * anything that decides layout.
  *
  * Null-safety is not defensive padding here: every optional column is genuinely
  * absent for some category (no photo for 14 people, no email for the visiting
@@ -61,6 +69,7 @@ function LegacyGroup({
   heading,
   children,
 }: {
+  /** Uppercase Latin kicker — a design element, identical in both languages. */
   eyebrow: string;
   heading: string;
   children: React.ReactNode;
@@ -81,20 +90,33 @@ function LegacyGroup({
  * `.legacy-resume-list` — 名譽教授 and 退休師資. Three grid columns per row:
  * name block / career block / mailto. The middle `<div>` is rendered even when
  * `experience` is null so the mailto stays in the third column.
+ *
+ * `experienceLabel` arrives already translated rather than as a `lang`, because
+ * the caller has the dictionary open anyway and this list is the only thing on
+ * the page that needs that one string.
  */
-function LegacyResumeList({ members }: { members: FacultyMember[] }) {
+function LegacyResumeList({
+  members,
+  experienceLabel,
+}: {
+  members: FacultyMember[];
+  experienceLabel: string;
+}) {
   return (
     <div className="legacy-resume-list">
       {members.map((member) => (
         <article key={member.id}>
           <div className="legacy-person-name">
+            {/* `name_en` is printed above the Chinese name on *both* sites: it
+                is the person's own English name shown beside their Chinese one,
+                not a translation that replaces it, so /en keeps the pair. */}
             {member.name_en ? <p>{member.name_en}</p> : null}
             <h4>{member.name}</h4>
           </div>
           <div className="legacy-career">
             {member.experience ? (
               <>
-                <span>重要經歷</span>
+                <span>{experienceLabel}</span>
                 <p>{member.experience}</p>
               </>
             ) : null}
@@ -108,7 +130,15 @@ function LegacyResumeList({ members }: { members: FacultyMember[] }) {
   );
 }
 
-export function Faculty({ faculty }: { faculty: FacultyMember[] }) {
+export function Faculty({
+  lang,
+  faculty,
+}: {
+  lang: Lang;
+  faculty: FacultyMember[];
+}) {
+  const t = translate(FACULTY, lang);
+
   const visiting = faculty.filter((m) => m.category === VISITING);
   const emeritus = faculty.filter((m) => m.category === EMERITUS);
   const retired = faculty.filter((m) => m.category === RETIRED);
@@ -132,48 +162,59 @@ export function Faculty({ faculty }: { faculty: FacultyMember[] }) {
 
   /**
    * The reference site hard-codes 全部/專任師資/合聘師資/兼任師資. Deriving the
-   * same four labels from the data in source order reproduces them exactly
-   * while keeping the tabs in sync with `category` — and the filter compares
-   * tab text against `category` by exact string equality, so a hard-coded list
-   * would silently match nothing the day a label is edited.
+   * same four tabs from the data in source order reproduces them exactly while
+   * keeping the tabs in sync with `category` — a hard-coded list would silently
+   * match nothing the day a category is edited.
+   *
+   * ⚠️ `value` is the raw Chinese `category` in both languages, because that is
+   * what FacultyFilterGrid compares each member against; only `label` is
+   * translated. Putting the English label in `value` would match nobody and
+   * leave the grid blank without raising anything.
    */
-  const tabs = [
+  const tabs: FilterTab[] = [
     "全部",
     ...standard.reduce<string[]>(
       (acc, m) => (acc.includes(m.category) ? acc : [...acc, m.category]),
       []
     ),
-  ];
+  ].map((value) => ({ value, label: categoryLabel(value, lang) }));
 
   return (
-    <SiteShell variant="interior">
+    <SiteShell lang={lang} variant="interior">
+      {/* Both titles: the hero prints whichever is not the page's language as
+          the kicker above the <h1>, so this reads the untranslated pair. */}
       <InteriorHero
+        lang={lang}
         slug="faculty"
-        title="系所成員"
-        titleEn="Faculty & Staff"
+        titleZh={FACULTY.title.zh}
+        titleEn={FACULTY.title.en}
         routeNo="04"
-        lead="由跨領域學者與專業行政團隊共同形成的知識社群，連結教學、研究、政策與產業實務。"
-        imageAlt="臺大農業綜合館入口"
+        lead={t.lead}
+        imageAlt={t.heroImageAlt}
       />
       <LocalNav
-        label="系所成員"
+        lang={lang}
+        label={t.title}
         items={[
-          { href: "#section-1", label: "專任師資" },
-          { href: "#section-2", label: "合聘與兼任" },
-          { href: "#section-3", label: "客座、名譽與退休" },
-          { href: "#section-4", label: "行政同仁" },
+          { href: "#section-1", label: t.nav.fullTime },
+          { href: "#section-2", label: t.nav.affiliated },
+          { href: "#section-3", label: t.nav.legacy },
+          { href: "#section-4", label: t.nav.administration },
         ]}
       />
       <div className="interior-content">
         <section className="inner-section" id="section-1">
           <div className="container">
+            {/* `eyebrow` stays a literal here and in the three sections below:
+                the uppercase Latin kicker is a typographic device and is the
+                same string on /faculty and /en/faculty. */}
             <SectionTitle
               no="01"
               eyebrow="FULL-TIME FACULTY"
-              heading="專任師資"
-              description="研究橫跨政策、制度、發展、運銷、貿易、消費、生產、管理、土地、資源與環境。"
+              heading={t.fullTime.heading}
+              description={t.fullTime.description}
             />
-            <FacultyFilterGrid members={standard} tabs={tabs} />
+            <FacultyFilterGrid lang={lang} members={standard} tabs={tabs} />
           </div>
         </section>
 
@@ -182,7 +223,7 @@ export function Faculty({ faculty }: { faculty: FacultyMember[] }) {
             <SectionTitle
               no="02"
               eyebrow="AFFILIATED FACULTY"
-              heading="合聘與兼任師資"
+              heading={t.affiliated.heading}
             />
             {/* `.faculty-grid-secondary` narrows the grid to 3 columns and
                 indents it by 28%; it is still `.faculty-grid`, so both classes
@@ -191,6 +232,7 @@ export function Faculty({ faculty }: { faculty: FacultyMember[] }) {
               {affiliated.map((member) => (
                 <FacultyCard
                   key={member.id}
+                  lang={lang}
                   member={member}
                   showCategory={false}
                 />
@@ -204,15 +246,15 @@ export function Faculty({ faculty }: { faculty: FacultyMember[] }) {
             <SectionTitle
               no="03"
               eyebrow="LEGACY & VISITING"
-              heading="客座、名譽與退休教師"
-              description="長年累積的教學與研究傳承，是本系持續前進的重要基礎。"
+              heading={t.legacy.heading}
+              description={t.legacy.description}
             />
             {/* A group is skipped entirely when its category is empty: an
                 accordion whose panel has nothing in it is worse than no
                 accordion. All three are populated by the 2026 seed, so this
                 matches the reference site one-for-one with real data. */}
             {visiting.length > 0 ? (
-              <LegacyGroup eyebrow="VISITING FACULTY" heading="客座教師">
+              <LegacyGroup eyebrow="VISITING FACULTY" heading={t.legacy.visiting}>
                 <div className="visiting-profile-list">
                   {visiting.map((member) => (
                     <article key={member.id}>
@@ -223,20 +265,27 @@ export function Faculty({ faculty }: { faculty: FacultyMember[] }) {
                         {member.photo_url ? (
                           // Unlike the standard card, this alt is composed from
                           // the *category*, not the title: 柏靖峰客座教師形象照
-                          // while the title reads 客座教師 · 助理教授.
+                          // while the title reads 客座教師 · 助理教授. The
+                          // category has to go through `categoryLabel()` — it is
+                          // the one column that is never translated upstream.
                           <img
                             src={member.photo_url}
-                            alt={`${member.name}${member.category}形象照`}
+                            alt={fill(t.visitingPortraitAlt, {
+                              name: member.name,
+                              category: categoryLabel(member.category, lang),
+                            })}
                           />
                         ) : null}
                       </figure>
                       <div>
+                        {/* Their own English name, shown beside the Chinese one
+                            on both sites — see LegacyResumeList above. */}
                         {member.name_en ? <p>{member.name_en}</p> : null}
                         <h4>{member.name}</h4>
                         <small>{member.title}</small>
                         {member.fields ? (
                           <dl>
-                            <dt>研究與授課領域</dt>
+                            <dt>{t.legacy.fieldsLabel}</dt>
                             <dd>{member.fields}</dd>
                           </dl>
                         ) : null}
@@ -247,13 +296,19 @@ export function Faculty({ faculty }: { faculty: FacultyMember[] }) {
               </LegacyGroup>
             ) : null}
             {emeritus.length > 0 ? (
-              <LegacyGroup eyebrow="EMERITUS FACULTY" heading="名譽教授">
-                <LegacyResumeList members={emeritus} />
+              <LegacyGroup eyebrow="EMERITUS FACULTY" heading={t.legacy.emeritus}>
+                <LegacyResumeList
+                  members={emeritus}
+                  experienceLabel={t.legacy.experienceLabel}
+                />
               </LegacyGroup>
             ) : null}
             {retired.length > 0 ? (
-              <LegacyGroup eyebrow="RETIRED FACULTY" heading="退休師資">
-                <LegacyResumeList members={retired} />
+              <LegacyGroup eyebrow="RETIRED FACULTY" heading={t.legacy.retired}>
+                <LegacyResumeList
+                  members={retired}
+                  experienceLabel={t.legacy.experienceLabel}
+                />
               </LegacyGroup>
             ) : null}
           </div>
@@ -264,7 +319,7 @@ export function Faculty({ faculty }: { faculty: FacultyMember[] }) {
             <SectionTitle
               no="04"
               eyebrow="ADMINISTRATION"
-              heading="行政同仁"
+              heading={t.administration.heading}
             />
             {/* `.admin-grid article` is the card selector. Note these mailto
                 links have no trailing ↗ — the only email style on the page
@@ -283,7 +338,7 @@ export function Faculty({ faculty }: { faculty: FacultyMember[] }) {
           </div>
         </section>
       </div>
-      <NextRoute />
+      <NextRoute lang={lang} />
     </SiteShell>
   );
 }
