@@ -1,6 +1,6 @@
 import type { Faculty } from "@/lib/data";
 import { translate, type Lang } from "@/lib/i18n";
-import { categoryLabel, fill, FACULTY } from "@/lib/i18n/faculty";
+import { categoryLabel, displayName, fill, FACULTY } from "@/lib/i18n/faculty";
 
 /**
  * `.faculty-grid article` — the standard portrait card, used by both
@@ -40,6 +40,9 @@ export function FacultyCard({
 }) {
   const t = translate(FACULTY, lang);
 
+  // One name slot, so it has to pick one language — see displayName().
+  const shownName = displayName(member, lang);
+
   return (
     <article style={visible ? undefined : { display: "none" }}>
       {/* `has-photo` clears the green fill; `no-photo` keeps it and lets the
@@ -53,16 +56,19 @@ export function FacultyCard({
           <img
             src={member.photo_url}
             alt={fill(t.cardPortraitAlt, {
-              name: member.name,
+              name: shownName,
               title: member.title,
             })}
           />
         ) : (
+          // The initial stays Chinese in both languages: it is a graphic
+          // element sized for one 42px serif glyph, and a Latin initial in
+          // that slot reads as a typo rather than a monogram.
           member.name.slice(0, 1)
         )}
       </div>
       <p>{member.title}</p>
-      <h3>{member.name}</h3>
+      <h3>{shownName}</h3>
       {showCategory ? (
         // `category` itself is never translated — it selects the card layout —
         // so the chip goes through the dictionary. Unlike the reference site,

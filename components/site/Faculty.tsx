@@ -1,6 +1,6 @@
 import type { Faculty as FacultyMember } from "@/lib/data";
 import { translate, type Lang } from "@/lib/i18n";
-import { categoryLabel, fill, FACULTY } from "@/lib/i18n/faculty";
+import { FACULTY, categoryLabel, displayName, fill, namePair } from "@/lib/i18n/faculty";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
@@ -96,9 +96,11 @@ function LegacyGroup({
  * the page that needs that one string.
  */
 function LegacyResumeList({
+  lang,
   members,
   experienceLabel,
 }: {
+  lang: Lang;
   members: FacultyMember[];
   experienceLabel: string;
 }) {
@@ -107,11 +109,15 @@ function LegacyResumeList({
       {members.map((member) => (
         <article key={member.id}>
           <div className="legacy-person-name">
-            {/* `name_en` is printed above the Chinese name on *both* sites: it
-                is the person's own English name shown beside their Chinese one,
-                not a translation that replaces it, so /en keeps the pair. */}
-            {member.name_en ? <p>{member.name_en}</p> : null}
-            <h4>{member.name}</h4>
+            {/* Both names always show — `name_en` is the person's own English
+                name shown beside their Chinese one, not a translation that
+                replaces it. Which one is the <h4> follows the same mirroring
+                rule as InteriorHero and the admission cards: the heading is
+                the page's language, the small line above it is the other. */}
+            {namePair(member, lang).kicker ? (
+              <p>{namePair(member, lang).kicker}</p>
+            ) : null}
+            <h4>{namePair(member, lang).heading}</h4>
           </div>
           <div className="legacy-career">
             {member.experience ? (
@@ -278,10 +284,12 @@ export function Faculty({
                         ) : null}
                       </figure>
                       <div>
-                        {/* Their own English name, shown beside the Chinese one
-                            on both sites — see LegacyResumeList above. */}
-                        {member.name_en ? <p>{member.name_en}</p> : null}
-                        <h4>{member.name}</h4>
+                        {/* Both names, heading in the page's language — see
+                            LegacyResumeList above. */}
+                        {namePair(member, lang).kicker ? (
+                          <p>{namePair(member, lang).kicker}</p>
+                        ) : null}
+                        <h4>{namePair(member, lang).heading}</h4>
                         <small>{member.title}</small>
                         {member.fields ? (
                           <dl>
@@ -298,6 +306,7 @@ export function Faculty({
             {emeritus.length > 0 ? (
               <LegacyGroup eyebrow="EMERITUS FACULTY" heading={t.legacy.emeritus}>
                 <LegacyResumeList
+                  lang={lang}
                   members={emeritus}
                   experienceLabel={t.legacy.experienceLabel}
                 />
@@ -306,6 +315,7 @@ export function Faculty({
             {retired.length > 0 ? (
               <LegacyGroup eyebrow="RETIRED FACULTY" heading={t.legacy.retired}>
                 <LegacyResumeList
+                  lang={lang}
                   members={retired}
                   experienceLabel={t.legacy.experienceLabel}
                 />
@@ -327,7 +337,8 @@ export function Faculty({
             <div className="admin-grid">
               {administration.map((member) => (
                 <article key={member.id}>
-                  <h3>{member.name}</h3>
+                  {/* One name slot, same rule as the portrait card. */}
+                  <h3>{displayName(member, lang)}</h3>
                   <p>{member.title}</p>
                   {member.email ? (
                     <a href={`mailto:${member.email}`}>{member.email}</a>

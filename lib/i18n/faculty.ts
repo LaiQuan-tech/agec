@@ -194,3 +194,45 @@ export function fill(
     key in values ? String(values[key]) : token
   );
 }
+
+/**
+ * The name to print where a layout has only one name slot — the standard
+ * portrait card and the administration card.
+ *
+ * The legacy layouts (名譽/退休/客座) do *not* use this: they have two slots
+ * and print `name_en` above the Chinese name on both sites, because that pair
+ * is how the reference site shows those people.
+ *
+ * Falls back to the Chinese name when `name_en` is null. That is one real row
+ * today — the staff member whose English name the department's own English
+ * site has not updated (it still lists a predecessor) — and showing their
+ * Chinese name is better than inventing a romanisation for a real person.
+ */
+export function displayName(
+  member: { name: string; name_en: string | null },
+  lang: Lang
+): string {
+  return lang === "en" ? (member.name_en ?? member.name) : member.name;
+}
+
+/**
+ * The two names a legacy card shows at once (名譽 / 退休 / 客座).
+ *
+ * Unlike `displayName`, nothing is dropped here — those layouts have a slot
+ * for each. What changes with the language is which one is the heading: the
+ * page's own language leads and the other sits above it as a kicker, the same
+ * mirroring InteriorHero applies to page titles and the admission cards apply
+ * to programme names.
+ *
+ * `kicker` is null when the pair would repeat itself — a legacy row with no
+ * `name_en`, where there is only one name to show.
+ */
+export function namePair(
+  member: { name: string; name_en: string | null },
+  lang: Lang
+): { heading: string; kicker: string | null } {
+  if (lang === "en" && member.name_en) {
+    return { heading: member.name_en, kicker: member.name };
+  }
+  return { heading: member.name, kicker: member.name_en };
+}
