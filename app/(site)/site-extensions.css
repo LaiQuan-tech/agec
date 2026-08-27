@@ -42,9 +42,9 @@
 .faculty-grid article.faculty-chair {
   grid-column: 1 / -1;
   display: grid;
-  /* portrait | text | field beside the chip | email, pushed to the far edge */
-  grid-template-columns: auto auto auto minmax(0, 1fr);
-  grid-template-rows: repeat(4, auto); /* see the warning above */
+  /* portrait | text | field beside the chip, then filler */
+  grid-template-columns: auto auto minmax(0, 1fr);
+  grid-template-rows: repeat(5, auto); /* see the warning above */
   align-content: center;
   justify-items: start;
   text-align: left; /* the portrait card centres; the banner does not */
@@ -85,34 +85,17 @@
   margin-top: 14px; /* level with the chip's own margin-top */
 }
 /* `.faculty-grid a` is `position:absolute; bottom:24px; left:16px; right:16px`
-   — pinned to the bottom of a tall card and stretched edge to edge. In a
-   banner that leaves the address alone on its own line with the whole right
-   half of the row empty, so it goes back into flow and moves to that edge. */
+   — pinned to the bottom of a tall card and stretched edge to edge. Here it
+   goes back into flow and sits under the rest of the text block.
+   (It was briefly parked against the banner's right edge to fill the row; the
+   client asked for it back under the details, so the whole right-hand column
+   is now just breathing room.) */
 .faculty-grid article.faculty-chair > a {
-  grid-area: 1 / 4 / -1 / 5;
-  justify-self: end;
-  align-self: center;
+  grid-area: 5 / 2 / 6 / 4;
+  justify-self: start;
   position: static;
   inset: auto;
-}
-
-/* Two columns of cards: the banner is half as wide, and the address no longer
-   has room to sit out on its own edge. Fold it back under the text. */
-@media (max-width: 860px) {
-  .faculty-grid article.faculty-chair {
-    grid-template-columns: auto auto minmax(0, 1fr);
-    grid-template-rows: repeat(5, auto);
-  }
-  .faculty-grid article.faculty-chair > p,
-  .faculty-grid article.faculty-chair > h3,
-  .faculty-grid article.faculty-chair > p.faculty-english-name {
-    grid-column: 2 / 4;
-  }
-  .faculty-grid article.faculty-chair > a {
-    grid-area: 5 / 2 / 6 / 4;
-    justify-self: start;
-    margin-top: 18px;
-  }
+  margin-top: 18px;
 }
 
 /* Below 600px the grid is already one column, so `grid-column: 1/-1` is a
