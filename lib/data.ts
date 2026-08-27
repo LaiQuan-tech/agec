@@ -64,6 +64,23 @@ export type Faculty = {
   experience: string | null;
   photo_url: string | null;
   sort_order: number;
+  /**
+   * True for the department chair, who gets the full-width banner row at the
+   * top of the faculty grid instead of a standard portrait card.
+   *
+   * Derived here rather than in the component because `title` is resolved to
+   * one language by `pick()` a few lines below — a component-level match
+   * against 「系主任」 would silently never fire on /en, where the same row
+   * reads "Distinguished Professor and Chair". The raw Chinese column is the
+   * only place both languages agree.
+   *
+   * Matching the title instead of carrying a flag column means the office only
+   * has to edit two people's titles when the chair changes and the banner
+   * follows on its own. 「系主任」 is unique across all 37 rows — 張宏浩 is
+   * 副院長 / Vice Dean and does not match. Should a second row ever match,
+   * only the first is featured; see the hoist in components/site/Faculty.tsx.
+   */
+  is_chair: boolean;
 };
 
 export type Course = {
@@ -134,7 +151,8 @@ type NewsRow = NewsItem & {
   category_en: string | null;
 };
 
-type FacultyRow = Faculty & {
+/** `is_chair` is computed by toFaculty(), not selected — the table has no such column. */
+type FacultyRow = Omit<Faculty, "is_chair"> & {
   title_en: string | null;
   fields_en: string | null;
   experience_en: string | null;
@@ -181,6 +199,9 @@ function toNews(row: NewsRow, lang: Lang): NewsItem {
   };
 }
 
+/** Substring of the Chinese `title` that identifies the chair. See Faculty.is_chair. */
+const CHAIR_MARKER = "系主任";
+
 function toFaculty(row: FacultyRow, lang: Lang): Faculty {
   return {
     id: row.id,
@@ -193,6 +214,9 @@ function toFaculty(row: FacultyRow, lang: Lang): Faculty {
     experience: pickNullable(row.experience, row.experience_en, lang),
     photo_url: row.photo_url,
     sort_order: row.sort_order,
+    // `row.title`, not the resolved `title` above: the English title says
+    // "Chair", not 「系主任」.
+    is_chair: row.title.includes(CHAIR_MARKER),
   };
 }
 

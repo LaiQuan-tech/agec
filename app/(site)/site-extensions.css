@@ -1,0 +1,112 @@
+/*
+ * Local additions to the ported reference stylesheet.
+ *
+ * site.css is the reference site's build copied byte for byte, and
+ * app/(site)/layout.tsx asks for it to stay that way — so anything this
+ * project adds on top lives here instead, where it can be read in one screen
+ * and reverted without touching the port.
+ *
+ * Loaded *after* site.css from the same layout, so on equal specificity these
+ * rules win. Both files are unlayered, so no @layer juggling is involved.
+ * This file must never be imported into app/(admin): the two route groups load
+ * separate stylesheets on purpose (see app/layout.tsx).
+ */
+
+/* ---------------------------------------------------------------------------
+ * 系主任特寫橫幅 — the first cell of `.faculty-grid`, spanning the full row.
+ *
+ * `.faculty-grid` has no positional selectors at all: its rules are
+ * "container border-top+left, every cell border-right+bottom". A cell that
+ * spans every column therefore draws correct grid lines with no special
+ * casing, the same way `.faculty-empty` already does.
+ *
+ * Every selector below is `.faculty-grid article.faculty-chair` (0,2,1) so it
+ * outranks `.faculty-grid article` (0,1,1). Dropping the `.faculty-grid`
+ * prefix would tie on specificity and lose to source order for some
+ * properties.
+ *
+ * The card's DOM is flat — portrait, title, name, English name, category chip,
+ * field, email as siblings — because site.css matches `>p` directly and a
+ * wrapper would break it. So the two-column layout is done with explicit
+ * `grid-area` placement rather than nesting.
+ * ------------------------------------------------------------------------ */
+
+.faculty-grid article.faculty-chair {
+  grid-column: 1 / -1;
+  display: grid;
+  /* col 1 portrait · col 2 text · col 3 the field beside the category chip */
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-content: center;
+  justify-items: start;
+  text-align: left; /* the portrait card centres; the banner does not */
+  min-height: 0; /* 450px is sized for a tall portrait card */
+  padding: 44px clamp(24px, 4vw, 56px);
+  column-gap: clamp(28px, 4vw, 56px);
+}
+
+.faculty-grid article.faculty-chair > .faculty-portrait {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  align-self: center;
+  margin: 0;
+  width: clamp(150px, 13vw, 200px);
+}
+
+/* Rows 1–5 of the text column. Explicit placement, so a member missing an
+   optional field simply leaves that row empty instead of reflowing the rest. */
+.faculty-grid article.faculty-chair > p {
+  grid-area: 1 / 2 / 2 / 4;
+}
+.faculty-grid article.faculty-chair > h3 {
+  grid-area: 2 / 2 / 3 / 4;
+  font-size: clamp(28px, 3vw, 36px);
+}
+.faculty-grid article.faculty-chair > p.faculty-english-name {
+  grid-area: 3 / 2 / 4 / 4;
+  color: var(--muted);
+  font: 500 12px var(--sans);
+  letter-spacing: 0.04em;
+  margin: 6px 0 0;
+}
+.faculty-grid article.faculty-chair > .faculty-category {
+  grid-area: 4 / 2 / 5 / 3;
+}
+.faculty-grid article.faculty-chair > .faculty-field {
+  grid-area: 4 / 3 / 5 / 4;
+  align-self: center;
+  margin-top: 14px; /* matches the chip's own margin-top so they sit level */
+}
+/* `.faculty-grid a` is `position:absolute; bottom:24px; left:16px; right:16px`
+   — pinned to the bottom of a tall card and stretched edge to edge. Across a
+   full-width banner that puts the address alone on its own line metres from
+   the name, so it goes back into flow. */
+.faculty-grid article.faculty-chair > a {
+  grid-area: 5 / 2 / 6 / 4;
+  position: static;
+  inset: auto;
+  margin-top: 22px;
+}
+
+/* Below 600px the grid is already one column, so `grid-column: 1/-1` is a
+   no-op — but the banner's own two-column layout would still squeeze the text
+   into ~150px beside the portrait. Fall back to the portrait card's own
+   stacked, centred shape. */
+@media (max-width: 600px) {
+  .faculty-grid article.faculty-chair {
+    grid-template-columns: 1fr;
+    text-align: center;
+    justify-items: center;
+    padding: 24px 24px 70px;
+  }
+  .faculty-grid article.faculty-chair > * {
+    grid-area: auto / 1 / auto / 2;
+  }
+  .faculty-grid article.faculty-chair > .faculty-portrait {
+    grid-row: auto;
+    margin: 2px auto 24px;
+    width: 158px;
+  }
+  .faculty-grid article.faculty-chair > .faculty-field {
+    margin-top: 12px;
+  }
+}

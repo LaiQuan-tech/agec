@@ -167,6 +167,22 @@ export function Faculty({
   const affiliated = standard.filter((m) => AFFILIATED.includes(m.category));
 
   /**
+   * The chair's card spans the whole grid row, so it only reads as a feature
+   * banner while it is the *first* cell — anywhere else it cuts the grid in
+   * half. `sort_order` happens to put her first today; hoisting makes that true
+   * by construction instead of by luck, and takes only the first match so a
+   * transitional period with two 系主任 titles cannot produce two banners.
+   */
+  const chairIndex = standard.findIndex((m) => m.is_chair);
+  const ordered =
+    chairIndex > 0
+      ? [
+          standard[chairIndex],
+          ...standard.filter((_, i) => i !== chairIndex),
+        ]
+      : standard;
+
+  /**
    * The reference site hard-codes 全部/專任師資/合聘師資/兼任師資. Deriving the
    * same four tabs from the data in source order reproduces them exactly while
    * keeping the tabs in sync with `category` — a hard-coded list would silently
@@ -220,7 +236,7 @@ export function Faculty({
               heading={t.fullTime.heading}
               description={t.fullTime.description}
             />
-            <FacultyFilterGrid lang={lang} members={standard} tabs={tabs} />
+            <FacultyFilterGrid lang={lang} members={ordered} tabs={tabs} />
           </div>
         </section>
 

@@ -1,6 +1,12 @@
 import type { Faculty } from "@/lib/data";
 import { translate, type Lang } from "@/lib/i18n";
-import { categoryLabel, displayName, fill, FACULTY } from "@/lib/i18n/faculty";
+import {
+  categoryLabel,
+  displayName,
+  fill,
+  namePair,
+  FACULTY,
+} from "@/lib/i18n/faculty";
 
 /**
  * `.faculty-grid article` — the standard portrait card, used by both
@@ -40,11 +46,25 @@ export function FacultyCard({
 }) {
   const t = translate(FACULTY, lang);
 
-  // One name slot, so it has to pick one language — see displayName().
-  const shownName = displayName(member, lang);
+  /**
+   * The chair gets the full-width banner variant: two name slots (the other
+   * language sits under the heading as `.faculty-english-name`), a portrait on
+   * the left and the text left-aligned beside it. Everyone else keeps the
+   * standard portrait card, which has one name slot and has to pick a language.
+   *
+   * The DOM stays flat and in the same order for both — site.css addresses
+   * `.faculty-grid article>p` as a *direct* child, so wrapping the banner's
+   * text in a container would drop the title's styling. The two-column layout
+   * comes from explicit grid placement in site-extensions.css instead.
+   */
+  const names = member.is_chair ? namePair(member, lang) : null;
+  const shownName = names ? names.heading : displayName(member, lang);
 
   return (
-    <article style={visible ? undefined : { display: "none" }}>
+    <article
+      className={member.is_chair ? "faculty-chair" : undefined}
+      style={visible ? undefined : { display: "none" }}
+    >
       {/* `has-photo` clears the green fill; `no-photo` keeps it and lets the
           42px serif initial show through. The reference site has a photo for
           all 22 cards, but photo_url is nullable, so the fallback is real. */}
@@ -69,6 +89,11 @@ export function FacultyCard({
       </div>
       <p>{member.title}</p>
       <h3>{shownName}</h3>
+      {names?.kicker ? (
+        // Class name borrowed from `.faculty-resume-card`'s unused rules in
+        // site.css — the same 11px Latin caps treatment this needs.
+        <p className="faculty-english-name">{names.kicker}</p>
+      ) : null}
       {showCategory ? (
         // `category` itself is never translated — it selects the card layout —
         // so the chip goes through the dictionary. Unlike the reference site,

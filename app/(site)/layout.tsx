@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import "./site.css";
+import "./site-extensions.css";
 
 /**
  * Layout for the 8 public routes. The route group's parentheses keep it out of
@@ -13,6 +14,10 @@ import "./site.css";
  * this tree, and do not slice site.css apart: the public pages need its
  * Preflight, and its own unlayered `.container` rule already beats the Tailwind
  * one inside the same file.
+ *
+ * site-extensions.css carries this project's own additions on top of the port
+ * and is imported second so it wins ties. Keep it out of app/(admin) — the two
+ * route groups load separate stylesheets on purpose.
  */
 export default function SiteLayout({ children }: { children: ReactNode }) {
   return children;
