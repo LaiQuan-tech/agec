@@ -17,19 +17,38 @@ import { formatNewsDate } from "./format";
 /**
  * 最新消息 (/news, /en/news) — route 02 / 08.
  *
- * The page is a single `.inner-section#section-1`: hero + local nav + section
- * title (A-class static copy, in lib/i18n/news.ts), then one B-class block
- * reading getNews() — `article.inner-news-feature` for the first row and
- * `.inner-news-list` for the rest — wrapped by two C-class controls that are
- * cosmetic on the reference site (see the two comments below).
+ * Two `.inner-section`s. `#section-1` is the reference site's whole page:
+ * hero + local nav + section title (A-class static copy, in lib/i18n/news.ts),
+ * then one B-class block reading getNews() — `article.inner-news-feature` for
+ * the first row and `.inner-news-list` for the rest — wrapped by two C-class
+ * controls that are cosmetic on the reference site (see the comments below).
+ *
+ * `#section-2` is an addition: 演講公告 rows were pulled out of that list into
+ * their own block at the client's request. It takes the id the local nav's
+ * 演講 / Talks anchor was already pointing at (the reference left it dead), and
+ * disappears entirely when there are no talks rather than rendering an empty
+ * container.
  */
 
 /** Reference feature image, used whenever the first row has no cover_url. */
 const FEATURE_FALLBACK_IMAGE = "/images/courtyard.jpg";
 
+/** The `news.category` value that routes a row to `#section-2`. Chinese: see below. */
+const TALKS_CATEGORY = "演講公告";
+
 export function News({ lang, news }: { lang: Lang; news: NewsItem[] }) {
   const t = translate(NEWS, lang);
-  const [feature, ...rest] = news;
+
+  /**
+   * `category_zh`, not `category`: the latter is already resolved to the page's
+   * language by lib/data.ts, so matching it against 「演講公告」 would put every
+   * talk in `#section-2` on /news and none of them there on /en — with no
+   * error either way. See NewsItem.category_zh.
+   */
+  const talks = news.filter((item) => item.category_zh === TALKS_CATEGORY);
+  const [feature, ...rest] = news.filter(
+    (item) => item.category_zh !== TALKS_CATEGORY
+  );
 
   return (
     <SiteShell lang={lang} variant="interior">
@@ -120,6 +139,35 @@ export function News({ lang, news }: { lang: Lang; news: NewsItem[] }) {
             </nav>
           </div>
         </section>
+
+        {talks.length > 0 ? (
+          <section className="inner-section tint" id="section-2">
+            <div className="container">
+              <SectionTitle
+                no="02"
+                eyebrow="TALKS & SEMINARS"
+                heading={t.talksHeading}
+                description={t.talksDescription}
+              />
+              {/* Same `.inner-news-list` rows as `#section-1`, but without the
+                  `.inner-news-layout` wrapper — that is the two-column grid
+                  holding the feature card, and there is no feature here, so the
+                  list runs the full width of the container. */}
+              <div className="inner-news-list">
+                {talks.map((item) => (
+                  <a href="#" key={item.id}>
+                    <time dateTime={item.published_at.slice(0, 10)}>
+                      {formatNewsDate(item.published_at).full}
+                    </time>
+                    <span>{item.category}</span>
+                    <h3>{item.title}</h3>
+                    <i>↗</i>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
       </div>
       <NextRoute lang={lang} />
     </SiteShell>

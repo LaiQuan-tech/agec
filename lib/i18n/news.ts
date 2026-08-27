@@ -59,6 +59,17 @@ export const NEWS = {
   /** The feature card's read-more link. The arrow is part of the label. */
   featureLink: { zh: "閱讀完整消息 →", en: "Read the full story →" },
 
+  /**
+   * `#section-2`, the talks-only block. Its heading is deliberately not the
+   * category label 「演講公告」 printed on each row a few centimetres below —
+   * the same rule `sectionHeading` follows for `LATEST UPDATES`.
+   */
+  talksHeading: { zh: "演講與研討會", en: "Talks and seminars" },
+  talksDescription: {
+    zh: "系上與跨校的演講、研討會與學術交流場次，獨立成區以便快速查找。",
+    en: "Departmental and inter-university talks, seminars and academic exchange, listed on their own so they are easy to find.",
+  },
+
   /** `.pagination`: its aria-label, then the only label that isn't a number. */
   paginationLabel: { zh: "消息分頁", en: "News pagination" },
   paginationNext: { zh: "下一頁 →", en: "Next →" },
@@ -67,8 +78,12 @@ export const NEWS = {
 /**
  * `nav.local-nav` anchors, verbatim from the reference.
  *
- * Note #section-2 … #section-5 have no target — the page only renders
- * `#section-1`. That is the reference site's own behaviour (clicking those four
+ * #section-2 (演講 / Talks) now has a real target: the talks were pulled out
+ * into their own block at the client's request, and it took the id the anchor
+ * was already pointing at.
+ *
+ * #section-3 … #section-5 still have none — the page renders no 活動花絮 /
+ * 招生 / 徵才 blocks. That is the reference site's own behaviour (clicking them
  * does nothing); don't "fix" it by inventing sections.
  */
 export const NEWS_LOCAL_NAV = [
@@ -80,8 +95,13 @@ export const NEWS_LOCAL_NAV = [
 ] satisfies { href: string; label: Msg }[];
 
 /**
- * The six `.filter-tabs` labels, copied verbatim from the reference markup
- * rather than derived from the data.
+ * The `.filter-tabs` labels, copied from the reference markup rather than
+ * derived from the data.
+ *
+ * The reference ships six. 演講公告 is dropped here because those rows moved to
+ * their own `#section-2`: a tab for a category the list below it no longer
+ * contains would be the one place the tabs' cosmetic-only nature actually
+ * misleads someone.
  *
  * They deliberately do NOT line up with `news.category`: the data also has
  * 榮譽/系友榮耀, which has no tab, and the data says 招生資訊 where the tab says
@@ -99,7 +119,6 @@ export const NEWS_LOCAL_NAV = [
 export const NEWS_FILTER_TABS = [
   { value: "全部", label: { zh: "全部", en: "All" } },
   { value: "最新公告", label: { zh: "最新公告", en: "Announcements" } },
-  { value: "演講公告", label: { zh: "演講公告", en: "Talks" } },
   { value: "活動剪影", label: { zh: "活動剪影", en: "Event highlights" } },
   { value: "招生", label: { zh: "招生", en: "Admissions" } },
   { value: "求職徵才", label: { zh: "求職徵才", en: "Careers" } },

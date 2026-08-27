@@ -27,46 +27,54 @@
  *
  * The card's DOM is flat — portrait, title, name, English name, category chip,
  * field, email as siblings — because site.css matches `>p` directly and a
- * wrapper would break it. So the two-column layout is done with explicit
- * `grid-area` placement rather than nesting.
+ * wrapper would break it. So the layout is done with explicit `grid-area`
+ * placement rather than nesting.
+ *
+ * ⚠️ `grid-template-rows` is declared even though every track is `auto`, and
+ * removing it is not a simplification. Row line `-1` addresses the end of the
+ * *explicit* grid; with no explicit rows it resolves back to line 1, so the
+ * portrait's `1 / -1` silently collapses to a single row. The symptom is not a
+ * missing style but a broken banner: the first row stretches to the portrait's
+ * full height, the job title floats alone at the top of it, and the name is
+ * pushed a couple of hundred pixels below the photo.
  * ------------------------------------------------------------------------ */
 
 .faculty-grid article.faculty-chair {
   grid-column: 1 / -1;
   display: grid;
-  /* col 1 portrait · col 2 text · col 3 the field beside the category chip */
-  grid-template-columns: auto auto minmax(0, 1fr);
+  /* portrait | text | field beside the chip | email, pushed to the far edge */
+  grid-template-columns: auto auto auto minmax(0, 1fr);
+  grid-template-rows: repeat(4, auto); /* see the warning above */
   align-content: center;
   justify-items: start;
   text-align: left; /* the portrait card centres; the banner does not */
   min-height: 0; /* 450px is sized for a tall portrait card */
-  padding: 44px clamp(24px, 4vw, 56px);
-  column-gap: clamp(28px, 4vw, 56px);
+  padding: 34px clamp(24px, 3.5vw, 48px);
+  column-gap: clamp(24px, 3vw, 44px);
+  row-gap: 2px;
 }
 
 .faculty-grid article.faculty-chair > .faculty-portrait {
-  grid-column: 1;
-  grid-row: 1 / -1;
+  grid-area: 1 / 1 / -1 / 2;
   align-self: center;
   margin: 0;
-  width: clamp(150px, 13vw, 200px);
+  width: clamp(128px, 10vw, 164px);
 }
 
-/* Rows 1–5 of the text column. Explicit placement, so a member missing an
-   optional field simply leaves that row empty instead of reflowing the rest. */
 .faculty-grid article.faculty-chair > p {
   grid-area: 1 / 2 / 2 / 4;
 }
 .faculty-grid article.faculty-chair > h3 {
   grid-area: 2 / 2 / 3 / 4;
-  font-size: clamp(28px, 3vw, 36px);
+  font-size: clamp(26px, 2.4vw, 32px);
+  margin-top: 2px;
 }
 .faculty-grid article.faculty-chair > p.faculty-english-name {
   grid-area: 3 / 2 / 4 / 4;
   color: var(--muted);
-  font: 500 12px var(--sans);
+  font: 500 13px var(--sans);
   letter-spacing: 0.04em;
-  margin: 6px 0 0;
+  margin: 5px 0 0;
 }
 .faculty-grid article.faculty-chair > .faculty-category {
   grid-area: 4 / 2 / 5 / 3;
@@ -74,26 +82,47 @@
 .faculty-grid article.faculty-chair > .faculty-field {
   grid-area: 4 / 3 / 5 / 4;
   align-self: center;
-  margin-top: 14px; /* matches the chip's own margin-top so they sit level */
+  margin-top: 14px; /* level with the chip's own margin-top */
 }
 /* `.faculty-grid a` is `position:absolute; bottom:24px; left:16px; right:16px`
-   — pinned to the bottom of a tall card and stretched edge to edge. Across a
-   full-width banner that puts the address alone on its own line metres from
-   the name, so it goes back into flow. */
+   — pinned to the bottom of a tall card and stretched edge to edge. In a
+   banner that leaves the address alone on its own line with the whole right
+   half of the row empty, so it goes back into flow and moves to that edge. */
 .faculty-grid article.faculty-chair > a {
-  grid-area: 5 / 2 / 6 / 4;
+  grid-area: 1 / 4 / -1 / 5;
+  justify-self: end;
+  align-self: center;
   position: static;
   inset: auto;
-  margin-top: 22px;
+}
+
+/* Two columns of cards: the banner is half as wide, and the address no longer
+   has room to sit out on its own edge. Fold it back under the text. */
+@media (max-width: 860px) {
+  .faculty-grid article.faculty-chair {
+    grid-template-columns: auto auto minmax(0, 1fr);
+    grid-template-rows: repeat(5, auto);
+  }
+  .faculty-grid article.faculty-chair > p,
+  .faculty-grid article.faculty-chair > h3,
+  .faculty-grid article.faculty-chair > p.faculty-english-name {
+    grid-column: 2 / 4;
+  }
+  .faculty-grid article.faculty-chair > a {
+    grid-area: 5 / 2 / 6 / 4;
+    justify-self: start;
+    margin-top: 18px;
+  }
 }
 
 /* Below 600px the grid is already one column, so `grid-column: 1/-1` is a
-   no-op — but the banner's own two-column layout would still squeeze the text
-   into ~150px beside the portrait. Fall back to the portrait card's own
-   stacked, centred shape. */
+   no-op — but the banner's own columns would still squeeze the text into a
+   sliver beside the portrait. Fall back to the portrait card's own stacked,
+   centred shape. */
 @media (max-width: 600px) {
   .faculty-grid article.faculty-chair {
     grid-template-columns: 1fr;
+    grid-template-rows: none;
     text-align: center;
     justify-items: center;
     padding: 24px 24px 70px;
@@ -102,11 +131,152 @@
     grid-area: auto / 1 / auto / 2;
   }
   .faculty-grid article.faculty-chair > .faculty-portrait {
-    grid-row: auto;
     margin: 2px auto 24px;
     width: 158px;
   }
   .faculty-grid article.faculty-chair > .faculty-field {
     margin-top: 12px;
   }
+  .faculty-grid article.faculty-chair > a {
+    justify-self: center;
+    margin-top: 18px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * 可讀字級下限 — legible font sizes
+ *
+ * The ported design runs an 8 / 9 / 10 / 11px scale for labels and tops out at
+ * 13px for running text. Every one of those is below the 12px floor Lighthouse
+ * checks in its "Document uses legible font sizes" audit, which is part of the
+ * mobile-friendliness signal Google reads — 57 rules in site.css were under it.
+ *
+ * Rather than editing the port, the whole scale is lifted here:
+ *
+ *     8px, 9px  →  12px      the smallest labels; letter-spaced Latin caps
+ *     10px      →  13px
+ *     11px      →  14px
+ *     12px      →  13px      short labels, links, dates
+ *     13px      →  14px      buttons and inline links
+ *     any of the above, when it is a *sentence*  →  15px
+ *
+ * The last line is the point: a chip reading 「專任師資」 and a paragraph of
+ * research description were both 11px in the original, and only one of them is
+ * something a person reads for more than a second. Selectors that set running
+ * text (`p`, `dd`, `figcaption`) are lifted to 15px regardless of where they
+ * started, so the relative hierarchy survives while the floor is cleared.
+ *
+ * The selectors are copied verbatim from site.css — same specificity, later in
+ * the cascade, so each simply wins. Several are multi-selector groups; splitting
+ * them would change specificity for none of them but is easy to get wrong, so
+ * they are kept exactly as written there.
+ *
+ * ⚠️ The `@media (max-width:600px)` block at the end is not optional. site.css
+ * re-declares `.route-number` at 9px inside that breakpoint, and a top-level
+ * override — however specific — loses to it below 600px.
+ * ------------------------------------------------------------------------ */
+
+/* 8px/9px → 12px */
+.admission-card small,
+.alumni-feature>div>span,
+.alumni-sectors span,
+.course-head,
+.desktop-nav small,
+.faculty-category,
+.faculty-experience strong,.emeritus-grid small strong,
+.faculty-grid a,
+.feature-overlay p,
+.footer-bottom,
+.hero-foot,
+.hero-index,
+.hero-pagination button,
+.inner-news-feature span,
+.inner-news-list span,
+.legacy-group-title span,
+.legacy-resume-list a,
+.motion-option-copy strong,
+.motion-option>header small,
+.next-route p,
+.program-grid small,
+.story-grid small,
+.tag,
+.visiting-profile-list dt,.legacy-career>span {
+  font-size: 12px;
+}
+
+/* 10px/12px → 13px */
+.admissions-links,
+.breadcrumb,
+.campus-note,
+.circle-link,
+.document-grid i,
+.document-grid>a>span,
+.faculty-grid article>p,
+.faculty-result-count,
+.feature-overlay a,
+.footer-contact,
+.footer-links a,
+.inner-news-list time,
+.inner-section-title p,
+.institution-bar,
+.local-nav a,
+.motion-note,
+.name-list a,.admin-grid a,
+.news-item time span,
+.route-number,
+.schedule-note,
+.stat-row span,
+.story-grid span,
+.visiting-profile-list p,.legacy-person-name p,
+.visiting-profile-list small {
+  font-size: 13px;
+}
+
+/* 11px/13px → 14px */
+.alumni-feature a,
+.button,
+.desktop-nav span,
+.eyebrow,
+.faculty-field,
+.faculty-grid article.faculty-resume-card>p.faculty-english-name,
+.faculty-no,
+.filter-tabs button,
+.inline-link,
+.inner-news-feature a,
+.interior-title-row p,
+.menu-grid span,
+.pagination,
+.program-grid a,
+.schedule-line span,
+.text-action {
+  font-size: 14px;
+}
+
+/* 11px/12px/13px → 15px */
+.about-photo-grid figcaption,
+.alumni-feature p,
+.archive-grid p,
+.document-grid p,
+.faculty-grid article.faculty-resume-card>p.faculty-experience,
+.history-image p,
+.inner-news-feature p,
+.leader p,.association-branches p,
+.legacy-career p,
+.motion-option-copy p,
+.name-list p,.admin-grid p,
+.principle-grid p,
+.program-grid p,
+.research-item p,
+.steps p,
+.timeline p,
+.visiting-profile-list dd {
+  font-size: 15px;
+}
+
+@media(max-width:600px) {
+  /* 9px → 12px */
+  .route-number {
+    font-size: 12px;
+  }
+
 }

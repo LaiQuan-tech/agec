@@ -23,7 +23,17 @@ import { pick, pickNullable, type Lang } from "@/lib/i18n";
 export type NewsItem = {
   id: number;
   published_at: string;
+  /** Display category in the requested language. */
   category: string;
+  /**
+   * The Chinese category as stored — the stable key to group or match on.
+   *
+   * Same reason `Program.name_zh` exists: `category` above is resolved to one
+   * language, so a component comparing it against 「演講公告」 matches every row
+   * on /news and none at all on /en, silently. Anything that decides *where* a
+   * row is rendered must read this instead.
+   */
+  category_zh: string;
   title: string;
   body: string | null;
   cover_url: string | null;
@@ -145,7 +155,8 @@ export type LinkItem = {
  * exist only so the mapping functions below are type-checked.         *
  * ------------------------------------------------------------------ */
 
-type NewsRow = NewsItem & {
+/** `category_zh` is derived by toNews() from `category`, not a column. */
+type NewsRow = Omit<NewsItem, "category_zh"> & {
   title_en: string | null;
   body_en: string | null;
   category_en: string | null;
@@ -192,6 +203,7 @@ function toNews(row: NewsRow, lang: Lang): NewsItem {
     id: row.id,
     published_at: row.published_at,
     category: pick(row.category, row.category_en, lang),
+    category_zh: row.category,
     title: pick(row.title, row.title_en, lang),
     body: pickNullable(row.body, row.body_en, lang),
     cover_url: row.cover_url,
