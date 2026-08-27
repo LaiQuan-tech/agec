@@ -12,12 +12,25 @@ export type PostFormValues = {
   id?: number;
   slug: string;
   title: string;
+  /** Empty string stands in for a null column, so the inputs stay uncontrolled. */
+  title_en: string;
   excerpt: string;
+  excerpt_en: string;
   cover_url: string;
   content_html: string;
   content_json: unknown;
+  content_html_en: string;
+  content_json_en: unknown;
   author: string;
-  /** Already joined with commas — the action splits it back apart. */
+  author_en: string;
+  /**
+   * Already joined with commas — the action splits it back apart.
+   *
+   * No `tags_en`, and not by oversight: `tags` is a `text[]` meant to be matched
+   * against for filtering, and a translated copy would stop matching the moment
+   * one side was filled in and the other was not — the same trap that keeps
+   * `courses.program` untranslated. Tags stay in one language for both sites.
+   */
   tags: string;
   status: PostStatus;
   /** Taipei wall-clock, in the format <input type="datetime-local"> expects. */
@@ -55,6 +68,22 @@ export function PostForm({
               required
               maxLength={200}
               aria-invalid={Boolean(state.fieldErrors?.title)}
+            />
+          </Field>
+
+          <Field
+            htmlFor="title_en"
+            label="標題 Title (English)"
+            error={state.fieldErrors?.title_en}
+            hint="留空的話，英文版網頁會直接顯示上面的中文，所以不必一次全部翻完。"
+          >
+            <Input
+              id="title_en"
+              name="title_en"
+              defaultValue={initial.title_en}
+              maxLength={300}
+              lang="en"
+              aria-invalid={Boolean(state.fieldErrors?.title_en)}
             />
           </Field>
 
@@ -129,13 +158,57 @@ export function PostForm({
             />
           </Field>
 
+          <Field
+            htmlFor="excerpt_en"
+            label="摘要 Excerpt (English)"
+            error={state.fieldErrors?.excerpt_en}
+            hint="留空的話，英文版網頁會直接顯示上面的中文摘要，所以不必一次全部翻完。"
+          >
+            <Textarea
+              id="excerpt_en"
+              name="excerpt_en"
+              rows={3}
+              defaultValue={initial.excerpt_en}
+              maxLength={600}
+              lang="en"
+              aria-invalid={Boolean(state.fieldErrors?.excerpt_en)}
+            />
+          </Field>
+
+          {/* Not a <Field>: the editing surface is a contenteditable div, which a
+              <label htmlFor> cannot target. The heading is a plain span and the
+              accessible name is passed to the editor as aria-label instead. */}
           <div className="flex flex-col gap-1.5">
             <span className="text-[13px] font-medium" style={{ color: "var(--ink)" }}>
               內文
             </span>
-            <Editor initialHtml={initial.content_html} initialJson={initial.content_json} />
+            <Editor
+              initialHtml={initial.content_html}
+              initialJson={initial.content_json}
+              htmlName="content_html"
+              jsonName="content_json"
+              ariaLabel="文章內文編輯區"
+            />
             <p className="text-[12px]" style={{ color: "var(--muted)" }}>
               圖片請先上傳到別處，再用「插入圖片」貼上網址。工具列以外的格式（例如底線、顏色）儲存時會被移除。
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[13px] font-medium" style={{ color: "var(--ink)" }}>
+              內文 Content (English)
+            </span>
+            <Editor
+              initialHtml={initial.content_html_en}
+              initialJson={initial.content_json_en}
+              htmlName="content_html_en"
+              jsonName="content_json_en"
+              ariaLabel="英文內文編輯區"
+              lang="en"
+            />
+            <p className="text-[12px]" style={{ color: "var(--muted)" }}>
+              留空的話，英文版文章會直接顯示上面的中文內文，所以可以先翻標題和摘要，內文之後再補。
+              動過又全部刪光也算留空，不會在英文版留下一篇空白文章。
             </p>
           </div>
 
@@ -159,7 +232,7 @@ export function PostForm({
               htmlFor="tags"
               label="標籤"
               error={state.fieldErrors?.tags}
-              hint="用逗號分隔，例如：政策, 農業經濟"
+              hint="用逗號分隔，例如：政策, 農業經濟。兩種語言共用同一組標籤，沒有英文版。"
             >
               <Input
                 id="tags"
@@ -169,6 +242,26 @@ export function PostForm({
               />
             </Field>
           </div>
+
+          {/* Outside the two-column grid on purpose: 標籤 occupies the other half,
+              so an English twin placed inside it would land beside the tags
+              rather than under the 作者 it translates. Same call as 分類 English
+              on the 最新消息 form. */}
+          <Field
+            htmlFor="author_en"
+            label="作者 Author (English)"
+            error={state.fieldErrors?.author_en}
+            hint="留空的話，英文版網頁會直接顯示上面的中文署名。同一個單位請固定用同一種英文寫法。"
+          >
+            <Input
+              id="author_en"
+              name="author_en"
+              defaultValue={initial.author_en}
+              maxLength={120}
+              lang="en"
+              aria-invalid={Boolean(state.fieldErrors?.author_en)}
+            />
+          </Field>
 
           <Field
             htmlFor="cover_url"

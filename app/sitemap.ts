@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { LANGS, localizePath } from "@/lib/i18n";
+import { getPostSlugs } from "@/lib/data";
 import { SITE_ORIGIN } from "@/lib/site-routes";
 
 const ROUTES = [
@@ -11,15 +12,23 @@ const ROUTES = [
   "/courses",
   "/students",
   "/alumni",
+  "/blog",
 ];
 
 /**
- * Both language versions of all eight public routes, each carrying the
+ * Both language versions of every public route — the eight in lib/nav.ts plus
+ * /blog and one entry per published post — each carrying the
  * `alternates.languages` block so a crawler that finds one version knows the
  * other exists. /admin and /login are omitted deliberately.
+ *
+ * Async because the post list comes from the database. Drafts and scheduled
+ * posts are excluded by getPostSlugs, so this never advertises a URL that
+ * would 404.
  */
-export default function sitemap(): MetadataRoute.Sitemap {
-  return ROUTES.flatMap((route) =>
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const posts = (await getPostSlugs()).map((slug) => `/blog/${slug}`);
+
+  return [...ROUTES, ...posts].flatMap((route) =>
     LANGS.map((lang) => ({
       url: `${SITE_ORIGIN}${localizePath(route, lang)}`,
       changeFrequency: "weekly" as const,

@@ -19,8 +19,15 @@ export type InteriorHeroProps = {
    * leaving a gap where the kicker was.
    */
   titleEn: string;
-  /** "NN" half of the route number; the "/ 08" denominator is added here. */
-  routeNo: string;
+  /**
+   * "NN" half of the route number; the "/ 08" denominator is added here.
+   *
+   * Omit it for a page that is not one of the eight routes in lib/nav.ts —
+   * /blog is the only one today. `.interior-title-row` is
+   * `justify-content: space-between`, so dropping the second child simply
+   * leaves the title block left-aligned rather than breaking the row.
+   */
+  routeNo?: string;
   /** Standfirst paragraph under the title row, already in the right language. */
   lead: string;
   /** alt text for the hero photo, already in the right language. */
@@ -98,7 +105,9 @@ export function InteriorHero({
               React emits three text nodes, and the browser shapes the run in
               three pieces — measurably 0.016px wider than the reference at the
               600 and 375 breakpoints. Joining them first makes it one run. */}
-          <span className="route-number">{`${routeNo} / ${ROUTE_TOTAL}`}</span>
+          {routeNo ? (
+            <span className="route-number">{`${routeNo} / ${ROUTE_TOTAL}`}</span>
+          ) : null}
         </div>
         <p className="interior-lead">{lead}</p>
       </div>

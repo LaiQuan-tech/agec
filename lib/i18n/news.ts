@@ -70,6 +70,9 @@ export const NEWS = {
     en: "Departmental and inter-university talks, seminars and academic exchange, listed on their own so they are easy to find.",
   },
 
+  /** Link out to /blog, which has no place in the site-wide navigation. */
+  toBlog: { zh: "閱讀專欄文章", en: "Read our features" },
+
   /** `.pagination`: its aria-label, then the only label that isn't a number. */
   paginationLabel: { zh: "消息分頁", en: "News pagination" },
   paginationNext: { zh: "下一頁 →", en: "Next →" },

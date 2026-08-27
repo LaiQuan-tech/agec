@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { footerColumns } from "./nav";
 import { navHref } from "@/lib/nav";
-import { translate, type Lang } from "@/lib/i18n";
+import { localizePath, translate, type Lang } from "@/lib/i18n";
 import { COMMON } from "@/lib/i18n/common";
+import { BLOG_TITLE } from "@/lib/i18n/blog";
 
 /**
  * Site footer. `#contact` and `#sitemap` are the anchor targets the institution
@@ -43,14 +44,24 @@ export function SiteFooter({ lang }: { lang: Lang }) {
             <a href="mailto:agec@ntu.edu.tw">agec@ntu.edu.tw</a>
           </p>
         </div>
+        {/* Exactly two <div>s: site.css addresses them as `.footer-links div`
+            and the pair is the column grid. /blog is appended inside the second
+            one rather than becoming a third column — and it is appended here
+            rather than added to lib/nav.ts, because that list also drives the
+            "NN / 08" route number on every interior hero. */}
         <div className="footer-links" id="sitemap">
-          {footerColumns(lang).map((column, i) => (
+          {footerColumns(lang).map((column, i, all) => (
             <div key={i}>
               {column.map((item) => (
                 <Link key={item.href} href={navHref(item.href, lang)}>
                   {item.label}
                 </Link>
               ))}
+              {i === all.length - 1 ? (
+                <Link href={localizePath("/blog", lang)}>
+                  {BLOG_TITLE[lang]}
+                </Link>
+              ) : null}
             </div>
           ))}
         </div>

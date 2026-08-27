@@ -133,6 +133,36 @@ export type Program = {
 };
 
 /**
+ * A blog post, as the public /blog routes see it.
+ *
+ * Unlike the other tables this one is *filtered* as well as translated:
+ * lib/supabase/server.ts hands out a service-role client, which bypasses RLS
+ * entirely, so the `public read published posts` policy on the table protects
+ * nothing here. The draft/scheduled filter below is the only thing standing
+ * between an unpublished draft and the open internet — do not remove it on the
+ * grounds that "the policy already covers it".
+ */
+export type Post = {
+  id: number;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  cover_url: string | null;
+  /** Sanitised HTML from the admin's TipTap editor. See BlogPost.tsx. */
+  content_html: string;
+  author: string | null;
+  /**
+   * Always the Chinese tags as stored. Same rule as `Course.program`: this is
+   * the value any future tag filter matches on, so translating it in place
+   * would break that match the moment one side was translated and the other
+   * was not. The table has no `tags_en` for exactly this reason.
+   */
+  tags: string[];
+  /** Never null on a published row — `posts_published_needs_date` enforces it. */
+  published_at: string;
+};
+
+/**
  * `section` groups link cards by the page whose `.resource-row` renders them.
  * The column is plain text with no CHECK constraint, so this union is the only
  * thing keeping the four live values in step with the four pages that query
@@ -184,6 +214,14 @@ type ProgramRow = {
 };
 
 type LinkRow = LinkItem & { label_en: string | null };
+type PostRow = Omit<Post, "content_html"> & {
+  content_html: string;
+  title_en: string | null;
+  excerpt_en: string | null;
+  author_en: string | null;
+  content_html_en: string | null;
+};
+
 
 const NEWS_COLUMNS =
   "id, published_at, category, title, body, cover_url, is_pinned, title_en, body_en, category_en";
@@ -197,6 +235,9 @@ const PROGRAM_COLUMNS =
   "id, name, name_en, description, description_en, sort_order";
 
 const LINK_COLUMNS = "id, section, label, url, sort_order, label_en";
+const POST_COLUMNS =
+  "id, slug, title, excerpt, cover_url, content_html, author, tags, published_at, title_en, excerpt_en, author_en, content_html_en";
+
 
 function toNews(row: NewsRow, lang: Lang): NewsItem {
   return {
@@ -384,4 +425,89 @@ export async function getLinks(
     return [];
   }
   return (data ?? []).map((row) => toLink(row, lang));
+}
+
+function toPost(row: PostRow, lang: Lang): Post {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: pick(row.title, row.title_en, lang),
+    excerpt: pickNullable(row.excerpt, row.excerpt_en, lang),
+    cover_url: row.cover_url,
+    // `pick` rather than `pickNullable`: the Chinese column is NOT NULL with a
+    // '' default, so a post whose body was never written falls back to an empty
+    // string and BlogPost renders nothing instead of crashing on null.
+    content_html: pick(row.content_html, row.content_html_en, lang),
+    author: pickNullable(row.author, row.author_en, lang),
+    tags: row.tags,
+    published_at: row.published_at,
+  };
+}
+
+/**
+ * ⚠️ All three getters below repeat the same two filters —
+ * `status = 'published'` and `published_at <= now()` — deliberately, rather
+ * than sharing a helper. supabase-js builders are not easily wrapped without
+ * casting away their types, and a cast here would be worse than the repetition:
+ * these two lines are the entire access control for /blog, so they should be
+ * visible at each call site rather than hidden behind a function whose types
+ * no longer check. Change one, change all three.
+ */
+
+/** Published posts, newest first. Used by /blog. */
+export async function getPosts(lang: Lang): Promise<Post[]> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("posts")
+    .select(POST_COLUMNS)
+    .eq("status", "published")
+    // Scheduled posts: a future `published_at` is how the admin queues one up,
+    // so "published" alone is not enough.
+    .lte("published_at", new Date().toISOString())
+    .order("published_at", { ascending: false })
+    .returns<PostRow[]>();
+
+  if (error) {
+    console.error("[lib/data] getPosts failed:", error.message);
+    return [];
+  }
+  return (data ?? []).map((row) => toPost(row, lang));
+}
+
+/** One published post, or null when the slug is unknown, a draft, or scheduled. */
+export async function getPostBySlug(
+  slug: string,
+  lang: Lang
+): Promise<Post | null> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("posts")
+    .select(POST_COLUMNS)
+    .eq("slug", slug)
+    .eq("status", "published")
+    .lte("published_at", new Date().toISOString())
+    .maybeSingle<PostRow>();
+
+  if (error) {
+    console.error(`[lib/data] getPostBySlug(${slug}) failed:`, error.message);
+    return null;
+  }
+  return data ? toPost(data, lang) : null;
+}
+
+/** Every published slug, for generateStaticParams. Language-independent. */
+export async function getPostSlugs(): Promise<string[]> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("posts")
+    .select("slug")
+    .eq("status", "published")
+    .lte("published_at", new Date().toISOString())
+    .returns<{ slug: string }[]>();
+
+  if (error) {
+    console.error("[lib/data] getPostSlugs failed:", error.message);
+    return [];
+  }
+  return (data ?? []).map((row) => row.slug);
 }

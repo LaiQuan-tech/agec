@@ -16,7 +16,7 @@ import {
   requireId,
   text,
 } from "@/lib/admin/validate";
-import { POST_STATUSES, taipeiDateStamp, type PostStatus } from "./constants";
+import { hasEditorContent, POST_STATUSES, taipeiDateStamp, type PostStatus } from "./constants";
 
 type PostInput = {
   /**
@@ -27,11 +27,16 @@ type PostInput = {
    */
   slug: string | null;
   title: string;
+  title_en: string | null;
   excerpt: string | null;
+  excerpt_en: string | null;
   cover_url: string | null;
   content_html: string;
   content_json: unknown;
+  content_html_en: string | null;
+  content_json_en: unknown;
   author: string | null;
+  author_en: string | null;
   tags: string[];
   status: PostStatus;
   published_at: string | null;
@@ -62,6 +67,10 @@ function generateSlug(): string {
  * is whatever the request body says it is. Stored HTML is rendered verbatim to
  * every public visitor, so the one allowlist that actually decides what can
  * execute has to be this one.
+ *
+ * Both bodies go through it. `content_html_en` is posted by a second editor and
+ * lands on the same public page under /en, so an English body exempted from the
+ * allowlist would be an XSS hole with a language prefix in front of it.
  */
 const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   allowedTags: [
@@ -102,22 +111,71 @@ function parseTags(raw: string): string[] {
  * and survives on its own, and refusing the save would cost the author their
  * text over a field they never see.
  */
-function parseContentJson(raw: string): unknown {
+function parseContentJson(raw: string, column: string): unknown {
   if (!raw.trim()) return null;
   try {
     return JSON.parse(raw);
   } catch {
-    console.error("[admin/posts] content_json was not valid JSON; storing null");
+    // The column is named because there are two of them now, and "which body
+    // lost its JSON" is the first question anyone reading this line will ask.
+    console.error(`[admin/posts] ${column} was not valid JSON; storing null`);
     return null;
   }
 }
 
+/**
+ * The English body, or null when there is nothing in it.
+ *
+ * Sanitising first and testing second is deliberate: a body made only of tags
+ * the allowlist drops comes out of sanitizeHtml() empty, and it should count as
+ * "not written" rather than as a translation consisting of nothing.
+ *
+ * The JSON is dropped alongside the HTML. Keeping it would leave a row whose
+ * `content_html_en` is null — "not translated", the state the public page falls
+ * back on — while `content_json_en` still holds a document, and reopening the
+ * post would show an editor with content the site does not display.
+ *
+ * `content_html` gets none of this treatment on purpose: it is NOT NULL, it is
+ * the only rendering source the article has, and there is nothing behind it to
+ * fall back to. An empty Chinese body stays exactly as the editor produced it.
+ */
+function parseEnglishBody(form: FormData): {
+  content_html_en: string | null;
+  content_json_en: unknown;
+} {
+  const html = sanitizeHtml(String(form.get("content_html_en") ?? ""), SANITIZE_OPTIONS);
+  if (!hasEditorContent(html)) return { content_html_en: null, content_json_en: null };
+
+  return {
+    content_html_en: html,
+    content_json_en: parseContentJson(String(form.get("content_json_en") ?? ""), "content_json_en"),
+  };
+}
+
+/**
+ * None of the English columns are ever required, including the body: text()
+ * returns null for a blank field, which is what lib/i18n's pick() reads as "not
+ * translated yet" before falling back to the Chinese. Storing "" would survive
+ * (pick() trims) but would make an emptied field indistinguishable from a
+ * never-filled one, and the 英文 badge on the list counts exactly that.
+ *
+ * There is no `tags_en`, and the column does not exist either — see the note in
+ * supabase/migrations/20260827100000_posts_i18n.sql. `tags` is a `text[]` that
+ * a tag filter has to match against, and a translated copy would stop matching
+ * the moment one side was filled and the other was not: the same trap that
+ * keeps `courses.program` in one language. Both sites share one set of tags,
+ * and the plan for English tag names is a lookup table keyed on the Chinese
+ * value — never a second editable column beside this one.
+ */
 function parse(form: FormData): { values?: PostInput; fieldErrors?: Record<string, string> } {
   const title = text(form, "title", "標題", { required: true, max: 200 });
+  const titleEn = text(form, "title_en", "英文標題", { max: 300 });
   const slug = text(form, "slug", "網址代稱", { max: 120 });
   const excerpt = text(form, "excerpt", "摘要", { max: 300 });
+  const excerptEn = text(form, "excerpt_en", "英文摘要", { max: 600 });
   const coverUrl = text(form, "cover_url", "封面圖片網址", { max: 500 });
   const author = text(form, "author", "作者", { max: 60 });
+  const authorEn = text(form, "author_en", "英文作者", { max: 120 });
   const status = oneOf(form, "status", "狀態", POST_STATUSES, { required: true });
   const publishedAt = datetimeLocal(form, "published_at", "發佈時間");
 
@@ -141,10 +199,13 @@ function parse(form: FormData): { values?: PostInput; fieldErrors?: Record<strin
 
   const fieldErrors = collect({
     title: title.error,
+    title_en: titleEn.error,
     slug: slugError,
     excerpt: excerpt.error,
+    excerpt_en: excerptEn.error,
     cover_url: coverError,
     author: author.error,
+    author_en: authorEn.error,
     tags: tagsError,
     status: status.error,
     published_at: publishedAt.error,
@@ -169,11 +230,15 @@ function parse(form: FormData): { values?: PostInput; fieldErrors?: Record<strin
     values: {
       slug: slug.value,
       title: title.value!,
+      title_en: titleEn.value,
       excerpt: excerpt.value,
+      excerpt_en: excerptEn.value,
       cover_url: coverUrl.value,
       content_html: sanitizeHtml(String(form.get("content_html") ?? ""), SANITIZE_OPTIONS),
-      content_json: parseContentJson(String(form.get("content_json") ?? "")),
+      content_json: parseContentJson(String(form.get("content_json") ?? ""), "content_json"),
+      ...parseEnglishBody(form),
       author: author.value,
+      author_en: authorEn.value,
       tags,
       status: status.value!,
       published_at: resolvedPublishedAt,
@@ -239,7 +304,7 @@ export async function updatePost(_prev: ActionState, form: FormData): Promise<Ac
     if (error) return { ok: false, message: toChineseError(error) };
 
     revalidateFor("posts", existing?.slug, slug);
-    return { ok: true, message: "已儲存" };
+    return { ok: true, message: "已儲存，前台已同步更新" };
   } catch (error) {
     const authState = toAuthErrorState(error);
     if (authState) return authState;

@@ -1,5 +1,6 @@
+import Link from "next/link";
 import type { NewsItem } from "@/lib/data";
-import { translate, type Lang } from "@/lib/i18n";
+import { localizePath, translate, type Lang } from "@/lib/i18n";
 import {
   NEWS,
   NEWS_FILTER_TABS,
@@ -128,6 +129,15 @@ export function News({ lang, news }: { lang: Lang; news: NewsItem[] }) {
                 ))}
               </div>
             </div>
+            {/* /blog is not in the site-wide nav (adding a ninth route would
+                renumber every interior hero's "NN / 08"), so this and the
+                footer are how a reader finds it. Longer pieces live there;
+                this page is announcements. */}
+            <p className="news-to-blog">
+              <Link className="text-action" href={localizePath("/blog", lang)}>
+                {t.toBlog} <span>→</span>
+              </Link>
+            </p>
             {/* Decorative page numbers. The reference site ships exactly this
                 markup with zero JavaScript behind it — 02 / 03 / 下一頁 do
                 nothing when clicked. Reproduced as-is. */}

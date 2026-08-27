@@ -62,13 +62,35 @@ function ToolButton({
   );
 }
 
+/**
+ * A rich-text body, plus the two hidden fields that carry it to the action.
+ *
+ * The field names are props rather than constants because the form renders this
+ * twice — once for `content_html` / `content_json` and once for their `_en`
+ * twins. Two instances sharing a name would post two values under one key, and
+ * FormData.get() returns the first, so the English body would silently
+ * overwrite the Chinese one on every save (or the reverse, depending on which
+ * rendered first). Nothing would look wrong until someone reloaded the article.
+ */
 export function Editor({
   initialHtml,
   initialJson,
+  htmlName,
+  jsonName,
+  ariaLabel,
+  lang,
 }: {
   initialHtml: string;
   /** ProseMirror JSON from content_json; null for posts saved before it existed. */
   initialJson: unknown;
+  /** Form field the serialised HTML is posted under. */
+  htmlName: string;
+  /** Form field the ProseMirror JSON is posted under. */
+  jsonName: string;
+  /** The editing surface is a div, so it has no label of its own to borrow. */
+  ariaLabel: string;
+  /** BCP 47 tag for the text being typed, for screen readers and hyphenation. */
+  lang?: string;
 }) {
   const htmlRef = useRef<HTMLInputElement>(null);
   const jsonRef = useRef<HTMLInputElement>(null);
@@ -95,7 +117,8 @@ export function Editor({
     editorProps: {
       attributes: {
         class: "min-h-[320px] outline-none",
-        "aria-label": "文章內文編輯區",
+        "aria-label": ariaLabel,
+        ...(lang ? { lang } : {}),
       },
     },
     onUpdate: ({ editor }) => {
@@ -232,11 +255,11 @@ export function Editor({
       />
 
       {/* See writeField() above for why these are text inputs rather than hidden ones. */}
-      <input ref={htmlRef} type="text" name="content_html" defaultValue={initialHtml} hidden readOnly />
+      <input ref={htmlRef} type="text" name={htmlName} defaultValue={initialHtml} hidden readOnly />
       <input
         ref={jsonRef}
         type="text"
-        name="content_json"
+        name={jsonName}
         defaultValue={initialJson ? JSON.stringify(initialJson) : ""}
         hidden
         readOnly

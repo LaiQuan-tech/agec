@@ -14,12 +14,16 @@ import { HOME_HERO } from "@/lib/i18n/home";
  * direction. site.js collected them by `.hero-image` class rather than tag for
  * exactly this reason.
  *
- * Three overlays the reference site draws on top of the hero were removed at
- * the client's request: `.hero-index` (the four Latin terms down the right
- * edge), `.hero-pagination` (the 01 / 02 slide buttons) and the `.scroll-cue`
- * "SCROLL" marker. The carousel itself is untouched and still advances on its
- * own; it simply has no visible control any more. Its CSS is still in site.css,
- * so restoring any of them is a matter of putting the markup back.
+ * Everything the reference site draws on top of the hero has been removed at
+ * the client's request, in two passes: first `.hero-index` (the four Latin
+ * terms down the right edge), `.hero-pagination` (the 01 / 02 slide buttons)
+ * and the `.scroll-cue` "SCROLL" marker, then the whole `.hero-foot` bar with
+ * it ("Nearly a century of inquiry"). What is left is the copy block alone
+ * over the carousel.
+ *
+ * The carousel itself is untouched and still advances on its own; it simply
+ * has no visible control any more. All of that CSS is still in site.css, so
+ * restoring any piece is a matter of putting the markup back.
  *
  * Faithful details:
  *  - autoplay is 7s and is cleared on unmount, otherwise the timer would
@@ -122,15 +126,6 @@ export function HomeHero({ lang }: { lang: Lang }) {
         </div>
       </div>
 
-      {/* English on both sites: a typographic device, not a sentence.
-          The `.scroll-cue` span that sat beside it was removed at the client's
-          request. `.hero-foot` is `justify-content: space-between`, which with
-          one child is equivalent to flex-start, so the line stays put at the
-          left — and the mobile override that hides this span and switches to
-          `flex-end` now leaves the bar empty rather than misaligned. */}
-      <div className="hero-foot container">
-        <span>Nearly a century of inquiry</span>
-      </div>
     </section>
   );
 }

@@ -51,10 +51,13 @@ export function revalidateFor(entity: RevalidateEntity, ...slugs: (string | null
   }
 
   if (entity === "posts") {
-    // A path containing a dynamic segment needs the type argument.
+    // A path containing a dynamic segment needs the type argument, and the two
+    // language trees are separate route entries.
     revalidatePath("/blog/[slug]", "page");
+    revalidatePath(`${EN_PREFIX}/blog/[slug]`, "page");
     for (const slug of slugs) {
-      if (slug) revalidatePath(`/blog/${slug}`);
+      if (!slug) continue;
+      for (const path of bothLanguages(`/blog/${slug}`)) revalidatePath(path);
     }
   }
 }
