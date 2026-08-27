@@ -14,10 +14,16 @@ import { HOME_HERO } from "@/lib/i18n/home";
  * direction. site.js collected them by `.hero-image` class rather than tag for
  * exactly this reason.
  *
+ * Three overlays the reference site draws on top of the hero were removed at
+ * the client's request: `.hero-index` (the four Latin terms down the right
+ * edge), `.hero-pagination` (the 01 / 02 slide buttons) and the `.scroll-cue`
+ * "SCROLL" marker. The carousel itself is untouched and still advances on its
+ * own; it simply has no visible control any more. Its CSS is still in site.css,
+ * so restoring any of them is a matter of putting the markup back.
+ *
  * Faithful details:
- *  - autoplay is 7s, and clicking a dot does *not* reset the timer (matching the
- *    original, which never cleared its interval at all — here it is cleared on
- *    unmount, otherwise the timer would outlive a client navigation away).
+ *  - autoplay is 7s and is cleared on unmount, otherwise the timer would
+ *    outlive a client navigation away (the original never cleared it at all).
  *  - `prefers-reduced-motion` is read once at mount, not watched. Changing the
  *    OS setting mid-visit has no effect on the reference site either.
  *  - only the visible slide's image carries alt text.
@@ -85,6 +91,11 @@ export function HomeHero({ lang }: { lang: Lang }) {
 
       <div className="hero-text-scrim" aria-hidden="true" />
 
+      {/* `.hero-content` is `grid-template-columns: 1fr auto`. The `auto`
+          column held `.hero-index` (the four Latin terms down the right edge)
+          until it was removed at the client's request; a grid with one child
+          simply gives it the `1fr` track, so the copy block keeps its width
+          and nothing else moves. */}
       <div className="container hero-content" id="content">
         <div className="hero-copy">
           {/* Latin-caps kicker, not copy: printed the same on both sites. */}
@@ -109,42 +120,16 @@ export function HomeHero({ lang }: { lang: Lang }) {
             </Link>
           </div>
         </div>
-        {/* The four terms are English on the reference site's Chinese page and
-            are set in 9px Latin caps with a rule before each one — a device,
-            not a sentence, so /en prints exactly the same four. */}
-        <div className="hero-index" aria-label={t.indexLabel}>
-          <span>FOOD SYSTEMS</span>
-          <span>CLIMATE &amp; LAND</span>
-          <span>TRADE &amp; POLICY</span>
-          <span>DATA &amp; DECISIONS</span>
-        </div>
       </div>
 
-      {/* Also English on both sites, for the same reason. */}
+      {/* English on both sites: a typographic device, not a sentence.
+          The `.scroll-cue` span that sat beside it was removed at the client's
+          request. `.hero-foot` is `justify-content: space-between`, which with
+          one child is equivalent to flex-start, so the line stays put at the
+          left — and the mobile override that hides this span and switches to
+          `flex-end` now leaves the bar empty rather than misaligned. */}
       <div className="hero-foot container">
         <span>Nearly a century of inquiry</span>
-        <span className="scroll-cue">
-          SCROLL <i />
-        </span>
-      </div>
-
-      <div
-        className="hero-pagination"
-        role="group"
-        aria-label={t.paginationLabel}
-      >
-        {[0, 1].map((i) => (
-          <button
-            key={i}
-            type="button"
-            className={index === i ? "active" : ""}
-            aria-label={t.slide.replace("{n}", String(i + 1))}
-            aria-pressed={index === i}
-            onClick={() => setIndex(i)}
-          >
-            <span>0{i + 1}</span>
-          </button>
-        ))}
       </div>
     </section>
   );

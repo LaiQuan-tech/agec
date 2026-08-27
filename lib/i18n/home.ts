@@ -17,8 +17,9 @@ import type { Msg } from "@/lib/i18n";
  * the two-part shape and translates the second half into Latin caps, the same
  * treatment `SHARED.nextRouteKicker` gets. The three kickers that carry no
  * Chinese to begin with — "AGRICULTURAL ECONOMICS · NTU", "FROM NTU TO THE
- * WORLD" and the `.hero-index` terms — are pure typographic devices and stay
- * inline in the components, unchanged on both sites.
+ * WORLD" — are pure typographic devices and stay inline in the components,
+ * unchanged on both sites. (A third, the `.hero-index` list, was removed from
+ * the hero entirely.)
  *
  * On headings: every `<h2>` here is broken across a hard `<br>` that the design
  * depends on, so each one is stored as two lines rather than one string. The
@@ -48,16 +49,10 @@ export const HOME_HERO = {
     zh: "國立臺灣大學正門與校園景觀",
     en: "The main gate and campus of National Taiwan University",
   },
-  /** aria-label of `.hero-index`, the four Latin terms down the right edge. */
-  indexLabel: { zh: "研究關鍵領域", en: "Key research areas" },
-  /** aria-label of the `role="group"` around the two pagination dots. */
-  paginationLabel: { zh: "首頁主視覺切換", en: "Hero image selection" },
-  /**
-   * aria-label of one dot. `{n}` is replaced with the 1-based slide number —
-   * a placeholder rather than concatenation, because the number sits in the
-   * middle of the Chinese label and at the end of the English one.
-   */
-  slide: { zh: "顯示第 {n} 張主視覺", en: "Show hero image {n}" },
+  // indexLabel / paginationLabel / slide lived here until `.hero-index`, the
+  // 01 / 02 buttons and the SCROLL cue were removed from the hero. They were
+  // the aria-labels of exactly those three elements and have no other reader,
+  // so they are gone rather than left as dead entries.
 } satisfies Record<string, Msg>;
 
 /** Everything below the hero. */
