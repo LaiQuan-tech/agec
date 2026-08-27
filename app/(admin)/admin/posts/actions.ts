@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import sanitizeHtml from "sanitize-html";
+import { RICH_TEXT_SANITIZE } from "@/lib/sanitize";
 import { requireAdmin } from "@/lib/admin/auth";
 import {
   toChineseError,
@@ -59,41 +60,6 @@ function generateSlug(): string {
   return `post-${taipeiDateStamp()}-${tail}`;
 }
 
-/**
- * Re-sanitises the HTML the browser posted.
- *
- * The editor's allowlist runs in the browser and is therefore only a
- * convenience: a Server Action is an HTTP endpoint, so the `content_html` field
- * is whatever the request body says it is. Stored HTML is rendered verbatim to
- * every public visitor, so the one allowlist that actually decides what can
- * execute has to be this one.
- *
- * Both bodies go through it. `content_html_en` is posted by a second editor and
- * lands on the same public page under /en, so an English body exempted from the
- * allowlist would be an XSS hole with a language prefix in front of it.
- */
-const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
-  allowedTags: [
-    "p", "br", "hr",
-    "h2", "h3", "h4",
-    "strong", "em", "s", "code", "pre",
-    "blockquote",
-    "ul", "ol", "li",
-    "a", "img",
-  ],
-  allowedAttributes: {
-    a: ["href", "target", "rel"],
-    img: ["src", "alt"],
-  },
-  allowedSchemes: ["http", "https", "mailto"],
-  allowedSchemesByTag: { img: ["http", "https"] },
-  // Every link leaves the site, and rel is not optional: without noopener the
-  // opened page gets a handle on window.opener.
-  transformTags: {
-    a: sanitizeHtml.simpleTransform("a", { target: "_blank", rel: "noopener noreferrer" }),
-  },
-  disallowedTagsMode: "discard",
-};
 
 /** Comma-separated in, `text[]` out. Full-width commas count — staff type both. */
 function parseTags(raw: string): string[] {
@@ -143,7 +109,7 @@ function parseEnglishBody(form: FormData): {
   content_html_en: string | null;
   content_json_en: unknown;
 } {
-  const html = sanitizeHtml(String(form.get("content_html_en") ?? ""), SANITIZE_OPTIONS);
+  const html = sanitizeHtml(String(form.get("content_html_en") ?? ""), RICH_TEXT_SANITIZE);
   if (!hasEditorContent(html)) return { content_html_en: null, content_json_en: null };
 
   return {
@@ -234,7 +200,7 @@ function parse(form: FormData): { values?: PostInput; fieldErrors?: Record<strin
       excerpt: excerpt.value,
       excerpt_en: excerptEn.value,
       cover_url: coverUrl.value,
-      content_html: sanitizeHtml(String(form.get("content_html") ?? ""), SANITIZE_OPTIONS),
+      content_html: sanitizeHtml(String(form.get("content_html") ?? ""), RICH_TEXT_SANITIZE),
       content_json: parseContentJson(String(form.get("content_json") ?? ""), "content_json"),
       ...parseEnglishBody(form),
       author: author.value,

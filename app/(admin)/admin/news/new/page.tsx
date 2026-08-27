@@ -18,6 +18,12 @@ export default async function NewNewsPage() {
       <h1 className="text-[22px] font-bold" style={{ color: "var(--brand-green)" }}>
         新增消息
       </h1>
+      {/*
+        Every content field starts empty, 內文 included. An announcement with
+        nothing but a title and a date is a valid row here — that is the whole
+        difference between 最新消息 and 部落格 — so /news/[id] renders it
+        without a body block rather than the form insisting on one.
+      */}
       <NewsForm
         action={createNews}
         submitLabel="新增"
@@ -27,6 +33,13 @@ export default async function NewNewsPage() {
           category_en: "",
           title: "",
           title_en: "",
+          body: "",
+          body_en: "",
+          content_html: "",
+          content_json: null,
+          content_html_en: "",
+          content_json_en: null,
+          cover_url: "",
           is_pinned: false,
         }}
       />

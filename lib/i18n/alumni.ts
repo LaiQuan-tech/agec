@@ -1,4 +1,4 @@
-import type { Dict, Msg } from "@/lib/i18n";
+import type { Dict } from "@/lib/i18n";
 
 /**
  * Every string on 系友專區 (/alumni) — the one interior page with no DB reads

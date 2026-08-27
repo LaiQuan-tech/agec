@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { NewsItem } from "@/lib/data";
+import type { NewsItem, NewsPage } from "@/lib/data";
 import { localizePath, translate, type Lang } from "@/lib/i18n";
 import {
   NEWS,
@@ -20,7 +20,7 @@ import { formatNewsDate } from "./format";
  *
  * Two `.inner-section`s. `#section-1` is the reference site's whole page:
  * hero + local nav + section title (A-class static copy, in lib/i18n/news.ts),
- * then one B-class block reading getNews() — `article.inner-news-feature` for
+ * then one B-class block reading getNewsPage() — `article.inner-news-feature` for
  * the first row and `.inner-news-list` for the rest — wrapped by two C-class
  * controls that are cosmetic on the reference site (see the comments below).
  *
@@ -34,22 +34,40 @@ import { formatNewsDate } from "./format";
 /** Reference feature image, used whenever the first row has no cover_url. */
 const FEATURE_FALLBACK_IMAGE = "/images/courtyard.jpg";
 
-/** The `news.category` value that routes a row to `#section-2`. Chinese: see below. */
-const TALKS_CATEGORY = "演講公告";
+/**
+ * Page 1 lives at /news, the rest at /news/page/N.
+ *
+ * Path segments rather than `?page=N`: reading searchParams would make this
+ * route dynamic, and every other page on the site is statically prerendered
+ * with ISR. `/news/page/2` also does not collide with `/news/[id]` — a static
+ * segment wins over a dynamic sibling, and the two have different depths.
+ */
+function newsPagePath(page: number, lang: Lang): string {
+  return localizePath(page === 1 ? "/news" : `/news/page/${page}`, lang);
+}
 
-export function News({ lang, news }: { lang: Lang; news: NewsItem[] }) {
+export function News({
+  lang,
+  newsPage,
+  talks,
+}: {
+  lang: Lang;
+  newsPage: NewsPage;
+  talks: NewsItem[];
+}) {
   const t = translate(NEWS, lang);
+  const { items, page, totalPages } = newsPage;
 
   /**
-   * `category_zh`, not `category`: the latter is already resolved to the page's
-   * language by lib/data.ts, so matching it against 「演講公告」 would put every
-   * talk in `#section-2` on /news and none of them there on /en — with no
-   * error either way. See NewsItem.category_zh.
+   * The feature card is the newest item, so it only belongs on page 1 — a card
+   * labelled `FEATURED` holding the 9th-newest announcement would be a lie.
+   * Later pages are a plain full-width list.
+   *
+   * The talks split happens in lib/data.ts rather than here, because it decides
+   * the page count as well as the contents.
    */
-  const talks = news.filter((item) => item.category_zh === TALKS_CATEGORY);
-  const [feature, ...rest] = news.filter(
-    (item) => item.category_zh !== TALKS_CATEGORY
-  );
+  const feature = page === 1 ? items[0] : undefined;
+  const rest = page === 1 ? items.slice(1) : items;
 
   return (
     <SiteShell lang={lang} variant="interior">
@@ -107,9 +125,9 @@ export function News({ lang, news }: { lang: Lang; news: NewsItem[] }) {
                         the paragraph is dropped rather than filled with invented
                         copy, since this is a real department's public site. */}
                     {feature.body ? <p>{feature.body}</p> : null}
-                    {/* href="#" as on the reference site: neither site has a
-                        single-post page. */}
-                    <a href="#">{t.featureLink}</a>
+                    <Link href={localizePath(`/news/${feature.id}`, lang)}>
+                      {t.featureLink}
+                    </Link>
                   </div>
                 </article>
               ) : null}
@@ -118,14 +136,17 @@ export function News({ lang, news }: { lang: Lang; news: NewsItem[] }) {
                   <span>. No :nth-child rules, so the row count is free. */}
               <div className="inner-news-list">
                 {rest.map((item) => (
-                  <a href="#" key={item.id}>
+                  <Link
+                    href={localizePath(`/news/${item.id}`, lang)}
+                    key={item.id}
+                  >
                     <time dateTime={item.published_at.slice(0, 10)}>
                       {formatNewsDate(item.published_at).full}
                     </time>
                     <span>{item.category}</span>
                     <h3>{item.title}</h3>
                     <i>↗</i>
-                  </a>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -138,19 +159,53 @@ export function News({ lang, news }: { lang: Lang; news: NewsItem[] }) {
                 {t.toBlog} <span>→</span>
               </Link>
             </p>
-            {/* Decorative page numbers. The reference site ships exactly this
-                markup with zero JavaScript behind it — 02 / 03 / 下一頁 do
-                nothing when clicked. Reproduced as-is. */}
-            <nav className="pagination" aria-label={t.paginationLabel}>
-              <span>01</span>
-              <a href="#">02</a>
-              <a href="#">03</a>
-              <a href="#">{t.paginationNext}</a>
-            </nav>
+            {/* The reference site ships this row as decoration — 01/02/03 and
+                下一頁 with no JavaScript behind them, all `href="#"`, so
+                clicking one jumped to the top of the page. It is real now:
+                `.pagination` supplies the type and the right alignment, and
+                the links are ordinary routes, so it still needs no client JS.
+
+                Hidden entirely at one page rather than rendered as a lone
+                "01" — a control that cannot do anything is worse than no
+                control. */}
+            {totalPages > 1 ? (
+              <nav className="pagination" aria-label={t.paginationLabel}>
+                {page > 1 ? (
+                  <Link href={newsPagePath(page - 1, lang)}>
+                    {t.paginationPrev}
+                  </Link>
+                ) : null}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) =>
+                  n === page ? (
+                    // `.pagination span` is the current-page style in site.css.
+                    <span key={n} aria-current="page">
+                      {String(n).padStart(2, "0")}
+                    </span>
+                  ) : (
+                    <Link
+                      key={n}
+                      href={newsPagePath(n, lang)}
+                      aria-label={t.paginationPage.replace("{n}", String(n))}
+                    >
+                      {String(n).padStart(2, "0")}
+                    </Link>
+                  )
+                )}
+                {page < totalPages ? (
+                  <Link href={newsPagePath(page + 1, lang)}>
+                    {t.paginationNext}
+                  </Link>
+                ) : null}
+              </nav>
+            ) : null}
           </div>
         </section>
 
-        {talks.length > 0 ? (
+        {/* Page 1 only. The talks block is not paginated — it is the whole
+            set, every time — so repeating it under page 2's list would show
+            the same items again and put one panel at two URLs. LocalNav drops
+            its 演講 anchor by itself when the section is absent. */}
+        {page === 1 && talks.length > 0 ? (
           <section className="inner-section tint" id="section-2">
             <div className="container">
               <SectionTitle
@@ -165,14 +220,17 @@ export function News({ lang, news }: { lang: Lang; news: NewsItem[] }) {
                   list runs the full width of the container. */}
               <div className="inner-news-list">
                 {talks.map((item) => (
-                  <a href="#" key={item.id}>
+                  <Link
+                    href={localizePath(`/news/${item.id}`, lang)}
+                    key={item.id}
+                  >
                     <time dateTime={item.published_at.slice(0, 10)}>
                       {formatNewsDate(item.published_at).full}
                     </time>
                     <span>{item.category}</span>
                     <h3>{item.title}</h3>
                     <i>↗</i>
-                  </a>
+                  </Link>
                 ))}
               </div>
             </div>

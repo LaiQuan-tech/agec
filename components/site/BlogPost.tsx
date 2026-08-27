@@ -7,6 +7,7 @@ import { SHARED } from "@/lib/i18n/shared";
 import { SiteShell } from "./SiteShell";
 import { NextRoute } from "./NextRoute";
 import { formatNewsDate } from "./format";
+import { RICH_TEXT_SANITIZE } from "@/lib/sanitize";
 
 /**
  * 單篇文章 (/blog/[slug], /en/blog/[slug]).
@@ -17,49 +18,12 @@ import { formatNewsDate } from "./format";
  * instead — the article's own title is the largest thing on it.
  */
 
-/**
- * The same allowlist app/(admin)/admin/posts/actions.ts applies on save.
- *
- * Sanitising again on the way out is not redundancy for its own sake: the
- * Server Action is only one of the ways a row can be written. Anything that
- * reaches the table another way — the SQL editor, a script holding the service
- * role key, a future import — never passed through it. This is the last point
- * before the HTML reaches a browser, and the cost is a few microseconds on an
- * ISR page that rebuilds every five minutes.
- *
- * Keep the two lists identical. If the editor gains a tag, add it in both
- * places or the tag will be stripped on the way out and authors will see their
- * formatting silently vanish.
- */
-const RENDER_SANITIZE: sanitizeHtml.IOptions = {
-  allowedTags: [
-    "p", "br", "hr",
-    "h2", "h3", "h4",
-    "strong", "em", "s", "code", "pre",
-    "blockquote",
-    "ul", "ol", "li",
-    "a", "img",
-  ],
-  allowedAttributes: {
-    a: ["href", "target", "rel"],
-    img: ["src", "alt"],
-  },
-  allowedSchemes: ["http", "https", "mailto"],
-  allowedSchemesByTag: { img: ["http", "https"] },
-  transformTags: {
-    a: sanitizeHtml.simpleTransform("a", {
-      target: "_blank",
-      rel: "noopener noreferrer",
-    }),
-  },
-  disallowedTagsMode: "discard",
-};
 
 export function BlogPost({ lang, post }: { lang: Lang; post: Post }) {
   const t = translate(BLOG, lang);
   const shared = translate(SHARED, lang);
   const listPath = localizePath("/blog", lang);
-  const html = sanitizeHtml(post.content_html, RENDER_SANITIZE);
+  const html = sanitizeHtml(post.content_html, RICH_TEXT_SANITIZE);
 
   return (
     <SiteShell lang={lang} variant="interior">

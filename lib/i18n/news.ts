@@ -73,9 +73,27 @@ export const NEWS = {
   /** Link out to /blog, which has no place in the site-wide navigation. */
   toBlog: { zh: "閱讀專欄文章", en: "Read our features" },
 
-  /** `.pagination`: its aria-label, then the only label that isn't a number. */
+  /** `.pagination`: its aria-label, then the two non-numeric labels. */
   paginationLabel: { zh: "消息分頁", en: "News pagination" },
   paginationNext: { zh: "下一頁 →", en: "Next →" },
+  paginationPrev: { zh: "← 上一頁", en: "← Previous" },
+  /** aria-label of one page number. `{n}` is the page. */
+  paginationPage: { zh: "第 {n} 頁", en: "Page {n}" },
+
+  /* --- 單則消息 /news/[id] --- */
+
+  /** Breadcrumb segment between 首頁 and the item's own title. */
+  breadcrumbList: { zh: "最新消息", en: "News" },
+  /** Back link at the foot of a single item. */
+  backToList: { zh: "← 返回最新消息", en: "← Back to all news" },
+  /**
+   * Shown in place of the body when an item is a one-line announcement with
+   * nothing more to read. Not an error — most announcements are exactly that.
+   */
+  noBody: {
+    zh: "這則公告沒有進一步的內容。",
+    en: "There is nothing further to this announcement.",
+  },
 } satisfies Record<string, Msg>;
 
 /**

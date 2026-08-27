@@ -40,13 +40,28 @@ function bothLanguages(path: string): string[] {
 }
 
 /**
- * @param slugs post slugs to invalidate. Pass both the old and the new slug
- *   when a slug changes, otherwise the old URL keeps serving cached content.
+ * @param slugs the changed row's public identifier — a post slug, or a news
+ *   id. Pass both the old and the new value when a post's slug changes,
+ *   otherwise the old URL keeps serving cached content.
  */
 export function revalidateFor(entity: RevalidateEntity, ...slugs: (string | null | undefined)[]) {
   for (const path of AFFECTED_ROUTES[entity]) {
     for (const localized of bothLanguages(path)) {
       revalidatePath(localized);
+    }
+  }
+
+  if (entity === "news") {
+    // Editing one item changes the list's ordering and can move items across
+    // page boundaries, so every paginated page goes with it — and the item's
+    // own page in both languages.
+    revalidatePath("/news/page/[page]", "page");
+    revalidatePath(`${EN_PREFIX}/news/page/[page]`, "page");
+    revalidatePath("/news/[id]", "page");
+    revalidatePath(`${EN_PREFIX}/news/[id]`, "page");
+    for (const id of slugs) {
+      if (!id) continue;
+      for (const path of bothLanguages(`/news/${id}`)) revalidatePath(path);
     }
   }
 

@@ -3,8 +3,11 @@ import {
   getCourses,
   getFaculty,
   getLinks,
-  getNews,
+  getNewsById,
   getNewsHome,
+  getNewsIds,
+  getNewsPage,
+  getTalks,
   getPostBySlug,
   getPosts,
   getPrograms,
@@ -12,6 +15,7 @@ import {
 import type { Lang } from "@/lib/i18n";
 import { Home } from "./Home";
 import { News } from "./News";
+import { NewsPost } from "./NewsPost";
 import { About } from "./About";
 import { Faculty } from "./Faculty";
 import { Admissions } from "./Admissions";
@@ -46,11 +50,49 @@ export async function HomeRoute({ lang }: { lang: Lang }) {
   return <Home lang={lang} newsHome={newsHome} programs={programs} />;
 }
 
-export async function NewsRoute({ lang }: { lang: Lang }) {
-  const news = await getNews(lang);
+export async function NewsRoute({
+  lang,
+  page = 1,
+}: {
+  lang: Lang;
+  /** 1-based. Page 1 is /news; the rest are /news/page/N. */
+  page?: number;
+}) {
+  // Two queries, not one filtered in the component: the talks block shows every
+  // talk regardless of which page of announcements you are on, and the main
+  // list's page count has to be computed from the announcements alone.
+  const [newsPage, talks] = await Promise.all([
+    getNewsPage(page, lang),
+    getTalks(lang),
+  ]);
 
-  return <News lang={lang} news={news} />;
+  // A page number past the end is a 404 rather than an empty list — otherwise
+  // /news/page/99 is a real URL serving a blank column.
+  if (page > newsPage.totalPages) notFound();
+
+  return <News lang={lang} newsPage={newsPage} talks={talks} />;
 }
+
+export async function NewsItemRoute({
+  lang,
+  id,
+}: {
+  lang: Lang;
+  id: string;
+}) {
+  // The segment is whatever was in the URL, so reject anything that is not a
+  // plain positive integer before it reaches the database.
+  const numeric = /^\d+$/.test(id) ? Number(id) : NaN;
+  if (!Number.isSafeInteger(numeric)) notFound();
+
+  const item = await getNewsById(numeric, lang);
+  if (!item) notFound();
+
+  return <NewsPost lang={lang} item={item} />;
+}
+
+/** Re-exported so the route files can build their static params. */
+export { getNewsIds };
 
 /**
  * Fully static: every block on this page is editorial copy, no DB reads.

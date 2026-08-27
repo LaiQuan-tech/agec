@@ -115,20 +115,23 @@ export function routeMetadata(route: SiteRoute, lang: Lang): Metadata {
 }
 
 /**
- * Metadata for one blog post.
+ * Metadata for one piece of content at a dynamic route — a blog post
+ * (`/blog/<slug>`) or a news item (`/news/<id>`).
  *
- * `routeMetadata` above is keyed on the fixed route table, which a dynamic
- * `/blog/[slug]` has no entry in — hence a sibling that takes the values
- * directly. It reproduces the same three things that matter for a translated
- * page: an absolute title (the root layout's template is a single Chinese
- * string), the hreflang pair, and an OpenGraph block.
+ * `routeMetadata` above is keyed on the fixed route table, which neither of
+ * those has an entry in, hence a sibling that takes the values directly. It
+ * reproduces the same three things that matter for a translated page: an
+ * absolute title (the root layout's template is a single Chinese string), the
+ * hreflang pair, and an OpenGraph block.
+ *
+ * @param route the language-neutral path, leading slash included, e.g.
+ *   "/blog/my-post" or "/news/14". `localizePath` adds the /en prefix.
  */
-export function postMetadata(
-  slug: string,
+export function articleMetadata(
+  route: string,
   lang: Lang,
   post: { title: string; excerpt: string | null; cover_url: string | null }
 ): Metadata {
-  const route = `/blog/${slug}`;
   const description = post.excerpt ?? DEFAULT_DESCRIPTION[lang];
 
   return {

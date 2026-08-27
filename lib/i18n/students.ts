@@ -1,4 +1,4 @@
-import type { Dict, Msg } from "@/lib/i18n";
+import type { Dict } from "@/lib/i18n";
 
 /**
  * Every hard-coded string on 學生專區 (/students).

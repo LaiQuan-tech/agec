@@ -35,7 +35,17 @@ export type NewsItem = {
    */
   category_zh: string;
   title: string;
+  /**
+   * Plain-text standfirst, shown under the title on the feature card.
+   * Deliberately not HTML: `.inner-news-feature p` is a text node.
+   */
   body: string | null;
+  /**
+   * The article body, as sanitised HTML from the admin's editor. Null when the
+   * item is a one-line announcement with nothing more to read — /news/[id]
+   * still renders, just without a body block.
+   */
+  content_html: string | null;
   cover_url: string | null;
   is_pinned: boolean;
 };
@@ -190,6 +200,7 @@ type NewsRow = Omit<NewsItem, "category_zh"> & {
   title_en: string | null;
   body_en: string | null;
   category_en: string | null;
+  content_html_en: string | null;
 };
 
 /** `is_chair` is computed by toFaculty(), not selected — the table has no such column. */
@@ -223,8 +234,15 @@ type PostRow = Omit<Post, "content_html"> & {
 };
 
 
+/**
+ * The `news.category` value that routes a row to the talks block on /news
+ * instead of the main list. Chinese: `category` is never translated (it is the
+ * grouping key), see NewsItem.category_zh.
+ */
+export const TALKS_CATEGORY = "演講公告";
+
 const NEWS_COLUMNS =
-  "id, published_at, category, title, body, cover_url, is_pinned, title_en, body_en, category_en";
+  "id, published_at, category, title, body, content_html, cover_url, is_pinned, title_en, body_en, category_en, content_html_en";
 
 const FACULTY_COLUMNS =
   "id, name, name_en, title, category, fields, email, experience, photo_url, sort_order, title_en, fields_en, experience_en";
@@ -247,6 +265,7 @@ function toNews(row: NewsRow, lang: Lang): NewsItem {
     category_zh: row.category,
     title: pick(row.title, row.title_en, lang),
     body: pickNullable(row.body, row.body_en, lang),
+    content_html: pickNullable(row.content_html, row.content_html_en, lang),
     cover_url: row.cover_url,
     is_pinned: row.is_pinned,
   };
@@ -292,23 +311,6 @@ function toLink(row: LinkRow, lang: Lang): LinkItem {
     url: row.url,
     sort_order: row.sort_order,
   };
-}
-
-/** All news items: pinned first, then newest. Used by /news. */
-export async function getNews(lang: Lang): Promise<NewsItem[]> {
-  const supabase = createServerClient();
-  const { data, error } = await supabase
-    .from("news")
-    .select(NEWS_COLUMNS)
-    .order("is_pinned", { ascending: false })
-    .order("published_at", { ascending: false })
-    .returns<NewsRow[]>();
-
-  if (error) {
-    console.error("[lib/data] getNews failed:", error.message);
-    return [];
-  }
-  return (data ?? []).map((row) => toNews(row, lang));
 }
 
 /** Top `limit` news items: pinned first, then newest. Home page 最新消息 panel. */
@@ -510,4 +512,113 @@ export async function getPostSlugs(): Promise<string[]> {
     return [];
   }
   return (data ?? []).map((row) => row.slug);
+}
+
+/**
+ * Items per page on /news.
+ *
+ * Eight, not ten: page 1 spends one of them on the `.inner-news-feature` card,
+ * so a larger number leaves the list column running well past the feature
+ * image. Talks live in their own block on that page (see News.tsx) and are not
+ * counted here — `getNewsPage` pages the same rows the list actually shows.
+ */
+export const NEWS_PAGE_SIZE = 8;
+
+export type NewsPage = {
+  items: NewsItem[];
+  page: number;
+  totalPages: number;
+};
+
+/**
+ * One page of news, excluding 演講公告.
+ *
+ * The talks filter lives here rather than in the component because it decides
+ * the page count as well as the contents: filtering after slicing would give
+ * pages of uneven length and a total that does not match what is rendered.
+ * `category`, not the translated column — see NewsItem.category_zh.
+ */
+export async function getNewsPage(
+  page: number,
+  lang: Lang
+): Promise<NewsPage> {
+  const supabase = createServerClient();
+  const from = (page - 1) * NEWS_PAGE_SIZE;
+
+  const { data, error, count } = await supabase
+    .from("news")
+    .select(NEWS_COLUMNS, { count: "exact" })
+    .neq("category", TALKS_CATEGORY)
+    .order("is_pinned", { ascending: false })
+    .order("published_at", { ascending: false })
+    .range(from, from + NEWS_PAGE_SIZE - 1)
+    .returns<NewsRow[]>();
+
+  if (error) {
+    console.error("[lib/data] getNewsPage failed:", error.message);
+    return { items: [], page: 1, totalPages: 1 };
+  }
+
+  return {
+    items: (data ?? []).map((row) => toNews(row, lang)),
+    page,
+    // At least 1: an empty table still has a page 1 to render the empty state on.
+    totalPages: Math.max(1, Math.ceil((count ?? 0) / NEWS_PAGE_SIZE)),
+  };
+}
+
+/** 演講公告 rows, for the talks block on /news. */
+export async function getTalks(lang: Lang): Promise<NewsItem[]> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("news")
+    .select(NEWS_COLUMNS)
+    .eq("category", TALKS_CATEGORY)
+    .order("published_at", { ascending: false })
+    .returns<NewsRow[]>();
+
+  if (error) {
+    console.error("[lib/data] getTalks failed:", error.message);
+    return [];
+  }
+  return (data ?? []).map((row) => toNews(row, lang));
+}
+
+/** One news item by id, or null. Used by /news/[id]. */
+export async function getNewsById(
+  id: number,
+  lang: Lang
+): Promise<NewsItem | null> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("news")
+    .select(NEWS_COLUMNS)
+    .eq("id", id)
+    .maybeSingle<NewsRow>();
+
+  if (error) {
+    console.error(`[lib/data] getNewsById(${id}) failed:`, error.message);
+    return null;
+  }
+  return data ? toNews(data, lang) : null;
+}
+
+/**
+ * Every news id, for generateStaticParams and the sitemap.
+ *
+ * No status column on this table, so every row is public — unlike posts, there
+ * is nothing to filter out here.
+ */
+export async function getNewsIds(): Promise<number[]> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("news")
+    .select("id")
+    .returns<{ id: number }[]>();
+
+  if (error) {
+    console.error("[lib/data] getNewsIds failed:", error.message);
+    return [];
+  }
+  return (data ?? []).map((row) => row.id);
 }

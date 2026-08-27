@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BlogPostRoute } from "@/components/site/pages";
 import { getPostBySlug, getPostSlugs } from "@/lib/data";
-import { postMetadata } from "@/lib/site-routes";
+import { articleMetadata } from "@/lib/site-routes";
 
 export const revalidate = 300;
 
@@ -25,7 +25,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = await getPostBySlug(slug, "zh");
   if (!post) notFound();
-  return postMetadata(slug, "zh", post);
+  return articleMetadata(`/blog/${slug}`, "zh", post);
 }
 
 /** 單篇文章 (/blog/[slug]) */

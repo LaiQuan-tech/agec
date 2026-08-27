@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { LANGS, localizePath } from "@/lib/i18n";
-import { getPostSlugs } from "@/lib/data";
+import { getNewsIds, getPostSlugs } from "@/lib/data";
 import { SITE_ORIGIN } from "@/lib/site-routes";
 
 const ROUTES = [
@@ -16,19 +16,26 @@ const ROUTES = [
 ];
 
 /**
- * Both language versions of every public route — the eight in lib/nav.ts plus
- * /blog and one entry per published post — each carrying the
- * `alternates.languages` block so a crawler that finds one version knows the
- * other exists. /admin and /login are omitted deliberately.
+ * Both language versions of every public route — the eight in lib/nav.ts, plus
+ * /blog, plus one entry per published post and per news item — each carrying
+ * the `alternates.languages` block so a crawler that finds one version knows
+ * the other exists. /admin and /login are omitted deliberately.
+ *
+ * The paginated /news/page/N URLs are left out on purpose: they hold no content
+ * of their own, and every item on them already has its own entry here.
  *
  * Async because the post list comes from the database. Drafts and scheduled
  * posts are excluded by getPostSlugs, so this never advertises a URL that
  * would 404.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const posts = (await getPostSlugs()).map((slug) => `/blog/${slug}`);
+  const [slugs, newsIds] = await Promise.all([getPostSlugs(), getNewsIds()]);
+  const articles = [
+    ...slugs.map((slug) => `/blog/${slug}`),
+    ...newsIds.map((id) => `/news/${id}`),
+  ];
 
-  return [...ROUTES, ...posts].flatMap((route) =>
+  return [...ROUTES, ...articles].flatMap((route) =>
     LANGS.map((lang) => ({
       url: `${SITE_ORIGIN}${localizePath(route, lang)}`,
       changeFrequency: "weekly" as const,
