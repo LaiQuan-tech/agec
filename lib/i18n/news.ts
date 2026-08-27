@@ -83,8 +83,13 @@ export const NEWS = {
  * was already pointing at.
  *
  * #section-3 … #section-5 still have none — the page renders no 活動花絮 /
- * 招生 / 徵才 blocks. That is the reference site's own behaviour (clicking them
- * does nothing); don't "fix" it by inventing sections.
+ * 招生 / 徵才 blocks. That is the reference site's own behaviour; don't "fix"
+ * it by inventing sections.
+ *
+ * They are safe to leave in this list: LocalNav checks each href against the
+ * DOM and drops the ones with no target, so a reader never sees an item that
+ * cannot be reached or highlighted. Build those sections one day and the
+ * matching entries come back on their own.
  */
 export const NEWS_LOCAL_NAV = [
   { href: "#section-1", label: { zh: "全部消息", en: "All news" } },

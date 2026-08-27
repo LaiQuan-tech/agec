@@ -127,6 +127,34 @@
 }
 
 /* ---------------------------------------------------------------------------
+ * 頁內導覽的目前區段 — .local-nav scroll-spy
+ *
+ * The gold underline already exists in site.css as `.local-nav a:after`
+ * (2px, `scaleX(0)`, 0.25s transition) and is what hover reveals. The active
+ * state just holds it open, so nothing new is drawn — same construction as
+ * site.css's own `.desktop-nav a.active:after`.
+ *
+ * Specificity is (0,2,0) against site.css's `.local-nav a` at (0,1,1), and
+ * this file loads second, so it wins either way.
+ *
+ * ⚠️ Two properties are deliberately left alone:
+ *   font-size   — `.local-nav a` is already lifted to 13px by the legible-size
+ *                 block below; setting it again here would fork one value
+ *                 across two rules.
+ *   font-weight — `.local-nav-inner>div` is a horizontal `overflow-x:auto`
+ *                 strip. A bolder active item is wider, which reflows the whole
+ *                 row and jumps its scroll position every time the section
+ *                 changes under the reader.
+ * ------------------------------------------------------------------------ */
+
+.local-nav a.active {
+  color: var(--green);
+}
+.local-nav a.active:after {
+  transform: scaleX(1);
+}
+
+/* ---------------------------------------------------------------------------
  * 可讀字級下限 — legible font sizes
  *
  * The ported design runs an 8 / 9 / 10 / 11px scale for labels and tops out at
