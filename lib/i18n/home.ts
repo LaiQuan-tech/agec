@@ -44,11 +44,11 @@ export const HOME_HERO = {
   explore: { zh: "探索本系", en: "Explore the department" },
   admissions: { zh: "招生資訊", en: "Admissions" },
 
-  /** alt text of slide 2. Slide 1 is a video and is `aria-hidden`. */
-  gateAlt: {
-    zh: "國立臺灣大學正門與校園景觀",
-    en: "The main gate and campus of National Taiwan University",
-  },
+  // gateAlt lived here as the alt of the hero's second slide, back when that
+  // slide was a still photograph of the main gate. Both slides are videos now
+  // (the department's own films, matching the official site's banner), and a
+  // <video> has no alt — the element is decorative and `aria-hidden`, so there
+  // is nothing left to describe.
   // indexLabel / paginationLabel / slide lived here until `.hero-index`, the
   // 01 / 02 buttons and the SCROLL cue were removed from the hero. They were
   // the aria-labels of exactly those three elements and have no other reader,

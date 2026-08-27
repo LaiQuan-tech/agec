@@ -6,100 +6,133 @@ import { localizePath, translate, type Lang } from "@/lib/i18n";
 import { HOME_HERO } from "@/lib/i18n/home";
 
 /**
- * `section.hero#top` — the home page's two-slide carousel, ported from site.js
- * lines 30–62.
+ * `section.hero#top` — the home page's video carousel.
  *
- * The two slides are hard-coded because they aren't the same shape: slide 1 is a
- * <div> wrapping a looping video, slide 2 is a <picture> with mobile art
- * direction. site.js collected them by `.hero-image` class rather than tag for
- * exactly this reason.
+ * The two clips are the department's own films, the same pair the current
+ * official site (agec.ntu.edu.tw) runs in its jPlayer banner. Both are re-encoded
+ * for the web from the originals: 1080p, **no audio track**, `+faststart`.
+ * Stripping the audio is not an optimisation — browsers refuse to autoplay a
+ * video with sound, and a muted track is bytes nobody will ever hear.
  *
- * Everything the reference site draws on top of the hero has been removed at
- * the client's request, in two passes: first `.hero-index` (the four Latin
- * terms down the right edge), `.hero-pagination` (the 01 / 02 slide buttons)
- * and the `.scroll-cue` "SCROLL" marker, then the whole `.hero-foot` bar with
- * it ("Nearly a century of inquiry"). What is left is the copy block alone
- * over the carousel.
+ * ⚠️ Both source films end on a white logo card (8 of video 1's 26 seconds,
+ * 4 of video 2's 132). The hero headline is white, so those stretches would
+ * make the page's own title disappear. Both are trimmed just before the fade —
+ * 17.8s and 127s. An end card is for a film that finishes; this one loops, and
+ * the site already carries the logo in its header. If either video is ever
+ * re-encoded, check for the white tail again.
  *
- * The carousel itself is untouched and still advances on its own; it simply
- * has no visible control any more. All of that CSS is still in site.css, so
- * restoring any piece is a matter of putting the markup back.
+ * Timing is driven by the videos, not a clock: each slide advances when its
+ * own clip ends. That is why neither <video> carries `loop` — `loop` restarts
+ * the clip instead of firing `ended`, and the carousel would sit on slide 1
+ * forever. The cycle comes from the index wrapping instead.
  *
- * Faithful details:
- *  - autoplay is 7s and is cleared on unmount, otherwise the timer would
- *    outlive a client navigation away (the original never cleared it at all).
+ * Faithful details kept from the ported reference:
  *  - `prefers-reduced-motion` is read once at mount, not watched. Changing the
  *    OS setting mid-visit has no effect on the reference site either.
- *  - only the visible slide's image carries alt text.
  *  - the video's `play()` rejection is swallowed: mobile autoplay policies
  *    reject it routinely and an unhandled rejection would surface in the console.
  */
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 
+/**
+ * How close to the end of a clip the *next* one starts buffering.
+ *
+ * Slide 2 is 16.5MB and ships `preload="none"`, so it is not fetched at all
+ * unless a visitor is still here after slide 1 — which most are not. That saves
+ * the bytes, but it also means the switch would otherwise land on an empty
+ * element while the browser starts the download. Five seconds is enough of a
+ * head start to have something decoded by the crossfade.
+ */
+const PRELOAD_LEAD_SECONDS = 5;
+
+const SLIDES = [
+  { src: "/videos/hero-1.mp4", poster: "/images/hero-desktop/hero-1.jpg" },
+  { src: "/videos/hero-2.mp4", poster: "/images/hero-desktop/hero-2.jpg" },
+];
+
 export function HomeHero({ lang }: { lang: Lang }) {
   const t = translate(HOME_HERO, lang);
   const [index, setIndex] = useState(0);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   useEffect(() => {
-    if (window.matchMedia(REDUCED_MOTION).matches) return;
-    const timer = window.setInterval(() => setIndex((i) => (i + 1) % 2), 7000);
-    return () => window.clearInterval(timer);
-  }, []);
+    const videos = videoRefs.current;
+    const current = videos[index];
+    if (!current) return;
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (index === 0 && !window.matchMedia(REDUCED_MOTION).matches) {
-      video.play().catch(() => {});
-    } else {
-      video.pause();
+    /**
+     * Reduced motion stops here: nothing plays, so `ended` never fires and the
+     * hero stays on slide 1's poster frame. That is the intended result, not a
+     * broken carousel — someone who asked for less movement gets a still image.
+     */
+    if (window.matchMedia(REDUCED_MOTION).matches) {
+      videos.forEach((video) => video?.pause());
+      return;
     }
+
+    // Every other clip stops: two videos decoding at once is CPU and battery
+    // spent on frames nobody can see behind the active one.
+    videos.forEach((video, i) => {
+      if (video && i !== index) video.pause();
+    });
+
+    // Rewind before playing. Without this the second time round a clip resumes
+    // from wherever it was paused rather than starting over.
+    current.currentTime = 0;
+    current.play().catch(() => {});
+
+    const advance = () => setIndex((i) => (i + 1) % SLIDES.length);
+
+    // Give the next clip a head start — see PRELOAD_LEAD_SECONDS.
+    const next = videos[(index + 1) % SLIDES.length];
+    const primeNext = () => {
+      if (!next || next.preload === "auto") return;
+      if (current.duration - current.currentTime > PRELOAD_LEAD_SECONDS) return;
+      next.preload = "auto";
+      next.load();
+    };
+
+    current.addEventListener("ended", advance);
+    current.addEventListener("timeupdate", primeNext);
+    return () => {
+      current.removeEventListener("ended", advance);
+      current.removeEventListener("timeupdate", primeNext);
+    };
   }, [index]);
 
   return (
     <section className="hero" id="top">
       <div className="hero-carousel">
-        <div
-          className={`hero-image${index === 0 ? " active" : ""}`}
-          aria-hidden={index !== 0}
-        >
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            poster="/images/hero-desktop/hero.jpg"
-            tabIndex={-1}
+        {SLIDES.map((slide, i) => (
+          <div
+            key={slide.src}
+            className={`hero-image${index === i ? " active" : ""}`}
             aria-hidden="true"
           >
-            <source src="/videos/home-intro.mp4" type="video/mp4" />
-          </video>
-        </div>
-        <picture
-          className={`hero-image${index === 1 ? " active" : ""}`}
-          aria-hidden={index !== 1}
-        >
-          <source
-            media="(max-width: 600px)"
-            srcSet="/images/hero-mobile/hero-gate.jpg"
-          />
-          <img
-            src="/images/hero-desktop/hero-gate.jpg"
-            alt={index === 1 ? t.gateAlt : ""}
-          />
-        </picture>
+            <video
+              ref={(el) => {
+                videoRefs.current[i] = el;
+              }}
+              // muted + playsInline + autoPlay together: drop any one of the
+              // three and iOS refuses to start the video at all.
+              autoPlay={i === 0}
+              muted
+              playsInline
+              // The first clip needs enough to start; the second is 16.5MB and
+              // must not be fetched until it is nearly needed.
+              preload={i === 0 ? "metadata" : "none"}
+              poster={slide.poster}
+              tabIndex={-1}
+              aria-hidden="true"
+            >
+              <source src={slide.src} type="video/mp4" />
+            </video>
+          </div>
+        ))}
       </div>
 
       <div className="hero-text-scrim" aria-hidden="true" />
 
-      {/* `.hero-content` is `grid-template-columns: 1fr auto`. The `auto`
-          column held `.hero-index` (the four Latin terms down the right edge)
-          until it was removed at the client's request; a grid with one child
-          simply gives it the `1fr` track, so the copy block keeps its width
-          and nothing else moves. */}
       <div className="container hero-content" id="content">
         <div className="hero-copy">
           {/* Latin-caps kicker, not copy: printed the same on both sites. */}
@@ -125,7 +158,6 @@ export function HomeHero({ lang }: { lang: Lang }) {
           </div>
         </div>
       </div>
-
     </section>
   );
 }
