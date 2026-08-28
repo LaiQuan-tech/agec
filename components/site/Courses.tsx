@@ -7,6 +7,7 @@ import { LocalNav } from "./LocalNav";
 import { SectionTitle } from "./SectionTitle";
 import { NextRoute } from "./NextRoute";
 import { FilterTabs } from "./FilterTabs";
+import { MaybeLink } from "./MaybeLink";
 
 /**
  * 課程資訊 (/courses) — route 06 / 08.
@@ -136,9 +137,13 @@ export function Courses({
                 <span>{t.table.ctype}</span>
               </div>
               {rows.map((course) => (
-                // href="#" matches the reference site: there are no
-                // per-course pages on either side, and `courses` has no url.
-                <a href="#" role="row" key={course.id}>
+                // Not clickable: there is no per-course page on either site and
+                // `courses` has no url column, so the reference site's
+                // `href="#"` was a row that looked like a link and scrolled to
+                // the top. MaybeLink keeps the <a> the grid needs and drops the
+                // behaviour. Give the table a destination by adding
+                // `courses.url` and passing it here.
+                <MaybeLink href={null} role="row" key={course.id}>
                   <span>{course.code}</span>
                   <span>{course.name}</span>
                   <span>{course.credit}</span>
@@ -147,8 +152,7 @@ export function Courses({
                       into an otherwise English table. */}
                   <span>{course.program_label}</span>
                   <span>{course.ctype}</span>
-                  <i>↗︎</i>
-                </a>
+                </MaybeLink>
               ))}
             </div>
           </div>
@@ -175,14 +179,21 @@ export function Courses({
                 pairing at 1180px. */}
             <div className="document-grid">
               {t.documents.map((doc) => (
-                <a href="#" key={doc.title}>
+                // No URLs for these PDFs anywhere yet — see the note above.
+                <MaybeLink
+                  href={null}
+                  key={doc.title}
+                  // `.document-grid i` is the gold "下載 ↗" footer, absolutely
+                  // positioned at the card's bottom-left. It is the card's call
+                  // to action, so it appears only once there is a file to open.
+                  arrow={<i>{t.download} ↗︎</i>}
+                >
                   {/* `.document-grid>a>span` is the gold file-type badge —
                       it has to be a direct child span. */}
                   <span>PDF</span>
                   <h3>{doc.title}</h3>
                   <p>{doc.description}</p>
-                  <i>{t.download}</i>
-                </a>
+                </MaybeLink>
               ))}
             </div>
           </div>
@@ -192,13 +203,18 @@ export function Courses({
           <div className="container">
             <SectionTitle no="03" eyebrow="FORMS" heading={t.section3.heading} />
             {/* `.resource-row a` carries the cell borders and the 120px min
-                height, so every cell stays an <a> even though the reference
-                site's hrefs are all placeholders. */}
+                height, so every cell stays an <a> — MaybeLink only removes the
+                href when the row has no url, which is most of them until the
+                office fills them in at /admin/links. */}
             <div className="resource-row">
               {forms.map((form) => (
-                <a href={form.url ?? "#"} key={form.id}>
-                  {form.label} <span>↗︎</span>
-                </a>
+                <MaybeLink
+                  href={form.url}
+                  key={form.id}
+                  arrow={<span> ↗︎</span>}
+                >
+                  {form.label}
+                </MaybeLink>
               ))}
             </div>
           </div>

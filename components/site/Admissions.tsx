@@ -6,6 +6,7 @@ import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
 import { SectionTitle } from "./SectionTitle";
 import { NextRoute } from "./NextRoute";
+import { MaybeLink } from "./MaybeLink";
 import { padNo } from "./nav";
 
 /**
@@ -37,7 +38,8 @@ import { padNo } from "./nav";
  *   .schedule-line article — same story with #ffffff3d borders on green.
  *   .resource-row a        — the border/min-height/flex live on the <a>. A row
  *                            rendered as <div> would lose all of it, so every
- *                            entry stays an anchor even when its url is "#".
+ *                            entry stays an anchor even with no destination —
+ *                            MaybeLink drops the href, not the tag.
  */
 
 export function Admissions({
@@ -60,9 +62,16 @@ export function Admissions({
   // DB rows arrive from lib/data.ts already resolved to the page's language;
   // the fallback comes from the dictionary. Either way `label` is ready to
   // print and must not be translated again here.
-  const resources = links.length
-    ? links.map((link) => ({ label: link.label, url: link.url ?? "#" }))
-    : t.section4.resourcesFallback;
+  const resources: { label: string; url: string | null }[] = links.length
+    ? links.map((link) => ({ label: link.label, url: link.url }))
+    // The fallback rows exist so the four-column grid never renders empty when
+    // the `links` table has nothing for this section. Three of the four carry
+    // a literal "#" and MaybeLink treats that as no destination; the fourth is
+    // the real in-page anchor to the footer's contact block.
+    : t.section4.resourcesFallback.map((row) => ({
+        label: row.label,
+        url: row.url,
+      }));
 
   return (
     <SiteShell lang={lang} variant="interior">
@@ -164,9 +173,13 @@ export function Admissions({
                 the 120px min-height and the flex alignment. */}
             <div className="resource-row">
               {resources.map((resource) => (
-                <a href={resource.url} key={resource.label}>
-                  {resource.label} <span>↗︎</span>
-                </a>
+                <MaybeLink
+                  href={resource.url}
+                  key={resource.label}
+                  arrow={<span> ↗︎</span>}
+                >
+                  {resource.label}
+                </MaybeLink>
               ))}
             </div>
           </div>

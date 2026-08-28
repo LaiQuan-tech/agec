@@ -5,6 +5,7 @@ import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
 import { SectionTitle } from "./SectionTitle";
 import { NextRoute } from "./NextRoute";
+import { MaybeLink } from "./MaybeLink";
 
 /**
  * 系友專區 (/alumni) — route 08 / 08.
@@ -94,8 +95,12 @@ export function Alumni({ lang }: { lang: Lang }) {
                   {t.section1.feature.heading.line2}
                 </h3>
                 <p>{t.section1.feature.body}</p>
-                {/* Placeholder anchor, as on the reference site. */}
-                <a href="#">{t.section1.feature.cta}</a>
+                {/* 「探索系友故事」 has no destination — the reference site
+                    left it as href="#" and there is no alumni-story page or
+                    table to point at. Inert rather than pretending. */}
+                <MaybeLink href={null} arrow={<span> →</span>}>
+                  {t.section1.feature.cta}
+                </MaybeLink>
               </div>
               <img
                 src="/images/building.jpg"
@@ -121,11 +126,20 @@ export function Alumni({ lang }: { lang: Lang }) {
             />
             <div className="story-grid">
               {t.section2.stories.map((story) => (
-                <a key={story.title} href="#">
+                // Static editorial cards with nowhere to go yet. Give each a
+                // url — a `links` row, or a story table — and they become real
+                // links without touching this markup.
+                <MaybeLink
+                  key={story.title}
+                  href={null}
+                  // `.story-grid span` is `margin-top:auto` — the card's call
+                  // to action pinned to its foot. "閱讀消息" with nothing to
+                  // read is the misleading half, so it goes with the link.
+                  arrow={<span>{story.action} ↗︎</span>}
+                >
                   <small>{story.eyebrow}</small>
                   <h3>{story.title}</h3>
-                  <span>{story.action}</span>
-                </a>
+                </MaybeLink>
               ))}
             </div>
           </div>
@@ -145,9 +159,14 @@ export function Alumni({ lang }: { lang: Lang }) {
             </div>
             <div>
               <p>{t.section3.body}</p>
-              <a className="button gold" href="#">
+              {/* 「前往捐贈專區」 — no donation URL in the port. */}
+              <MaybeLink
+                className="button gold"
+                href={null}
+                arrow={<span> ↗︎</span>}
+              >
                 {t.section3.cta}
-              </a>
+              </MaybeLink>
             </div>
           </div>
         </section>

@@ -118,7 +118,8 @@ export const COURSES = {
     },
   ],
   /** `.document-grid>a>i` — the download affordance on each PDF card. */
-  download: { zh: "下載 ↗︎", en: "Download ↗︎" },
+  // Arrow lives on MaybeLink, not here — see students.ts section2.cta.
+  download: { zh: "下載", en: "Download" },
   section3: {
     heading: { zh: "常用表格", en: "Forms" },
   },

@@ -83,7 +83,8 @@ export const ALUMNI = {
         en: "This section will present alumni through their own stories — the careers they built and the difference they made — as an archive that keeps growing.",
       },
       /** Placeholder anchor, as on the reference site. */
-      cta: { zh: "探索系友故事 →", en: "Explore alumni stories →" },
+      // Arrow lives on MaybeLink, not here — see students.ts section2.cta.
+      cta: { zh: "探索系友故事", en: "Explore alumni stories" },
       imageAlt: {
         zh: "臺大農業綜合館",
         en: "The Agriculture Complex Building at NTU",
@@ -107,7 +108,7 @@ export const ALUMNI = {
           zh: "四位系友榮獲第 8 屆百大青年農民",
           en: "Four alumni selected for the 8th Hundred Outstanding Young Farmers program",
         },
-        action: { zh: "閱讀消息 ↗︎", en: "Read the news ↗︎" },
+        action: { zh: "閱讀消息", en: "Read the news" },
       },
       {
         eyebrow: { zh: "ALUMNI GATHERING", en: "ALUMNI GATHERING" },
@@ -115,7 +116,7 @@ export const ALUMNI = {
           zh: "跨世代交流，讓經驗成為共同資產",
           en: "Exchange across generations turns experience into shared ground",
         },
-        action: { zh: "近期活動 ↗︎", en: "Upcoming events ↗︎" },
+        action: { zh: "近期活動", en: "Upcoming events" },
       },
       {
         eyebrow: { zh: "STAY CONNECTED", en: "STAY CONNECTED" },
@@ -123,7 +124,7 @@ export const ALUMNI = {
           zh: "更新系友資料，與母系保持聯繫",
           en: "Update your alumni record and stay in touch with the department",
         },
-        action: { zh: "聯絡我們 ↗︎", en: "Contact us ↗︎" },
+        action: { zh: "聯絡我們", en: "Contact us" },
       },
     ],
   },
@@ -137,7 +138,8 @@ export const ALUMNI = {
       zh: "系友捐贈支持獎助學金、國際交流、研究設備與學生活動，讓農經教育持續回應新時代的挑戰。",
       en: "Alumni giving funds scholarships, international exchange, research equipment and student activities, keeping an AGEC education equal to the challenges of a new era.",
     },
-    cta: { zh: "前往捐贈專區 ↗︎", en: "Visit the giving page ↗︎" },
+    // Arrow lives on MaybeLink, not here — see students.ts section2.cta.
+    cta: { zh: "前往捐贈專區", en: "Visit the giving page" },
   },
   section4: {
     heading: { zh: "李登輝系友專區", en: "The Lee Teng-hui Alumni Archive" },

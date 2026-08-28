@@ -6,6 +6,10 @@ import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
 import { SectionTitle } from "./SectionTitle";
 import { NextRoute } from "./NextRoute";
+import { MaybeLink } from "./MaybeLink";
+
+/** NTU's campus map, supplied by the client. Not a department page. */
+const CAMPUS_MAP_URL = "https://map.ntu.edu.tw/";
 
 /**
  * 學生專區 (/students) — route 07 / 08.
@@ -75,9 +79,16 @@ export function Students({ lang, links }: { lang: Lang; links: LinkItem[] }) {
               />
               {/* Styled by `.student-life-grid>div>p` — a direct child only. */}
               <p>{t.section2.body}</p>
-              <a className="button gold" href="#">
+              {/* NTU's own campus map. External, so MaybeLink gives it a
+                  plain <a target="_blank" rel="noopener noreferrer"> rather
+                  than a next/link route. */}
+              <MaybeLink
+                className="button gold"
+                href={CAMPUS_MAP_URL}
+                arrow={<span> ↗︎</span>}
+              >
                 {t.section2.cta}
-              </a>
+              </MaybeLink>
             </div>
             <img src="/images/hero.jpg" alt={t.section2.imageAlt} />
           </div>
@@ -117,14 +128,18 @@ export function Students({ lang, links }: { lang: Lang; links: LinkItem[] }) {
               heading={t.section4.heading}
             />
             {/* `.resource-row a` carries every border, min-height and hover
-                state — a placeholder row must still render an <a>, exactly as
-                the reference site does with href="#". `label` arrives from
-                lib/data.ts already in the page's language. */}
+                state, so a row with no url still renders an <a> — MaybeLink
+                removes only the href. `label` arrives from lib/data.ts already
+                in the page's language. */}
             <div className="resource-row">
               {links.map((link) => (
-                <a key={link.id} href={link.url || "#"}>
-                  {link.label} <span>↗︎</span>
-                </a>
+                <MaybeLink
+                  key={link.id}
+                  href={link.url}
+                  arrow={<span> ↗︎</span>}
+                >
+                  {link.label}
+                </MaybeLink>
               ))}
             </div>
           </div>

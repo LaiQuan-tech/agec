@@ -94,7 +94,12 @@ export const STUDENTS = {
       zh: "小地圖整理農業綜合館周邊的學生餐廳、教學館與日常服務；椰林攻略則提供選課、校園資源與系所資訊，讓新生更快融入。",
       en: "The mini-map gathers the dining halls, teaching buildings and everyday services around the Agriculture Complex Building, while the Royal Palm Boulevard guide covers course selection, campus resources and department information so new students settle in sooner.",
     },
-    cta: { zh: "開啟校園小地圖 ↗︎", en: "Open the campus mini-map ↗︎" },
+    /**
+     * Arrow deliberately NOT in this string: MaybeLink renders it only when
+     * the button has somewhere to go, so a label carrying its own arrow would
+     * keep promising navigation after the destination was taken away.
+     */
+    cta: { zh: "開啟校園小地圖", en: "Open the campus mini-map" },
     imageAlt: {
       zh: "臺大椰林大道",
       en: "Royal Palm Boulevard at NTU",
