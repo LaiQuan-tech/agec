@@ -43,6 +43,15 @@ import { MaybeLink } from "./MaybeLink";
  * Not in the dictionary: uppercase Latin in the reference design, identical in
  * both languages, exactly like `SectionTitle`'s eyebrow.
  */
+/**
+ * 「前往捐贈專區」 and the 系友捐贈 link both land here.
+ *
+ * NTU's own giving site, not a department page: 農經系 runs no donation channel
+ * of its own — there is no giving page anywhere under agec.ntu.edu.tw, and the
+ * current official site sends donors to the university as well.
+ */
+const GIVING_URL = "https://giving.ntu.edu.tw/Default.html";
+
 const SECTORS = [
   "GOVERNMENT",
   "ACADEMIA",
@@ -126,12 +135,13 @@ export function Alumni({ lang }: { lang: Lang }) {
             />
             <div className="story-grid">
               {t.section2.stories.map((story) => (
-                // Static editorial cards with nowhere to go yet. Give each a
-                // url — a `links` row, or a story table — and they become real
-                // links without touching this markup.
+                // Two of the three still have nowhere to go — see the note on
+                // `stories` in lib/i18n/alumni.ts. Give one a url — a `links`
+                // row, or a story table — and it becomes a real link without
+                // touching this markup.
                 <MaybeLink
                   key={story.title}
-                  href={null}
+                  href={story.url}
                   // `.story-grid span` is `margin-top:auto` — the card's call
                   // to action pinned to its foot. "閱讀消息" with nothing to
                   // read is the misleading half, so it goes with the link.
@@ -159,10 +169,9 @@ export function Alumni({ lang }: { lang: Lang }) {
             </div>
             <div>
               <p>{t.section3.body}</p>
-              {/* 「前往捐贈專區」 — no donation URL in the port. */}
               <MaybeLink
                 className="button gold"
-                href={null}
+                href={GIVING_URL}
                 arrow={<span> ↗︎</span>}
               >
                 {t.section3.cta}

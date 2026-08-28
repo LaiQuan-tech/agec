@@ -97,6 +97,12 @@ export const ALUMNI = {
      * `.story-grid` — exactly 3 cards, and not one homogeneous list: the first
      * is a dated news item, the other two are calls to action whose eyebrows
      * are Latin labels in the reference design and stay that way in Chinese.
+     *
+     * `url` sits beside the copy the same way `section4.resourcesFallback`
+     * carries one, and "#" means the same thing to MaybeLink as an empty
+     * value: no destination, so no link and no arrow. Only the third card has
+     * somewhere to go — `footer#contact` is rendered on every page by
+     * SiteShell, so the anchor stays on /alumni rather than routing home.
      */
     stories: [
       {
@@ -109,6 +115,8 @@ export const ALUMNI = {
           en: "Four alumni selected for the 8th Hundred Outstanding Young Farmers program",
         },
         action: { zh: "閱讀消息", en: "Read the news" },
+        // The 百大青年農民 item is not in `news` and has no source URL.
+        url: "#",
       },
       {
         eyebrow: { zh: "ALUMNI GATHERING", en: "ALUMNI GATHERING" },
@@ -117,6 +125,8 @@ export const ALUMNI = {
           en: "Exchange across generations turns experience into shared ground",
         },
         action: { zh: "近期活動", en: "Upcoming events" },
+        // No events page or table on either site yet.
+        url: "#",
       },
       {
         eyebrow: { zh: "STAY CONNECTED", en: "STAY CONNECTED" },
@@ -125,6 +135,7 @@ export const ALUMNI = {
           en: "Update your alumni record and stay in touch with the department",
         },
         action: { zh: "聯絡我們", en: "Contact us" },
+        url: "#contact",
       },
     ],
   },
