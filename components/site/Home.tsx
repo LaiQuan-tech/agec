@@ -58,9 +58,12 @@ export function Home({
             </h2>
             <div className="intro-body">
               <p>{t.introBody}</p>
-              <a className="inline-link" href="#research">
+              {/* `/about`, not the `#research` band this used to jump to: the
+                  label says "our mission", and the mission lives on /about —
+                  the home page has no mission block for it to point at. */}
+              <Link className="inline-link" href={localizePath("/about", lang)}>
                 {t.introLink} <span>↗︎</span>
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -111,7 +114,10 @@ export function Home({
                     both sites; the category beside it arrives translated. */}
                 <p>FEATURED · {feature.category}</p>
                 <h3>{feature.title}</h3>
-                <Link href={newsHref}>
+                {/* The featured item's own page. `newsHref` (the list) is
+                    still right for the 全部消息 circle above, but a link
+                    reading "read the full story" has to open that story. */}
+                <Link href={localizePath(`/news/${feature.id}`, lang)}>
                   {t.newsFeatureLink} <span>→</span>
                 </Link>
               </div>
@@ -121,7 +127,14 @@ export function Home({
             {rest.map((item) => {
               const date = formatNewsDate(item.published_at);
               return (
-                <Link className="news-item" href={newsHref} key={item.id}>
+                <Link
+                  className="news-item"
+                  // The item itself, not the list. /news/[id] did not exist
+                  // when this was written, so every row pointed at /news and
+                  // made the reader find the same headline again.
+                  href={localizePath(`/news/${item.id}`, lang)}
+                  key={item.id}
+                >
                   {/* `.news-item time strong` / `time span` — the <time> needs
                       exactly these two element children. */}
                   <time dateTime={item.published_at.slice(0, 10)}>
@@ -155,12 +168,20 @@ export function Home({
             // Both languages are on screen at once, so this row is a swap, not
             // a lookup: `<h3>` takes the page's language and `<p>` the other.
             // The key stays the Chinese string, which is the stable identity.
-            <a href="#research" className="research-item" key={area.zh}>
+            // `/faculty`, not the `#research` band these sit inside — an
+            // anchor to their own section scrolls nowhere. The four strings are
+            // `faculty.fields` values, so the people working in each are one
+            // page away.
+            <Link
+              href={localizePath("/faculty", lang)}
+              className="research-item"
+              key={area.zh}
+            >
               <span>{padNo(i + 1)}</span>
               <h3>{lang === "en" ? area.en : area.zh}</h3>
               <p>{lang === "en" ? area.zh : area.en}</p>
               <i>↗︎</i>
-            </a>
+            </Link>
           ))}
         </div>
       </section>
@@ -188,7 +209,12 @@ export function Home({
             // dropped rather than rendered blank.
             const kicker = lang === "en" ? program.name_zh : program.name_en;
             return (
-              <a className="admission-card" href="#admissions" key={program.id}>
+              // `/admissions`, not the `#admissions` band this card is inside.
+              <Link
+                className="admission-card"
+                href={localizePath("/admissions", lang)}
+                key={program.id}
+              >
                 <span className="card-no">{padNo(i + 1)}</span>
                 <div>
                   {kicker ? <small>{kicker}</small> : null}
@@ -196,7 +222,7 @@ export function Home({
                   <p>{program.description}</p>
                 </div>
                 <span className="card-arrow">→</span>
-              </a>
+              </Link>
             );
           })}
         </div>

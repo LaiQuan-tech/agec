@@ -88,7 +88,16 @@ export const HOME = {
     zh: "農經系大講堂",
     en: "The department's main lecture hall",
   },
-  newsFeatureLink: { zh: "掌握近期演講", en: "See recent talks" },
+  /**
+   * The featured card's read-more link.
+   *
+   * Was "掌握近期演講 / See recent talks", inherited from the reference site
+   * where that card evidently held a talk announcement. It now shows whichever
+   * news item is pinned or newest, and its <h3> is that item's own headline —
+   * so a link promising talks was describing something else. Worded to match
+   * `NEWS.featureLink`, which is the same card on /news.
+   */
+  newsFeatureLink: { zh: "閱讀完整消息", en: "Read the full story" },
 
   /* .research#research ------------------------------------------------- */
   researchEyebrow: {
