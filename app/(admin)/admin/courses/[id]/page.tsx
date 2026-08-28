@@ -55,7 +55,7 @@ export default async function EditCoursePage({
           className="text-[13px] underline underline-offset-2"
           style={{ color: "var(--muted)" }}
         >
-          在前台查看 ↗
+          在前台查看 ↗︎
         </Link>
       </header>
 

@@ -108,7 +108,7 @@ export function FacultyCard({
         <span className="faculty-field">{member.fields}</span>
       ) : null}
       {member.email ? (
-        <a href={`mailto:${member.email}`}>{member.email} ↗</a>
+        <a href={`mailto:${member.email}`}>{member.email} ↗︎</a>
       ) : null}
     </article>
   );

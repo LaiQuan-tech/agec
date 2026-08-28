@@ -59,7 +59,7 @@ export function Home({
             <div className="intro-body">
               <p>{t.introBody}</p>
               <a className="inline-link" href="#research">
-                {t.introLink} <span>↗</span>
+                {t.introLink} <span>↗︎</span>
               </a>
             </div>
           </div>
@@ -132,7 +132,7 @@ export function Home({
                     <span className="tag">{item.category}</span>
                     <h3>{item.title}</h3>
                   </div>
-                  <span className="news-arrow">↗</span>
+                  <span className="news-arrow">↗︎</span>
                 </Link>
               );
             })}
@@ -159,7 +159,7 @@ export function Home({
               <span>{padNo(i + 1)}</span>
               <h3>{lang === "en" ? area.en : area.zh}</h3>
               <p>{lang === "en" ? area.zh : area.en}</p>
-              <i>↗</i>
+              <i>↗︎</i>
             </a>
           ))}
         </div>
@@ -226,7 +226,7 @@ export function Home({
             </h2>
             <p>{t.campusBody}</p>
             <Link className="button dark" href={localizePath("/faculty", lang)}>
-              {t.campusCta} <span>↗</span>
+              {t.campusCta} <span>↗︎</span>
             </Link>
           </div>
           {/* <figure>/<figcaption> are load-bearing: `.campus figure` and
@@ -268,7 +268,7 @@ export function Home({
               className="button gold"
               href={localizePath("/admissions", lang)}
             >
-              {t.closingJoin} <span>↗</span>
+              {t.closingJoin} <span>↗︎</span>
             </Link>
             <Link
               className="text-action light-action"

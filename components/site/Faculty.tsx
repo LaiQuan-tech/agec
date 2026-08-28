@@ -128,7 +128,7 @@ function LegacyResumeList({
             ) : null}
           </div>
           {member.email ? (
-            <a href={`mailto:${member.email}`}>{member.email} ↗</a>
+            <a href={`mailto:${member.email}`}>{member.email} ↗︎</a>
           ) : null}
         </article>
       ))}
@@ -348,7 +348,7 @@ export function Faculty({
               heading={t.administration.heading}
             />
             {/* `.admin-grid article` is the card selector. Note these mailto
-                links have no trailing ↗ — the only email style on the page
+                links have no trailing ↗︎ — the only email style on the page
                 that does not. */}
             <div className="admin-grid">
               {administration.map((member) => (

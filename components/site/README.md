@@ -54,6 +54,26 @@ site.css 原本有一組 `opacity:0` 的 scroll-reveal 規則，但 `motion-read
 
 ---
 
+## ⚠️ `↗` 後面有一個看不見的字元，不要刪
+
+全站的 `↗`（U+2197 NORTH EAST ARROW）後面都跟著 **U+FE0E VARIATION SELECTOR-15**，
+也就是「文字呈現選擇器」。`©`（U+00A9）同理。
+
+原因：這兩個字元在 Unicode 的 emoji 資料裡是 `Emoji=Yes`。雖然它們的預設呈現是
+文字，iOS Safari 的字體回退鏈仍會走到 Apple Color Emoji，把「探索本系 ↗」的箭頭
+畫成一顆藍底白箭頭的 emoji 方塊。桌機看不出來，只有實機才會發現。
+
+VS15 強制走文字字體，是唯一在各家瀏覽器都可靠的做法（CSS 的
+`font-variant-emoji: text` 到 2026 年仍只有較新的 Chrome 與 Safari 支援）。
+
+實務上要注意：
+
+- 這個字元**寬度為零、在編輯器裡看不見**。複製貼上 `↗` 到新的地方時很可能只複製到
+  箭頭本身，於是那一處就會在 iPhone 上變成 emoji
+- `→`（U+2192）、`←`（U+2190）**不需要**，它們沒有 emoji 屬性
+- 註解裡的 `↗` 不用加（不會被渲染）
+- 檢查方式：`grep -c $'\u2197\ufe0e'` 對 `grep -c $'\u2197'`，兩個數字應該一樣
+
 ## 2. 已建立的元件
 
 ### 外框（8 頁共用，不要改）

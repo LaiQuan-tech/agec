@@ -165,7 +165,7 @@ export function Admissions({
             <div className="resource-row">
               {resources.map((resource) => (
                 <a href={resource.url} key={resource.label}>
-                  {resource.label} <span>↗</span>
+                  {resource.label} <span>↗︎</span>
                 </a>
               ))}
             </div>

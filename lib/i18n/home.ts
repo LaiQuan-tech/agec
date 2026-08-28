@@ -82,7 +82,7 @@ export const HOME = {
   /** `.circle-link`: its aria-label, then its own two lines inside the circle. */
   newsAllLabel: { zh: "查看全部消息", en: "View all news" },
   newsAllTop: { zh: "全部", en: "All" },
-  newsAllBottom: { zh: "消息 ↗", en: "News ↗" },
+  newsAllBottom: { zh: "消息 ↗︎", en: "News ↗︎" },
   /** alt of `.feature-story img` when the pinned item has no cover of its own. */
   newsFeatureAlt: {
     zh: "農經系大講堂",
@@ -131,9 +131,9 @@ export const HOME = {
    * here rather than derived from lib/nav.ts — the arrow is part of the label
    * on the reference site and stays inside the string.
    */
-  admissionsCourses: { zh: "課程資訊 ↗", en: "Courses ↗" },
-  admissionsStudents: { zh: "學生專區 ↗", en: "Students ↗" },
-  admissionsSchedule: { zh: "重要招生時程 ↗", en: "Key admission dates ↗" },
+  admissionsCourses: { zh: "課程資訊 ↗︎", en: "Courses ↗︎" },
+  admissionsStudents: { zh: "學生專區 ↗︎", en: "Students ↗︎" },
+  admissionsSchedule: { zh: "重要招生時程 ↗︎", en: "Key admission dates ↗︎" },
 
   /* .campus#people ----------------------------------------------------- */
   campusEyebrow: {

@@ -69,7 +69,7 @@ export function AdminShell({
               className="text-[12px] underline underline-offset-2"
               style={{ color: "var(--muted)" }}
             >
-              開啟前台網站 ↗
+              開啟前台網站 ↗︎
             </Link>
             <form action={logoutAction}>
               <Button type="submit" variant="ghost" size="sm">

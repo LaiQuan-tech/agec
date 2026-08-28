@@ -123,7 +123,7 @@ export function Students({ lang, links }: { lang: Lang; links: LinkItem[] }) {
             <div className="resource-row">
               {links.map((link) => (
                 <a key={link.id} href={link.url || "#"}>
-                  {link.label} <span>↗</span>
+                  {link.label} <span>↗︎</span>
                 </a>
               ))}
             </div>

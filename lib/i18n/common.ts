@@ -93,8 +93,8 @@ export const COMMON = {
    * own English motto — so neither changes on /en.
    */
   copyright: {
-    zh: "© 2026 Department of Agricultural Economics, NTU",
-    en: "© 2026 Department of Agricultural Economics, NTU",
+    zh: "©︎ 2026 Department of Agricultural Economics, NTU",
+    en: "©︎ 2026 Department of Agricultural Economics, NTU",
   },
   tagline: {
     zh: "Knowledge rooted in land. Vision connected to the world.",

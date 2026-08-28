@@ -148,12 +148,12 @@ export default async function NewsListPage() {
                         is already on the public site and /news/[id] can never
                         404 on one. Chinese only — the /en twin lives on the edit
                         page, where someone is actually translating and has a
-                        reason to look at it; two ↗ links per row would crowd out
+                        reason to look at it; two ↗︎ links per row would crowd out
                         the two buttons that do the work.
                       */}
                       <Link href={`/news/${row.id}`} target="_blank">
                         <Button variant="ghost" size="sm" title="在新分頁開啟前台的這則消息">
-                          前台 ↗
+                          前台 ↗︎
                         </Button>
                       </Link>
                       <DeleteButton action={deleteNews} id={row.id} itemLabel={row.title} />

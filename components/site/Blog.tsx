@@ -118,7 +118,7 @@ export function Blog({ lang, posts }: { lang: Lang; posts: Post[] }) {
                           (see Post.tags). */}
                         <span>{post.tags[0] ?? ""}</span>
                         <h3>{post.title}</h3>
-                        <i>↗</i>
+                        <i>↗︎</i>
                       </Link>
                     ))}
                   </div>

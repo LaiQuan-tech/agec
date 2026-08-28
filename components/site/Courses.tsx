@@ -147,7 +147,7 @@ export function Courses({
                       into an otherwise English table. */}
                   <span>{course.program_label}</span>
                   <span>{course.ctype}</span>
-                  <i>↗</i>
+                  <i>↗︎</i>
                 </a>
               ))}
             </div>
@@ -197,7 +197,7 @@ export function Courses({
             <div className="resource-row">
               {forms.map((form) => (
                 <a href={form.url ?? "#"} key={form.id}>
-                  {form.label} <span>↗</span>
+                  {form.label} <span>↗︎</span>
                 </a>
               ))}
             </div>

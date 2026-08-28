@@ -85,7 +85,7 @@ export default async function EditPostPage({
               className="text-[13px] underline underline-offset-2"
               style={{ color: "var(--muted)" }}
             >
-              在前台查看 ↗
+              在前台查看 ↗︎
             </Link>
             <Link
               href={localizePath(publicPath, "en")}
@@ -93,7 +93,7 @@ export default async function EditPostPage({
               className="text-[13px] underline underline-offset-2"
               style={{ color: "var(--muted)" }}
             >
-              英文版 ↗
+              英文版 ↗︎
             </Link>
           </span>
         )}

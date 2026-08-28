@@ -147,7 +147,7 @@ export function HomeHero({ lang }: { lang: Lang }) {
           <p className="hero-lead">{t.lead}</p>
           <div className="hero-actions">
             <Link className="button gold" href={localizePath("/about", lang)}>
-              {t.explore} <span>↗</span>
+              {t.explore} <span>↗︎</span>
             </Link>
             <Link
               className="text-action"

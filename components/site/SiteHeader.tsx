@@ -187,7 +187,7 @@ export function SiteHeader({ lang }: { lang: Lang }) {
                 >
                   <small>{item.no}</small>
                   <strong>{item.label}</strong>
-                  <i>↗</i>
+                  <i>↗︎</i>
                 </Link>
               );
             })}

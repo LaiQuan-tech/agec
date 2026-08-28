@@ -145,7 +145,7 @@ export function News({
                     </time>
                     <span>{item.category}</span>
                     <h3>{item.title}</h3>
-                    <i>↗</i>
+                    <i>↗︎</i>
                   </Link>
                 ))}
               </div>
@@ -229,7 +229,7 @@ export function News({
                     </time>
                     <span>{item.category}</span>
                     <h3>{item.title}</h3>
-                    <i>↗</i>
+                    <i>↗︎</i>
                   </Link>
                 ))}
               </div>
