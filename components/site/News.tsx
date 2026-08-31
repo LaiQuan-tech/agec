@@ -13,7 +13,9 @@ import { LocalNav } from "./LocalNav";
 import { SectionTitle } from "./SectionTitle";
 import { FilterTabs } from "./FilterTabs";
 import { NextRoute } from "./NextRoute";
-import { formatEventTime, formatNewsDate } from "./format";
+import { Pagination } from "./Pagination";
+import { TalkList } from "./TalkList";
+import { formatNewsDate } from "./format";
 
 /**
  * 最新消息 (/news, /en/news) — route 02 / 08.
@@ -50,10 +52,14 @@ export function News({
   lang,
   newsPage,
   talks,
+  talkCount,
 }: {
   lang: Lang;
   newsPage: NewsPage;
+  /** The most recent few, not all of them — see `talkCount`. */
   talks: NewsItem[];
+  /** How many talks exist in total, for the link to the archive. */
+  talkCount: number;
 }) {
   const t = translate(NEWS, lang);
   const { items, page, totalPages } = newsPage;
@@ -159,50 +165,16 @@ export function News({
                 {t.toBlog} <span>→</span>
               </Link>
             </p>
-            {/* The reference site ships this row as decoration — 01/02/03 and
-                下一頁 with no JavaScript behind them, all `href="#"`, so
-                clicking one jumped to the top of the page. It is real now:
-                `.pagination` supplies the type and the right alignment, and
-                the links are ordinary routes, so it still needs no client JS.
-
-                Hidden entirely at one page rather than rendered as a lone
-                "01" — a control that cannot do anything is worse than no
-                control. */}
-            {totalPages > 1 ? (
-              <nav className="pagination" aria-label={t.paginationLabel}>
-                {page > 1 ? (
-                  <Link href={newsPagePath(page - 1, lang)}>
-                    {t.paginationPrev}
-                  </Link>
-                ) : null}
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) =>
-                  n === page ? (
-                    // `.pagination span` is the current-page style in site.css.
-                    <span key={n} aria-current="page">
-                      {String(n).padStart(2, "0")}
-                    </span>
-                  ) : (
-                    <Link
-                      key={n}
-                      href={newsPagePath(n, lang)}
-                      aria-label={t.paginationPage.replace("{n}", String(n))}
-                    >
-                      {String(n).padStart(2, "0")}
-                    </Link>
-                  )
-                )}
-                {page < totalPages ? (
-                  <Link href={newsPagePath(page + 1, lang)}>
-                    {t.paginationNext}
-                  </Link>
-                ) : null}
-              </nav>
-            ) : null}
+            <Pagination
+              lang={lang}
+              page={page}
+              totalPages={totalPages}
+              hrefFor={(n) => newsPagePath(n, lang)}
+            />
           </div>
         </section>
 
-        {/* Page 1 only. The talks block is not paginated — it is the whole
-            set, every time — so repeating it under page 2's list would show
+        {/* Page 1 only. Repeating the block under page 2's list would show
             the same items again and put one panel at two URLs. LocalNav drops
             its 演講 anchor by itself when the section is absent. */}
         {page === 1 && talks.length > 0 ? (
@@ -214,50 +186,22 @@ export function News({
                 heading={t.talksHeading}
                 description={t.talksDescription}
               />
-              {/* Same `.inner-news-list` rows as `#section-1`, but without the
+              {/* Same rows as `#section-1`, but without the
                   `.inner-news-layout` wrapper — that is the two-column grid
                   holding the feature card, and there is no feature here, so the
                   list runs the full width of the container. */}
-              <div className="inner-news-list">
-                {talks.map((item) => (
-                  <Link
-                    href={localizePath(`/news/${item.id}`, lang)}
-                    key={item.id}
-                  >
-                    <time dateTime={item.published_at.slice(0, 10)}>
-                      {formatNewsDate(item.published_at).full}
-                    </time>
-                    <span>{item.category}</span>
-                    {/* ⚠️ `.inner-news-list>a` is a four-column grid
-                        (105px 86px 1fr auto), so this row must keep exactly
-                        four direct children. The talk details go *inside* the
-                        title's column, not beside it — a fifth child would
-                        push the arrow out of its track and misalign every row
-                        on the page. `.inner-news-list h3` is a descendant
-                        selector, so the heading keeps its styling here.
-
-                        The <time> above stays the announcement date, which is
-                        what the list is sorted by; the talk's own date sits
-                        with the other talk details, where it cannot be mistaken
-                        for the row's position in the list. */}
-                    <div className="talk-line">
-                      <h3>{item.title}</h3>
-                      {(item.event_at || item.speaker || item.venue) && (
-                        <p className="talk-meta">
-                          {item.event_at && (
-                            <time dateTime={item.event_at}>
-                              {formatEventTime(item.event_at, lang)}
-                            </time>
-                          )}
-                          {item.speaker && <span>{item.speaker}</span>}
-                          {item.venue && <span>{item.venue}</span>}
-                        </p>
-                      )}
-                    </div>
-                    <i>↗︎</i>
+              <TalkList lang={lang} talks={talks} />
+              {/* The block used to be every talk there was, which was fine at
+                  one and absurd at 256 — nine years of mostly-expired notices
+                  stacked under the announcements. It is a preview now, and this
+                  is the way to the rest. Rendered only when there is a rest. */}
+              {talkCount > talks.length ? (
+                <p className="news-to-blog">
+                  <Link className="text-action" href={localizePath("/news/talks", lang)}>
+                    {t.talksAll.replace("{n}", String(talkCount))} <span>→</span>
                   </Link>
-                ))}
-              </div>
+                </p>
+              ) : null}
             </div>
           </section>
         ) : null}

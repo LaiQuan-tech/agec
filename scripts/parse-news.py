@@ -86,6 +86,7 @@ def parse(page: str) -> dict:
     # occasionally truncated with an ellipsis.
     attachments, seen = [], set()
     for href, name in FILE_RE.findall(page):
+        href = html.unescape(href)      # `&amp;` in an attribute is a literal `&`
         url = href if href.startswith("http") else BASE + href
         if url in seen:
             continue

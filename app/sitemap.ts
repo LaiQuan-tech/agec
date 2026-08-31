@@ -13,6 +13,11 @@ const ROUTES = [
   "/students",
   "/alumni",
   "/blog",
+  // 演講公告 are excluded from /news's paginated list, so without this entry
+  // the archive's first page would be reachable only from a link inside the
+  // talks block. Its own pages 2..n stay out for the same reason /news/page/N
+  // does — see the note below.
+  "/news/talks",
 ];
 
 /**
@@ -21,8 +26,9 @@ const ROUTES = [
  * the `alternates.languages` block so a crawler that finds one version knows
  * the other exists. /admin and /login are omitted deliberately.
  *
- * The paginated /news/page/N URLs are left out on purpose: they hold no content
- * of their own, and every item on them already has its own entry here.
+ * The paginated /news/page/N and /news/talks/page/N URLs are left out on
+ * purpose: they hold no content of their own, and every item on them already
+ * has its own entry here.
  *
  * Async because the post list comes from the database. Drafts and scheduled
  * posts are excluded by getPostSlugs, so this never advertises a URL that

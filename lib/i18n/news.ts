@@ -70,6 +70,25 @@ export const NEWS = {
     en: "Departmental and inter-university talks, seminars and academic exchange, listed on their own so they are easy to find.",
   },
 
+  /**
+   * The 「查看全部演講」 link under the talks block, and the archive page it
+   * opens.
+   *
+   * `{n}` is the total number of talks. It is in the label deliberately: the
+   * block shows ten of two hundred and fifty-six, and without the count the
+   * link reads as "there might be a few more" rather than "there are nine years
+   * of these".
+   */
+  talksAll: { zh: "查看全部 {n} 場演講", en: "See all {n} talks" },
+  talksArchiveTitle: { zh: "演講公告", en: "Talks and seminars" },
+  talksArchiveLead: {
+    zh: "本系歷年演講、研討會與學術交流場次，依公告日期排列。",
+    en: "Every talk, seminar and academic exchange the department has announced, newest first.",
+  },
+  talksArchiveHeading: { zh: "歷年演講與研討會", en: "Talks and seminars, year by year" },
+  /** Back link at the foot of the archive. */
+  talksBackToNews: { zh: "← 返回最新消息", en: "← Back to news" },
+
   /** Link out to /blog, which has no place in the site-wide navigation. */
   toBlog: { zh: "閱讀專欄文章", en: "Read our features" },
 

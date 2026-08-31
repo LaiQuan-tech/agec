@@ -8,6 +8,9 @@ import {
   getNewsIds,
   getNewsPage,
   getTalks,
+  getTalksPage,
+  countTalks,
+  TALKS_PREVIEW_SIZE,
   getPostBySlug,
   getPosts,
   getPrograms,
@@ -15,6 +18,7 @@ import {
 import type { Lang } from "@/lib/i18n";
 import { Home } from "./Home";
 import { News } from "./News";
+import { Talks } from "./Talks";
 import { NewsPost } from "./NewsPost";
 import { About } from "./About";
 import { Faculty } from "./Faculty";
@@ -58,19 +62,38 @@ export async function NewsRoute({
   /** 1-based. Page 1 is /news; the rest are /news/page/N. */
   page?: number;
 }) {
-  // Two queries, not one filtered in the component: the talks block shows every
-  // talk regardless of which page of announcements you are on, and the main
-  // list's page count has to be computed from the announcements alone.
-  const [newsPage, talks] = await Promise.all([
+  // Separate queries, not one list filtered in the component: the talks block
+  // shows recent talks regardless of which page of announcements you are on,
+  // and the main list's page count has to be computed from the announcements
+  // alone. The count is its own head-only request rather than a length — the
+  // block is a preview, so the number it advertises is not the number it holds.
+  const [newsPage, talks, talkCount] = await Promise.all([
     getNewsPage(page, lang),
-    getTalks(lang),
+    getTalks(lang, TALKS_PREVIEW_SIZE),
+    countTalks(),
   ]);
 
   // A page number past the end is a 404 rather than an empty list — otherwise
   // /news/page/99 is a real URL serving a blank column.
   if (page > newsPage.totalPages) notFound();
 
-  return <News lang={lang} newsPage={newsPage} talks={talks} />;
+  return (
+    <News lang={lang} newsPage={newsPage} talks={talks} talkCount={talkCount} />
+  );
+}
+
+/** 演講公告封存 (/news/talks, /news/talks/page/N). */
+export async function TalksRoute({
+  lang,
+  page = 1,
+}: {
+  lang: Lang;
+  page?: number;
+}) {
+  const talksPage = await getTalksPage(page, lang);
+  if (page > talksPage.totalPages) notFound();
+
+  return <Talks lang={lang} talksPage={talksPage} />;
 }
 
 export async function NewsItemRoute({

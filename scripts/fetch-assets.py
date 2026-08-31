@@ -15,6 +15,7 @@ puts it — the title attribute in the markup drops the extension on half of
 them), the sniffed mime, and the byte count. Failures are recorded rather than
 raised: the run has to finish so the list of dead links is complete.
 """
+import html
 import json
 import os
 import re
@@ -52,7 +53,13 @@ def key_for(url: str) -> str:
 def download(url: str, dest: str) -> dict:
     """curl, not urllib: Cloudflare answers Python's default agent with a 403."""
     p = subprocess.run(
-        ["curl", "-sS", "-L", "--max-time", "60", "--retry", "1", "-A", UA,
+        # --connect-timeout, separate from --max-time: a dead host burns the
+        # full 60s (twice, with the retry) just failing to connect, and a
+        # quarter of the inline images point at hosts that no longer answer.
+        # Eight seconds is far more than a live host needs to accept a socket,
+        # while --max-time still allows a slow but working transfer to finish.
+        ["curl", "-sS", "-L", "--max-time", "60", "--connect-timeout", "8",
+         "--retry", "1", "-A", UA,
          "-D", dest + ".hdr", "-o", dest, "-w", "%{http_code}", url],
         capture_output=True, text=True,
     )
@@ -90,6 +97,12 @@ def main() -> int:
             # http/https) and they are counted, not chased.
             if src.startswith("data:"):
                 continue
+            # The src comes out of an HTML attribute, so `&` arrives as `&amp;`.
+            # Only the legacy img.php URLs have a query string at all, and all of
+            # those hosts are dead — but requesting `?img=x&amp;dir=y` would put a
+            # mangled URL in the dead-link report, which is the thing someone
+            # would paste into a browser to check.
+            src = html.unescape(src)
             url = src if src.startswith("http") else "https://www.agec.ntu.edu.tw" + src
             wanted.setdefault(url, {"url": url, "kind": "image", "used_by": []})
             wanted[url]["used_by"].append(r["id"])

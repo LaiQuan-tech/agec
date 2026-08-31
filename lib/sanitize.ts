@@ -113,4 +113,22 @@ export const RICH_TEXT_SANITIZE: sanitizeHtml.IOptions = {
    * this to "escape" would print the tags on the page as text.
    */
   disallowedTagsMode: "discard",
+  /**
+   * Drop an embed that has lost its source rather than leaving the shell.
+   *
+   * `allowedIframeHostnames` strips the `src` of anything that is not YouTube
+   * but leaves the `<iframe>` itself, because iframe is an allowed tag. What
+   * reaches the page is `<iframe loading="lazy" title="YouTube"></iframe>` —
+   * which `.post-body` sizes at 16:9, so the reader gets a blank rectangle
+   * where a video appears to be missing. Nothing at all is the honest render.
+   *
+   * The same goes for `<img>`: a src stripped for a bad scheme (the three
+   * `data:` URIs in the imported bodies) would otherwise leave a broken-image
+   * icon with no alt text.
+   *
+   * Returning true discards the element and its contents; both of these are
+   * void elements, so there are no contents to lose.
+   */
+  exclusiveFilter: (frame) =>
+    (frame.tag === "iframe" || frame.tag === "img") && !frame.attribs.src,
 };

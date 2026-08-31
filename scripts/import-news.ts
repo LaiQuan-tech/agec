@@ -108,7 +108,33 @@ const bump = (key: string, by = 1) => stats.set(key, (stats.get(key) ?? 0) + by)
  * on the old one being alive.
  */
 function rewriteAssets(html: string, urlMap: Record<string, MappedAsset>): string {
-  return html.replace(/<img\b[^>]*>/gi, (tag) => {
+  /*
+   * Nine bodies wrap the poster in a link to the same file — "click to see it
+   * full size". Rewriting only `<img src>` would leave those hrefs pointing at
+   * the old host: the picture would load from Supabase and clicking it would
+   * still leave the site. Every one of them is a file already uploaded for the
+   * `<img>` beside it, so this is a lookup, not another download.
+   *
+   * Only asset paths are touched. Links to old-site *pages* stay as they are —
+   * those are references, not resources, and the new site has no equivalent to
+   * point them at.
+   */
+  const withLinks = html.replace(/<a\b[^>]*\shref="([^"]*\/uploads\/asset\/data\/[^"]*)"/gi,
+    (tag, href: string) => {
+      const decoded = href.replace(/&amp;/g, "&");
+      const absolute = decoded.startsWith("http")
+        ? decoded
+        : `https://www.agec.ntu.edu.tw${decoded}`;
+      const mapped = urlMap[absolute];
+      if (!mapped) {
+        bump("連結-指向舊站資產但未搬移");
+        return tag;
+      }
+      bump("連結-已改指 Supabase");
+      return tag.replace(/\shref="[^"]*"/i, ` href="${mapped.url}"`);
+    });
+
+  return withLinks.replace(/<img\b[^>]*>/gi, (tag) => {
     const src = /\ssrc="([^"]*)"/i.exec(tag)?.[1];
     if (!src) {
       bump("圖片-無 src，移除");
@@ -120,7 +146,11 @@ function rewriteAssets(html: string, urlMap: Record<string, MappedAsset>): strin
       bump("圖片-data URI，移除");
       return "";
     }
-    const absolute = src.startsWith("http") ? src : `https://www.agec.ntu.edu.tw${src}`;
+    // `&` arrives from the attribute as `&amp;`; the map is keyed on real URLs.
+    const decoded = src.replace(/&amp;/g, "&");
+    const absolute = decoded.startsWith("http")
+      ? decoded
+      : `https://www.agec.ntu.edu.tw${decoded}`;
     const mapped = urlMap[absolute];
     if (!mapped) {
       bump("圖片-來源已失效，移除");
@@ -128,6 +158,39 @@ function rewriteAssets(html: string, urlMap: Record<string, MappedAsset>): strin
     }
     bump("圖片-已改指 Supabase");
     return tag.replace(/\ssrc="[^"]*"/i, ` src="${mapped.url}"`);
+  });
+}
+
+/**
+ * Facebook post embeds → an ordinary link to the post.
+ *
+ * Nine of the fifteen embeds in the imported bodies are `plugins/post.php`
+ * iframes. Adding facebook.com to `allowedIframeHostnames` would render them,
+ * and would also load Facebook's frame — and its cookies — into every reader's
+ * browser on a university page; the embed does not render for a logged-out
+ * visitor anyway. Dropping them loses the content entirely.
+ *
+ * The plugin URL carries the real post address in its `href` parameter, so the
+ * third option is available and is plainly the best one: keep the destination,
+ * lose the tracking. The sanitiser then treats it like any other outbound link
+ * (target=_blank, rel=noopener).
+ */
+function facebookEmbedsToLinks(html: string): string {
+  return html.replace(/<iframe\b[^>]*\ssrc="([^"]+)"[^>]*>\s*<\/iframe>/gi, (tag, src: string) => {
+    const decoded = src.replace(/&amp;/g, "&");
+    if (!/^https:\/\/(www\.)?facebook\.com\/plugins\//i.test(decoded)) return tag;
+    let target: string | null = null;
+    try {
+      target = new URL(decoded).searchParams.get("href");
+    } catch {
+      target = null;
+    }
+    if (!target) {
+      bump("Facebook 嵌入-取不出原始網址，移除");
+      return "";
+    }
+    bump("Facebook 嵌入-改成連結");
+    return `<p><a href="${target}">${target}</a></p>`;
   });
 }
 
@@ -188,7 +251,7 @@ function main() {
   const speakersEn = readJson<Record<string, string>>("speakers-en.json", {});
 
   const prepared = rows.map((row) => {
-    const rewritten = rewriteAssets(row.content_html, urlMap);
+    const rewritten = facebookEmbedsToLinks(rewriteAssets(row.content_html, urlMap));
     const clean = tidy(sanitizeHtml(rewritten, RICH_TEXT_SANITIZE));
 
     const attachments = row.attachments

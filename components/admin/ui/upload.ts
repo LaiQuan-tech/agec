@@ -31,6 +31,20 @@ export async function uploadFile(file: File, bucket: UploadBucket): Promise<Uplo
 
   const response = await fetch("/admin/api/upload", { method: "POST", body });
 
+  /*
+   * The proxy guards `/admin/:path*`, this route included, and answers an
+   * expired session with a 307 to /login. fetch() follows that by default, so
+   * what comes back is the login page: `response.ok` is true, and the JSON
+   * parse below would fail on `<!DOCTYPE html>` — surfacing as a syntax error
+   * where the real answer is "you were signed out".
+   *
+   * Someone leaves the admin open over lunch, comes back, picks a file: this is
+   * that. The route's own 401 never gets a chance to run.
+   */
+  if (response.redirected || !response.headers.get("content-type")?.includes("json")) {
+    throw new Error("登入狀態已過期，請重新登入後再上傳。");
+  }
+
   if (!response.ok) {
     // A crashed route or a proxy in between answers with HTML, not JSON, and
     // response.json() would then throw something unreadable over the real

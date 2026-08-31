@@ -35,6 +35,13 @@ import { NotAdminError, NotAuthenticatedError } from "@/lib/admin/errors";
 /** Uploads are per-request and must never be cached or statically evaluated. */
 export const dynamic = "force-dynamic";
 
+/**
+ * ⚠️ These two maps and the bucket `allowed_mime_types` in
+ * supabase/migrations/*_bucket_mimes_from_real_data.sql are one contract in two
+ * halves. Adding an extension here without adding its mime there produces an
+ * upload that passes every check we wrote and is then refused by Storage with a
+ * message the office cannot act on.
+ */
 const IMAGE_TYPES: Record<string, string> = {
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
@@ -45,11 +52,16 @@ const IMAGE_TYPES: Record<string, string> = {
 };
 
 /**
- * Attachment types, chosen from what the 428 imported news items actually
- * carry — pdf, docx, doc, xlsx, jpg and one 7z — plus the obvious siblings of
- * each. Anything not listed is refused: this bucket is public and served back
- * verbatim, so "allow whatever, it is only staff" would make it a place to host
- * an executable behind a university domain.
+ * Attachment types.
+ *
+ * Not guessed: this is what the 66 files attached to the 428 imported
+ * announcements actually turned out to be once their bytes were sniffed — pdf,
+ * docx, doc, one 7z, one .ods spreadsheet, one file named .doc that is really
+ * RTF, and three JPEGs — plus the obvious siblings of each.
+ *
+ * Anything not listed is refused. This bucket is public and served back
+ * verbatim, so "allow whatever, it is only staff who can upload" would make it
+ * a place to host an executable behind a university domain.
  */
 const FILE_TYPES: Record<string, string> = {
   pdf: "application/pdf",
@@ -59,6 +71,9 @@ const FILE_TYPES: Record<string, string> = {
   xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   ppt: "application/vnd.ms-powerpoint",
   pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  odt: "application/vnd.oasis.opendocument.text",
+  ods: "application/vnd.oasis.opendocument.spreadsheet",
+  rtf: "application/rtf",
   zip: "application/zip",
   "7z": "application/x-7z-compressed",
   rar: "application/vnd.rar",

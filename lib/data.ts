@@ -635,22 +635,83 @@ export async function getNewsPage(
   };
 }
 
-/** 演講公告 rows, for the talks block on /news. */
-export async function getTalks(lang: Lang): Promise<NewsItem[]> {
+/**
+ * How many talks the block on /news shows.
+ *
+ * It used to show every one of them, which was correct when the table held a
+ * single talk and stopped being correct at 256: the whole set is nine years
+ * deep, and stacking it under the announcements turned /news into 385KB of
+ * mostly-expired notices. A talk announcement is almost entirely prospective —
+ * nobody browses to find out who spoke in 2018 — so the block keeps the recent
+ * ones and the rest live at /news/talks, which is also how the old site
+ * arranged them (its 演講公告 list is thirteen pages of its own).
+ */
+export const TALKS_PREVIEW_SIZE = 10;
+
+/** 演講公告, newest first. `limit` is for the preview block on /news. */
+export async function getTalks(lang: Lang, limit?: number): Promise<NewsItem[]> {
   const supabase = createServerClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("news")
     .select(NEWS_COLUMNS)
     .eq("status", PUBLISHED)
     .eq("category", TALKS_CATEGORY)
-    .order("published_at", { ascending: false })
-    .returns<NewsRow[]>();
+    .order("published_at", { ascending: false });
+  if (limit) query = query.limit(limit);
+
+  const { data, error } = await query.returns<NewsRow[]>();
 
   if (error) {
     console.error("[lib/data] getTalks failed:", error.message);
     return [];
   }
   return (data ?? []).map((row) => toNews(row, lang));
+}
+
+/**
+ * One page of 演講公告, for the archive at /news/talks.
+ *
+ * Same shape and page size as getNewsPage so both lists paginate identically —
+ * the `.pagination` markup and its labels are shared.
+ */
+export async function getTalksPage(page: number, lang: Lang): Promise<NewsPage> {
+  const supabase = createServerClient();
+  const from = (Math.max(1, page) - 1) * NEWS_PAGE_SIZE;
+  const { data, error, count } = await supabase
+    .from("news")
+    .select(NEWS_COLUMNS, { count: "exact" })
+    .eq("status", PUBLISHED)
+    .eq("category", TALKS_CATEGORY)
+    .order("published_at", { ascending: false })
+    .range(from, from + NEWS_PAGE_SIZE - 1)
+    .returns<NewsRow[]>();
+
+  if (error) {
+    console.error("[lib/data] getTalksPage failed:", error.message);
+    return { items: [], page: 1, totalPages: 1 };
+  }
+
+  return {
+    items: (data ?? []).map((row) => toNews(row, lang)),
+    page,
+    totalPages: Math.max(1, Math.ceil((count ?? 0) / NEWS_PAGE_SIZE)),
+  };
+}
+
+/** How many talks there are in total — for the "see all N" link on /news. */
+export async function countTalks(): Promise<number> {
+  const supabase = createServerClient();
+  const { count, error } = await supabase
+    .from("news")
+    .select("id", { count: "exact", head: true })
+    .eq("status", PUBLISHED)
+    .eq("category", TALKS_CATEGORY);
+
+  if (error) {
+    console.error("[lib/data] countTalks failed:", error.message);
+    return 0;
+  }
+  return count ?? 0;
 }
 
 /**
