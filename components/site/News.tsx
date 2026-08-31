@@ -13,7 +13,7 @@ import { LocalNav } from "./LocalNav";
 import { SectionTitle } from "./SectionTitle";
 import { FilterTabs } from "./FilterTabs";
 import { NextRoute } from "./NextRoute";
-import { formatNewsDate } from "./format";
+import { formatEventTime, formatNewsDate } from "./format";
 
 /**
  * 最新消息 (/news, /en/news) — route 02 / 08.
@@ -228,7 +228,32 @@ export function News({
                       {formatNewsDate(item.published_at).full}
                     </time>
                     <span>{item.category}</span>
-                    <h3>{item.title}</h3>
+                    {/* ⚠️ `.inner-news-list>a` is a four-column grid
+                        (105px 86px 1fr auto), so this row must keep exactly
+                        four direct children. The talk details go *inside* the
+                        title's column, not beside it — a fifth child would
+                        push the arrow out of its track and misalign every row
+                        on the page. `.inner-news-list h3` is a descendant
+                        selector, so the heading keeps its styling here.
+
+                        The <time> above stays the announcement date, which is
+                        what the list is sorted by; the talk's own date sits
+                        with the other talk details, where it cannot be mistaken
+                        for the row's position in the list. */}
+                    <div className="talk-line">
+                      <h3>{item.title}</h3>
+                      {(item.event_at || item.speaker || item.venue) && (
+                        <p className="talk-meta">
+                          {item.event_at && (
+                            <time dateTime={item.event_at}>
+                              {formatEventTime(item.event_at, lang)}
+                            </time>
+                          )}
+                          {item.speaker && <span>{item.speaker}</span>}
+                          {item.venue && <span>{item.venue}</span>}
+                        </p>
+                      )}
+                    </div>
                     <i>↗︎</i>
                   </Link>
                 ))}

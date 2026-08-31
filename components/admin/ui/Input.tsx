@@ -1,4 +1,9 @@
-import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type {
+  ComponentPropsWithRef,
+  InputHTMLAttributes,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from "react";
 import { cn } from "@/lib/cn";
 
 const CONTROL =
@@ -11,7 +16,13 @@ const CONTROL_STYLE: React.CSSProperties = {
   color: "var(--ink)",
 };
 
-export function Input({ className, style, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
+/**
+ * `ComponentPropsWithRef` rather than `InputHTMLAttributes`, so callers can pass
+ * a `ref` — React 19 hands function components `ref` as an ordinary prop, but
+ * the plain attributes type does not declare it. UploadField needs one to write
+ * an uploaded URL back into the field.
+ */
+export function Input({ className, style, ...rest }: ComponentPropsWithRef<"input">) {
   return (
     <input
       {...rest}

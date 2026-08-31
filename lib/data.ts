@@ -48,6 +48,44 @@ export type NewsItem = {
   content_html: string | null;
   cover_url: string | null;
   is_pinned: boolean;
+  /**
+   * Files offered for download under the article. Empty array, never null —
+   * the column is `jsonb not null default '[]'`, so render sites can map over
+   * it without a guard.
+   */
+  attachments: NewsAttachment[];
+  /**
+   * 演講公告 only: who is speaking, when the talk actually happens, and where.
+   *
+   * `published_at` is the announcement's date and the talk is usually weeks
+   * later, so `event_at` is a separate column rather than a reinterpretation
+   * of that one.
+   *
+   * All three are null on most rows and that is expected, not a gap: 92% of the
+   * talks migrated from the old site are a poster image with no machine-readable
+   * text at all — the speaker and the room exist only as pixels. What could be
+   * recovered came from parsing the headline, which never carries the venue.
+   */
+  speaker: string | null;
+  venue: string | null;
+  event_at: string | null;
+};
+
+/**
+ * One downloadable file on a news item.
+ *
+ * `name` is the original filename as the old CMS served it in
+ * `Content-Disposition` — Chinese included. It is what the reader sees, so it
+ * is stored beside the URL rather than derived from it: the object key in
+ * storage is percent-encoded and ASCII-folded, and reversing that back into a
+ * readable label is not possible.
+ */
+export type NewsAttachment = {
+  name: string;
+  url: string;
+  /** Bytes. Shown next to the link so a reader knows what they are clicking. */
+  size: number;
+  mime: string;
 };
 
 /**
@@ -196,11 +234,17 @@ export type LinkItem = {
  * ------------------------------------------------------------------ */
 
 /** `category_zh` is derived by toNews() from `category`, not a column. */
-type NewsRow = Omit<NewsItem, "category_zh"> & {
+type NewsRow = Omit<NewsItem, "category_zh" | "speaker" | "venue"> & {
   title_en: string | null;
   body_en: string | null;
   category_en: string | null;
   content_html_en: string | null;
+  // Both halves of the pair, because toNews() resolves them the same way it
+  // resolves `title` — see the note on `speaker_en` below.
+  speaker: string | null;
+  speaker_en: string | null;
+  venue: string | null;
+  venue_en: string | null;
 };
 
 /** `is_chair` is computed by toFaculty(), not selected — the table has no such column. */
@@ -242,7 +286,19 @@ type PostRow = Omit<Post, "content_html"> & {
 export const TALKS_CATEGORY = "演講公告";
 
 const NEWS_COLUMNS =
-  "id, published_at, category, title, body, content_html, cover_url, is_pinned, title_en, body_en, category_en, content_html_en";
+  "id, published_at, category, title, body, content_html, cover_url, is_pinned, attachments, speaker, venue, event_at, title_en, body_en, category_en, content_html_en, speaker_en, venue_en";
+
+/**
+ * Every news getter filters on this, and every one of them has to do it itself.
+ *
+ * `createServerClient()` authenticates as the service role, which bypasses RLS
+ * entirely — a policy on the table would protect nothing here. These five words
+ * are the only thing between an unpublished draft and the open internet, the
+ * same way the `status`/`published_at` pair is for posts. Removing one from any
+ * getter leaks silently: no error, no warning, just a draft on the public site
+ * (or, from getNewsIds, a draft pre-rendered into a static page at build time).
+ */
+const PUBLISHED = "published";
 
 const FACULTY_COLUMNS =
   "id, name, name_en, title, category, fields, email, experience, photo_url, sort_order, title_en, fields_en, experience_en";
@@ -268,6 +324,16 @@ function toNews(row: NewsRow, lang: Lang): NewsItem {
     content_html: pickNullable(row.content_html, row.content_html_en, lang),
     cover_url: row.cover_url,
     is_pinned: row.is_pinned,
+    // `not null default '[]'` in Postgres, but a row written before that
+    // default existed would still arrive as null through PostgREST.
+    attachments: row.attachments ?? [],
+    // pick(), not the `namePair()` treatment `Faculty.name_en` gets: the talk
+    // card has one slot for the speaker, so this is a translation — English if
+    // there is one, Chinese otherwise. Faculty's parallel display exists only
+    // because those layouts have two slots.
+    speaker: pickNullable(row.speaker, row.speaker_en, lang),
+    venue: pickNullable(row.venue, row.venue_en, lang),
+    event_at: row.event_at,
   };
 }
 
@@ -322,6 +388,7 @@ export async function getNewsHome(
   const { data, error } = await supabase
     .from("news")
     .select(NEWS_COLUMNS)
+    .eq("status", PUBLISHED)
     .order("is_pinned", { ascending: false })
     .order("published_at", { ascending: false })
     .limit(limit)
@@ -548,6 +615,7 @@ export async function getNewsPage(
   const { data, error, count } = await supabase
     .from("news")
     .select(NEWS_COLUMNS, { count: "exact" })
+    .eq("status", PUBLISHED)
     .neq("category", TALKS_CATEGORY)
     .order("is_pinned", { ascending: false })
     .order("published_at", { ascending: false })
@@ -573,6 +641,7 @@ export async function getTalks(lang: Lang): Promise<NewsItem[]> {
   const { data, error } = await supabase
     .from("news")
     .select(NEWS_COLUMNS)
+    .eq("status", PUBLISHED)
     .eq("category", TALKS_CATEGORY)
     .order("published_at", { ascending: false })
     .returns<NewsRow[]>();
@@ -584,7 +653,13 @@ export async function getTalks(lang: Lang): Promise<NewsItem[]> {
   return (data ?? []).map((row) => toNews(row, lang));
 }
 
-/** One news item by id, or null. Used by /news/[id]. */
+/**
+ * One published news item by id, or null. Used by /news/[id].
+ *
+ * A draft and a deleted row are indistinguishable from here, and deliberately
+ * so — /news/[id] turns null into a 404, which is the only answer that does not
+ * tell an outsider that a draft with that id exists.
+ */
 export async function getNewsById(
   id: number,
   lang: Lang
@@ -593,6 +668,7 @@ export async function getNewsById(
   const { data, error } = await supabase
     .from("news")
     .select(NEWS_COLUMNS)
+    .eq("status", PUBLISHED)
     .eq("id", id)
     .maybeSingle<NewsRow>();
 
@@ -604,16 +680,20 @@ export async function getNewsById(
 }
 
 /**
- * Every news id, for generateStaticParams and the sitemap.
+ * Every *published* news id, for generateStaticParams and the sitemap.
  *
- * No status column on this table, so every row is public — unlike posts, there
- * is nothing to filter out here.
+ * This used to read "no status column on this table, so every row is public".
+ * There is one now, and the filter below is not optional: without it a draft
+ * gets pre-rendered into a static page at build time and listed in the sitemap,
+ * which is a leak that survives even after someone notices and fixes the page
+ * itself.
  */
 export async function getNewsIds(): Promise<number[]> {
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from("news")
     .select("id")
+    .eq("status", PUBLISHED)
     .returns<{ id: number }[]>();
 
   if (error) {

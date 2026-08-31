@@ -40,3 +40,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# supabase CLI 的本機連結狀態（含 project ref），不是專案設定
+supabase/.temp/
+
+# 消息搬運的中間產物（scripts/README.md 說明各檔用途）。
+# 這三個是可重跑重建的大檔：news-parsed.json 有 4MB，內容就是舊站 HTML。
+# 保留在版控裡的是「查不回來的東西」——手工翻譯、被清掉的舊資料、
+# 以及哪些檔案沒搬成功的紀錄。
+scripts/data/news-list.json
+scripts/data/news-parsed.json
+scripts/data/news-prepared.json

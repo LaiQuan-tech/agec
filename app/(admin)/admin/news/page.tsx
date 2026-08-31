@@ -23,6 +23,7 @@ type Row = {
   content_html: string | null;
   content_html_en: string | null;
   is_pinned: boolean;
+  status: string;
 };
 
 export default async function NewsListPage() {
@@ -42,7 +43,7 @@ export default async function NewsListPage() {
     .from("news")
     .select(
       "id, published_at, category, category_en, title, title_en, " +
-        "body, body_en, content_html, content_html_en, is_pinned"
+        "body, body_en, content_html, content_html_en, is_pinned, status"
     )
     .order("is_pinned", { ascending: false })
     .order("published_at", { ascending: false })
@@ -92,6 +93,7 @@ export default async function NewsListPage() {
             <TH className="w-[110px]">日期</TH>
             <TH className="w-[110px]">分類</TH>
             <TH>標題</TH>
+            <TH className="w-[80px]">狀態</TH>
             <TH className="w-[70px]">置頂</TH>
             <TH className="w-[80px]">英文</TH>
             <TH className="w-[190px]">操作</TH>
@@ -130,6 +132,24 @@ export default async function NewsListPage() {
                     <Link href={`/admin/news/${row.id}`} className="hover:underline underline-offset-2">
                       {row.title}
                     </Link>
+                  </TD>
+                  <TD>
+                    {/* Only the draft state gets a badge. Published is the
+                        ordinary case and marking all of them would leave a
+                        column of identical labels for the eye to filter out
+                        before finding the two that differ. */}
+                    {row.status === "draft" ? (
+                      <span
+                        className="rounded px-1.5 py-0.5 text-[12px] font-medium"
+                        style={{ background: "#fef3c7", color: "#92400e" }}
+                      >
+                        草稿
+                      </span>
+                    ) : (
+                      <span className="text-[12px]" style={{ color: "var(--muted)" }}>
+                        已發佈
+                      </span>
+                    )}
                   </TD>
                   <TD>{row.is_pinned ? "是" : ""}</TD>
                   <TD>

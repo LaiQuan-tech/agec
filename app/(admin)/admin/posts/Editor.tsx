@@ -1,34 +1,24 @@
 "use client";
 
-import { useCallback, useRef, type ReactNode } from "react";
+import { useCallback, useRef, useState, type ReactNode } from "react";
 import { EditorContent, useEditor, useEditorState, type JSONContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
+import { TableKit } from "@tiptap/extension-table";
+import Youtube from "@tiptap/extension-youtube";
 import { Button } from "@/components/admin/ui/Button";
+import { writeField } from "@/components/admin/ui/native-value";
+import { uploadFile } from "@/components/admin/ui/upload";
 
-/**
- * Writes a value into a form field in a way React notices.
- *
- * Two things conspire here. React only raises its synthetic change event for
- * text-like inputs, so the two payload fields are `type="text"` kept out of the
- * layout with the `hidden` attribute rather than `type="hidden"` — the latter
- * would submit fine but never reach FormShell's onChange. And React remembers
- * the last value it saw on the node itself, so a plain `node.value = …` would
- * update that record and make the event that follows look like a no-op; the
- * write has to go through the prototype's own setter.
- *
- * Without both, the unsaved-changes guard stays disarmed for anyone who only
- * ever touched the editor, and closing the tab would silently drop the article.
+/*
+ * writeField() moved to components/admin/ui/native-value.ts when the upload
+ * controls needed the same trick. Its two payload fields below are still
+ * `type="text"` + the `hidden` attribute rather than `type="hidden"`, for the
+ * reason recorded there: React raises its synthetic change event only for
+ * text-like inputs, and a real hidden input would submit correctly but never
+ * reach FormShell's onChange — leaving the unsaved-changes guard disarmed for
+ * anyone who only ever touched the editor.
  */
-function writeField(node: HTMLInputElement | null, value: string) {
-  if (!node || node.value === value) return;
-
-  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
-  if (setter) setter.call(node, value);
-  else node.value = value;
-
-  node.dispatchEvent(new Event("input", { bubbles: true }));
-}
 
 function ToolButton({
   label,
@@ -94,6 +84,8 @@ export function Editor({
 }) {
   const htmlRef = useRef<HTMLInputElement>(null);
   const jsonRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
   const editor = useEditor({
     // This project server-renders the admin, and a Tiptap instance built during
@@ -107,8 +99,41 @@ export function Editor({
         // <u> is not on the sanitiser's allowlist, so an underline would vanish
         // on save. Better to not offer the shortcut at all than to lose it.
         underline: false,
+        // StarterKit ships Link; it just had no button. openOnClick would
+        // navigate away from the admin mid-edit, which is never what someone
+        // clicking a link inside an editor meant to do.
+        link: { openOnClick: false, autolink: true },
       }),
       Image.configure({ inline: false, allowBase64: false }),
+      /*
+       * ⚠️ Table and Youtube are here because the sanitiser allows them, and
+       * that is not a nicety — it is the only thing keeping the imported
+       * announcements intact.
+       *
+       * Tiptap silently drops nodes it has no extension for while parsing. The
+       * hidden HTML field starts out holding the row exactly as stored, so
+       * opening an item and saving it untouched is safe; but the first
+       * keystroke fires onUpdate, which overwrites that field with
+       * editor.getHTML() — by then already stripped of every table and embed.
+       * No error, no warning, and only on the migrated rows.
+       *
+       * 7 of the 428 imported news items are a Word table (for the job
+       * postings, the table *is* the announcement) and 15 are a YouTube embed.
+       * Remove either extension and those 22 empty themselves out the next time
+       * the office edits a typo.
+       */
+      TableKit.configure({ table: { resizable: false } }),
+      Youtube.configure({
+        // The sanitiser's allowedIframeHostnames is the real boundary; this is
+        // the editor half agreeing with it. nocookie is YouTube's own
+        // privacy-preserving host.
+        nocookie: true,
+        controls: true,
+        // Sized by CSS on both sides, so the width/height attributes Youtube
+        // would otherwise write are dropped by the sanitiser anyway.
+        width: 640,
+        height: 360,
+      }),
     ],
     // content_json is the editor's own format and round-trips exactly;
     // content_html is the fallback for anything stored before it, and for rows
@@ -139,23 +164,72 @@ export function Editor({
       bulletList: editor?.isActive("bulletList") ?? false,
       orderedList: editor?.isActive("orderedList") ?? false,
       blockquote: editor?.isActive("blockquote") ?? false,
+      link: editor?.isActive("link") ?? false,
+      inTable: editor?.isActive("table") ?? false,
       canUndo: editor?.can().undo() ?? false,
       canRedo: editor?.can().redo() ?? false,
     }),
   });
 
-  const insertImage = useCallback(() => {
-    if (!editor) return;
-    const answer = window.prompt("請輸入圖片網址（以 http:// 或 https:// 開頭）");
-    if (answer === null) return;
+  /*
+   * Pick a file, upload it, insert it. This used to be a window.prompt asking
+   * for a URL, with the hint text telling the office to "upload the image
+   * somewhere else first" — which meant the Supabase dashboard.
+   */
+  const pickImage = useCallback(() => imageInputRef.current?.click(), []);
 
-    const url = answer.trim();
-    if (!url) return;
-    if (!/^https?:\/\//i.test(url)) {
-      window.alert("圖片網址必須以 http:// 或 https:// 開頭，這張圖片沒有插入。");
+  const insertImageFile = useCallback(
+    async (file: File) => {
+      if (!editor) return;
+      setUploading(true);
+      try {
+        const { url } = await uploadFile(file, "blog");
+        // alt is left empty rather than filled with the filename: a decorative
+        // image wants an empty alt, and "poster-web.jpg" read aloud is worse
+        // than silence. The author can add a real one.
+        editor.chain().focus().setImage({ src: url, alt: "" }).run();
+      } catch (cause) {
+        window.alert(cause instanceof Error ? cause.message : "圖片上傳失敗。");
+      } finally {
+        setUploading(false);
+        if (imageInputRef.current) imageInputRef.current.value = "";
+      }
+    },
+    [editor],
+  );
+
+  const toggleLink = useCallback(() => {
+    if (!editor) return;
+    if (editor.isActive("link")) {
+      editor.chain().focus().unsetLink().run();
       return;
     }
-    editor.chain().focus().setImage({ src: url }).run();
+    const answer = window.prompt("連結網址（http://、https:// 或 mailto:）");
+    if (answer === null) return;
+    const href = answer.trim();
+    if (!href) return;
+    // The same three schemes lib/sanitize.ts allows. Checking here means the
+    // author is told now, rather than watching the link disappear on save.
+    if (!/^(https?:\/\/|mailto:)/i.test(href)) {
+      window.alert("網址必須以 http://、https:// 或 mailto: 開頭，連結沒有建立。");
+      return;
+    }
+    editor.chain().focus().extendMarkRange("link").setLink({ href }).run();
+  }, [editor]);
+
+  const insertVideo = useCallback(() => {
+    if (!editor) return;
+    const answer = window.prompt("YouTube 影片網址");
+    if (answer === null) return;
+    const src = answer.trim();
+    if (!src) return;
+    // Only YouTube survives the sanitiser (allowedIframeHostnames), so anything
+    // else would be stored and then vanish on render.
+    if (!/^https?:\/\/(www\.)?(youtube\.com|youtu\.be|youtube-nocookie\.com)\//i.test(src)) {
+      window.alert("目前只支援 YouTube 影片，這個網址沒有插入。");
+      return;
+    }
+    editor.commands.setYoutubeVideo({ src });
   }, [editor]);
 
   return (
@@ -207,11 +281,72 @@ export function Editor({
           onClick={() => editor?.chain().focus().toggleBlockquote().run()}
         />
         <ToolButton
+          label="連結"
+          title={toolbar?.link ? "移除連結" : "插入連結"}
+          active={toolbar?.link}
+          onClick={toggleLink}
+        />
+        <ToolButton
           label="分隔線"
           title="插入分隔線"
           onClick={() => editor?.chain().focus().setHorizontalRule().run()}
         />
-        <ToolButton label="插入圖片" title="插入圖片" onClick={insertImage} />
+        <ToolButton
+          label={uploading ? "上傳中…" : "插入圖片"}
+          title="從電腦選一張圖片上傳"
+          disabled={uploading}
+          onClick={pickImage}
+        />
+        <ToolButton label="插入影片" title="插入 YouTube 影片" onClick={insertVideo} />
+        <ToolButton
+          label="表格"
+          title="插入 3×3 表格"
+          active={toolbar?.inTable}
+          onClick={() =>
+            editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+          }
+        />
+        {/* Only shown inside a table: four more buttons on every toolbar, for
+            something most posts never use, is four more things to scan past. */}
+        {toolbar?.inTable && (
+          <>
+            <ToolButton
+              label="＋列"
+              title="在下方增加一列"
+              onClick={() => editor?.chain().focus().addRowAfter().run()}
+            />
+            <ToolButton
+              label="＋欄"
+              title="在右方增加一欄"
+              onClick={() => editor?.chain().focus().addColumnAfter().run()}
+            />
+            <ToolButton
+              label="－列"
+              title="刪除目前這一列"
+              onClick={() => editor?.chain().focus().deleteRow().run()}
+            />
+            <ToolButton
+              label="－欄"
+              title="刪除目前這一欄"
+              onClick={() => editor?.chain().focus().deleteColumn().run()}
+            />
+            <ToolButton
+              label="刪表格"
+              title="刪除整個表格"
+              onClick={() => editor?.chain().focus().deleteTable().run()}
+            />
+          </>
+        )}
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => {
+            const file = e.currentTarget.files?.[0];
+            if (file) void insertImageFile(file);
+          }}
+        />
 
         <span className="mx-1 h-4 w-px" style={{ background: "var(--hairline)" }} aria-hidden="true" />
 
@@ -249,7 +384,15 @@ export function Editor({
           "[&_img]:my-3 [&_img]:max-w-full [&_img]:rounded " +
           "[&_a]:underline [&_a]:underline-offset-2 " +
           "[&_pre]:my-3 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-neutral-100 [&_pre]:p-3 " +
-          "[&_code]:text-[13px]"
+          "[&_code]:text-[13px] " +
+          // Tables and embeds need visible structure while editing too —
+          // without borders a table is an indistinguishable run of words, and
+          // the author cannot tell where the cells are to click into them.
+          "[&_table]:my-3 [&_table]:w-full [&_table]:table-fixed [&_table]:border-collapse " +
+          "[&_th]:border [&_th]:border-neutral-300 [&_th]:bg-neutral-100 [&_th]:p-2 [&_th]:text-left " +
+          "[&_td]:border [&_td]:border-neutral-300 [&_td]:p-2 " +
+          "[&_.ProseMirror-selectedcell]:bg-neutral-200 " +
+          "[&_iframe]:my-3 [&_iframe]:aspect-video [&_iframe]:h-auto [&_iframe]:w-full [&_iframe]:max-w-xl"
         }
         style={{ color: "var(--ink)" }}
       />

@@ -41,6 +41,17 @@ export default async function NewNewsPage() {
           content_json_en: null,
           cover_url: "",
           is_pinned: false,
+          // New announcements start as drafts. The column's own default is
+          // 'published' — that was forced by the eleven live rows it was added
+          // beside — but a form the office is still typing into is the one
+          // place where "not yet visible" is the safe starting point.
+          status: "draft",
+          attachments: [],
+          speaker: "",
+          speaker_en: "",
+          venue: "",
+          venue_en: "",
+          event_at: "",
         }}
       />
     </div>

@@ -94,6 +94,31 @@ export const NEWS = {
     zh: "這則公告沒有進一步的內容。",
     en: "There is nothing further to this announcement.",
   },
+
+  /* --- 演講場次與附件 --- */
+
+  /**
+   * Labels for the talk details block on 演講公告.
+   *
+   * A definition list rather than a sentence, because the three are looked up
+   * rather than read: someone deciding whether to attend wants the time, and
+   * wants it without reading a paragraph.
+   */
+  eventSpeaker: { zh: "講者", en: "Speaker" },
+  eventTime: { zh: "時間", en: "Time" },
+  eventVenue: { zh: "地點", en: "Venue" },
+  /** aria-label of the block, which has no visible heading of its own. */
+  eventLabel: { zh: "演講場次資訊", en: "Talk details" },
+
+  /** Heading above the download list at the foot of an item. */
+  attachmentsHeading: { zh: "附件下載", en: "Attachments" },
+  /**
+   * Appended to each download link for screen readers. `{name}` is the
+   * filename and `{size}` the human-readable size — both already on screen,
+   * but a link announced as just the filename gives no warning that following
+   * it starts a download.
+   */
+  attachmentHint: { zh: "下載 {name}，{size}", en: "Download {name}, {size}" },
 } satisfies Record<string, Msg>;
 
 /**

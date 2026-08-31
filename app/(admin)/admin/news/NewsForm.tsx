@@ -4,7 +4,10 @@ import Link from "next/link";
 import type { ActionState } from "@/lib/admin/action-result";
 import { FormShell } from "@/components/admin/ui/FormShell";
 import { Field } from "@/components/admin/ui/Field";
-import { Checkbox, Input, Textarea } from "@/components/admin/ui/Input";
+import { Checkbox, Input, Select, Textarea } from "@/components/admin/ui/Input";
+import { UploadField } from "@/components/admin/ui/UploadField";
+import { AttachmentsField } from "@/components/admin/ui/AttachmentsField";
+import type { NewsAttachment } from "@/lib/data";
 /**
  * The blog's editor, used as-is rather than copied.
  *
@@ -43,6 +46,16 @@ export type NewsFormValues = {
   content_json_en: unknown;
   cover_url: string;
   is_pinned: boolean;
+  /** 'draft' | 'published'. See the note on the field below. */
+  status: string;
+  attachments: NewsAttachment[];
+  /** 演講公告 only; empty string for the null columns, like category_en above. */
+  speaker: string;
+  speaker_en: string;
+  venue: string;
+  venue_en: string;
+  /** `datetime-local` shape — "YYYY-MM-DDTHH:mm" in Taipei time, or "". */
+  event_at: string;
 };
 
 export function NewsForm({
@@ -234,18 +247,27 @@ export function NewsForm({
 
           <Field
             htmlFor="cover_url"
-            label="封面圖片網址"
+            label="封面圖片"
             error={state.fieldErrors?.cover_url}
-            hint="選填，請以 http://、https:// 或 / 開頭。每一則消息點進去都會顯示這張圖，排最前面的那一則還會拿它當列表最上方大卡片的背景圖（留空時卡片改用預設的院景照片）。"
+            hint="選填。按「上傳」從電腦選圖，或直接貼上網址。每一則消息點進去都會顯示這張圖，排最前面的那一則還會拿它當列表最上方大卡片的背景圖（留空時卡片改用預設的院景照片）。"
           >
-            <Input
+            <UploadField
               id="cover_url"
               name="cover_url"
+              bucket="posters"
               defaultValue={initial.cover_url}
-              maxLength={500}
               placeholder="https://…"
-              aria-invalid={Boolean(state.fieldErrors?.cover_url)}
+              invalid={Boolean(state.fieldErrors?.cover_url)}
             />
+          </Field>
+
+          <Field
+            htmlFor="attachments"
+            label="附件"
+            error={state.fieldErrors?.attachments}
+            hint="選填。簡章、報名表、要點這類要給人下載的檔案。會列在消息內文的最下方，讀者看到的是這裡的原始檔名。"
+          >
+            <AttachmentsField name="attachments" defaultValue={initial.attachments} />
           </Field>
 
           <Field
@@ -260,6 +282,78 @@ export function NewsForm({
               label="固定在列表最上方"
             />
           </Field>
+
+          <Field
+            htmlFor="status"
+            label="發佈狀態"
+            error={state.fieldErrors?.status}
+            hint="草稿只有後台看得到，前台完全查不到——列表、首頁、搜尋引擎、直接輸入網址都一樣。改成「已發佈」後最多五分鐘會出現在前台。"
+          >
+            <Select id="status" name="status" defaultValue={initial.status}>
+              <option value="draft">草稿</option>
+              <option value="published">已發佈</option>
+            </Select>
+          </Field>
+
+          {/*
+            演講場次資訊。永遠顯示，不依分類自動隱藏——欄位會憑空消失比多幾個
+            空白欄更難用，而且分類是自由文字（datalist 只是建議），沒有可靠的
+            判斷點。前台自己只在「演講公告」那一區用這三欄。
+          */}
+          <fieldset className="flex flex-col gap-5 rounded-md border p-4" style={{ borderColor: "var(--hairline)" }}>
+            <legend className="px-1 text-[13px] font-medium" style={{ color: "var(--ink-soft)" }}>
+              演講場次（只有分類為「演講公告」時前台才會顯示）
+            </legend>
+
+            <Field
+              htmlFor="speaker"
+              label="講者"
+              error={state.fieldErrors?.speaker}
+              hint="含職稱與服務單位，例如「林建甫 董事長（中信金融管理學院）」。"
+            >
+              <Input
+                id="speaker"
+                name="speaker"
+                defaultValue={initial.speaker}
+                maxLength={200}
+                aria-invalid={Boolean(state.fieldErrors?.speaker)}
+              />
+            </Field>
+
+            <Field htmlFor="speaker_en" label="講者 Speaker (English)">
+              <Input id="speaker_en" name="speaker_en" defaultValue={initial.speaker_en} maxLength={300} />
+            </Field>
+
+            <Field
+              htmlFor="event_at"
+              label="演講時間"
+              error={state.fieldErrors?.event_at}
+              hint="演講實際舉行的時間，不是公告日期。台北時間。"
+            >
+              <Input
+                id="event_at"
+                name="event_at"
+                type="datetime-local"
+                defaultValue={initial.event_at}
+                aria-invalid={Boolean(state.fieldErrors?.event_at)}
+              />
+            </Field>
+
+            <Field htmlFor="venue" label="地點" error={state.fieldErrors?.venue}>
+              <Input
+                id="venue"
+                name="venue"
+                defaultValue={initial.venue}
+                maxLength={200}
+                placeholder="農經系一樓大講堂"
+                aria-invalid={Boolean(state.fieldErrors?.venue)}
+              />
+            </Field>
+
+            <Field htmlFor="venue_en" label="地點 Venue (English)">
+              <Input id="venue_en" name="venue_en" defaultValue={initial.venue_en} maxLength={300} />
+            </Field>
+          </fieldset>
         </>
       )}
     </FormShell>

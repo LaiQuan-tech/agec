@@ -10,8 +10,20 @@ import {
   type ActionState,
 } from "@/lib/admin/action-result";
 import { revalidateFor } from "@/lib/admin/revalidate";
-import { boolean, collect, date, requireId, text } from "@/lib/admin/validate";
+import {
+  boolean,
+  collect,
+  date,
+  datetimeLocal,
+  oneOf,
+  requireId,
+  text,
+} from "@/lib/admin/validate";
+import type { NewsAttachment } from "@/lib/data";
 import { hasEditorContent } from "./constants";
+
+/** Matches the CHECK constraint on news.status. */
+const NEWS_STATUSES = ["draft", "published"] as const;
 
 type NewsInput = {
   published_at: string;
@@ -27,7 +39,71 @@ type NewsInput = {
   content_json_en: unknown;
   cover_url: string | null;
   is_pinned: boolean;
+  status: (typeof NEWS_STATUSES)[number];
+  attachments: NewsAttachment[];
+  speaker: string | null;
+  speaker_en: string | null;
+  venue: string | null;
+  venue_en: string | null;
+  event_at: string | null;
 };
+
+/** How many files one announcement may carry, and how large a label may be. */
+const MAX_ATTACHMENTS = 20;
+const MAX_ATTACHMENT_NAME = 260;
+
+/**
+ * The attachments list, as JSON from the hidden field AttachmentsField posts.
+ *
+ * Every entry here was produced by our own upload endpoint, which is why the
+ * shape is predictable — and exactly why it still gets checked. The field is a
+ * text input in a form on the client: whatever validation the component does is
+ * advisory, and this is the last point before the value lands in a jsonb column
+ * that render sites map over without guards.
+ *
+ * A malformed payload is rejected rather than silently trimmed. Unlike the
+ * ProseMirror JSON above — which is a convenience the article survives without
+ * — a dropped attachment is a download link the reader was promised and cannot
+ * see, with nothing on screen to say so.
+ */
+function parseAttachments(form: FormData): { value: NewsAttachment[]; error?: string } {
+  const raw = String(form.get("attachments") ?? "").trim();
+  if (!raw) return { value: [] };
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return { value: [], error: "附件清單格式不正確，請重新上傳" };
+  }
+  if (!Array.isArray(parsed)) return { value: [], error: "附件清單格式不正確，請重新上傳" };
+  if (parsed.length > MAX_ATTACHMENTS) {
+    return { value: [], error: `附件最多 ${MAX_ATTACHMENTS} 個` };
+  }
+
+  const files: NewsAttachment[] = [];
+  for (const entry of parsed) {
+    if (typeof entry !== "object" || entry === null) {
+      return { value: [], error: "附件清單格式不正確，請重新上傳" };
+    }
+    const { name, url, size, mime } = entry as Record<string, unknown>;
+    if (typeof name !== "string" || typeof url !== "string" || typeof mime !== "string") {
+      return { value: [], error: "附件清單格式不正確，請重新上傳" };
+    }
+    // http/https only. The value is rendered straight into an href, so a
+    // `javascript:` URL here would be a stored XSS on a public page.
+    if (!/^https?:\/\//i.test(url)) {
+      return { value: [], error: `附件「${name}」的網址無效` };
+    }
+    files.push({
+      name: name.slice(0, MAX_ATTACHMENT_NAME),
+      url,
+      size: typeof size === "number" && Number.isFinite(size) && size >= 0 ? Math.round(size) : 0,
+      mime,
+    });
+  }
+  return { value: files };
+}
 
 
 /**
@@ -124,6 +200,13 @@ function parse(form: FormData): { values?: NewsInput; fieldErrors?: Record<strin
   const body = text(form, "body", "摘要", { max: 300 });
   const bodyEn = text(form, "body_en", "英文摘要", { max: 600 });
   const coverUrl = text(form, "cover_url", "封面圖片網址", { max: 500 });
+  const status = oneOf(form, "status", "發佈狀態", NEWS_STATUSES, { required: true });
+  const attachments = parseAttachments(form);
+  const speaker = text(form, "speaker", "講者", { max: 200 });
+  const speakerEn = text(form, "speaker_en", "英文講者", { max: 300 });
+  const venue = text(form, "venue", "地點", { max: 200 });
+  const venueEn = text(form, "venue_en", "英文地點", { max: 300 });
+  const eventAt = datetimeLocal(form, "event_at", "演講時間");
 
   const coverError =
     coverUrl.error ?? (coverUrl.value && !/^(https?:\/\/|\/)/.test(coverUrl.value)
@@ -139,6 +222,13 @@ function parse(form: FormData): { values?: NewsInput; fieldErrors?: Record<strin
     body: body.error,
     body_en: bodyEn.error,
     cover_url: coverError,
+    status: status.error,
+    attachments: attachments.error,
+    speaker: speaker.error,
+    speaker_en: speakerEn.error,
+    venue: venue.error,
+    venue_en: venueEn.error,
+    event_at: eventAt.error,
   });
   if (fieldErrors) return { fieldErrors };
 
@@ -162,6 +252,14 @@ function parse(form: FormData): { values?: NewsInput; fieldErrors?: Record<strin
       content_html_en: contentEn.html,
       content_json_en: contentEn.json,
       is_pinned: boolean(form, "is_pinned"),
+      // Required by oneOf() above, so `.value` is never null here.
+      status: status.value!,
+      attachments: attachments.value,
+      speaker: speaker.value,
+      speaker_en: speakerEn.value,
+      venue: venue.value,
+      venue_en: venueEn.value,
+      event_at: eventAt.value,
     },
   };
 }
