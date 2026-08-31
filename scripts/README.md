@@ -13,6 +13,7 @@ python3 scripts/fetch-assets.py                         # 4a 下載圖片與附�
 python3 scripts/upload-assets.py                        # 4b 上傳 Supabase Storage
 npx tsx scripts/import-news.ts --dry                    # 5  轉換＋消毒，只看報告
 npx tsx scripts/import-news.ts --write                  # 5  清空 news 後寫入
+python3 scripts/shrink-oversized.py                     # 6  縮掉過大的圖（選用）
 ```
 
 每一步都可以單獨重跑：抓取會沿用快取，上傳走 `x-upsert`，只有最後一步會動資料庫。
@@ -44,6 +45,21 @@ npx tsx scripts/import-news.ts --write                  # 5  清空 news 後寫�
 
 沒進版控的（`.gitignore` 有列，重跑即可重建）：
 `news-list.json`、`news-parsed.json`（4MB，內容就是舊站 HTML）、`news-prepared.json`。
+
+## 第 6 步在做什麼
+
+舊 CMS 存的是上傳者丟進去的原檔。搬過來的 376 張圖裡，有 100 張寬度超過
+2000px，光這 100 張就佔 337MB——直接從 Photoshop 匯出的海報，最大一張 17MB。
+內文欄寬只有 760px，2000px 已經是 2.6 倍。縮完 **337MB → 50MB（省 85%）**。
+
+刻意做得很窄，所以不會弄壞任何東西：只動寬度超過 2000px 的、**格式不變**
+（物件鍵因此不變，`cover_url` 與 `content_html` 完全不用改）、原始下載檔留著
+不動、走 upsert 所以可以重跑。
+
+**還沒做的**：另外 73 張海報是 PNG（合計 81MB，單張 1–2.5MB），轉成 JPEG 大約
+還能省 60MB。但那會改副檔名 → 改物件鍵 → 要重寫資料庫裡每一個引用，是另一件
+風險不同的事。影響也比想像小：/news 的主打卡目前用的是本地預設圖，這些 PNG
+只在各自的單則消息頁載入，一頁一張。
 
 ## 兩個踩過的坑
 
