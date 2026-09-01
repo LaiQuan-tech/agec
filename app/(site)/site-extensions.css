@@ -780,3 +780,69 @@
   max-width: none;
   text-wrap: balance;
 }
+
+/* ---------------------------------------------------------------------------
+   分頁的省略號
+
+   `.pagination span` 在 site.css 是「目前這一頁」的樣式（綠色、粗體），所以
+   省略號需要自己的 class，否則畫面上會出現兩個看起來像目前頁的東西。
+   `.pagination .pagination-gap` 的分數（0,2,0）高於 `.pagination span`（0,1,1），
+   所以直接勝出，不必動 site.css。
+   --------------------------------------------------------------------------- */
+.pagination .pagination-gap {
+  color: var(--muted);
+  font-weight: 400;
+  /* gap 是 24px，省略號兩側各留這麼寬會讓它看起來像一個獨立的頁碼。
+     負邊距把它拉回來，讀起來才是「這裡有東西被省略了」。 */
+  margin: 0 -10px;
+}
+
+/* ---------------------------------------------------------------------------
+   年份導覽 `.news-years`
+
+   site.css 沒有這個 class —— 參考站沒有年份瀏覽，585 則消息也是這次才有的。
+
+   刻意**不做成第二排 `.filter-tabs` 膠囊**：分類是四個，膠囊剛好；年份是
+   十一個，同樣做成膠囊就是在分類籤下面再壓一排一樣醒目的東西，兩排十六顆。
+   這裡要的是相反的效果 —— 一行輕量的文字連結，讀起來像檔案索引而不是第二組
+   篩選器，視覺重量明顯低於它上面那排籤。
+
+   字級用 14px 而不是更小：那是全站可讀性下限那一組訂的值（見上面的
+   「可讀字級下限」段），年份也是要點的東西，不能例外。
+   --------------------------------------------------------------------------- */
+.news-years {
+  align-items: baseline;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 14px;
+  /* column-gap 比 row-gap 大：同一行的年份之間要看得出間隔，
+     換行之後上下靠太近反而會黏成一團。 */
+  gap: 10px 18px;
+  margin: 18px 0 0;
+  padding: 0 0 18px;
+}
+.news-years-label {
+  color: var(--green-soft);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  /* 與 `.eyebrow` 同一個裝置：小字、大字距、全形標題旁的標籤。 */
+  margin-right: 6px;
+  text-transform: uppercase;
+}
+.news-years a {
+  color: var(--muted);
+  /* 上下 padding 把點擊區從 20px 撐到 36px。年份是四個數字的窄目標，
+     沒有它在觸控裝置上很難點中。負邊距讓這一行的高度不受影響。 */
+  margin: -8px 0;
+  padding: 8px 0;
+  transition: color 0.2s;
+}
+.news-years a:hover {
+  color: var(--green);
+}
+.news-years a.active {
+  color: var(--green);
+  font-weight: 700;
+}

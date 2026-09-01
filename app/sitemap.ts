@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { LANGS, localizePath } from "@/lib/i18n";
-import { getNewsIds, getPostSlugs } from "@/lib/data";
+import { getNewsIds, getNewsYears, getPostSlugs } from "@/lib/data";
 import { NEWS_CATEGORIES } from "@/lib/news-categories";
 import { SITE_ORIGIN } from "@/lib/site-routes";
 
@@ -39,13 +39,28 @@ const ROUTES = [
  * would 404.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [slugs, newsIds] = await Promise.all([getPostSlugs(), getNewsIds()]);
+  const [slugs, newsIds, years] = await Promise.all([
+    getPostSlugs(),
+    getNewsIds(),
+    getNewsYears(),
+  ]);
   const articles = [
     ...slugs.map((slug) => `/blog/${slug}`),
     ...newsIds.map((id) => `/news/${id}`),
   ];
 
-  return [...ROUTES, ...articles].flatMap((route) =>
+  /*
+   * 年份頁。這些是真正的封存索引 —— 十一年的消息，年份是讀者實際會用來找東西
+   * 的入口，而且清單是資料推導的，所以不會列出空的年份。
+   *
+   * ⚠️ 分類 × 年份的組合（/news/category/admissions/year/2024）刻意不收。
+   * 4 × 11 = 44 個網址、兩種語言就是 88 筆，內容全部是別處已經各自有網址的
+   * 消息的子集合 —— 與 /news/page/N 被排除的理由完全一樣（「本身沒有內容」）。
+   * 它們仍然可以被瀏覽、被連結，只是不由 sitemap 主動推薦。
+   */
+  const yearRoutes = years.map(({ year }) => `/news/year/${year}`);
+
+  return [...ROUTES, ...yearRoutes, ...articles].flatMap((route) =>
     LANGS.map((lang) => ({
       url: `${SITE_ORIGIN}${localizePath(route, lang)}`,
       changeFrequency: "weekly" as const,

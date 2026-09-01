@@ -7,6 +7,7 @@ import {
   getNewsHome,
   getNewsIds,
   getNewsPage,
+  getNewsYears,
   getTalks,
   getTalksPage,
   countTalks,
@@ -58,6 +59,7 @@ export async function NewsRoute({
   lang,
   page = 1,
   category,
+  year,
 }: {
   lang: Lang;
   /** 1-based. Page 1 is /news; the rest are /news/page/N. */
@@ -67,6 +69,8 @@ export async function NewsRoute({
    * `categoryForSlug()` — never a raw URL segment.
    */
   category?: string;
+  /** 西元年，來自 `parseNewsYear()` —— 不是網址上那一段原字串。 */
+  year?: number;
 }) {
   // Separate queries, not one list filtered in the component: the talks block
   // shows recent talks regardless of which page of announcements you are on,
@@ -76,10 +80,15 @@ export async function NewsRoute({
   // The talks block only appears on the unfiltered first page, so a filtered
   // request skips both of its queries rather than fetching what it will not
   // render.
-  const [newsPage, talks, talkCount] = await Promise.all([
-    getNewsPage(page, lang, category),
-    category ? [] : getTalks(lang, TALKS_PREVIEW_SIZE),
-    category ? 0 : countTalks(),
+  const filtered = Boolean(category || year);
+  const [newsPage, years, talks, talkCount] = await Promise.all([
+    getNewsPage(page, lang, category, year),
+    // ⚠️ 只帶 category，不帶 year。年份列要列出「這個分類底下所有有資料的
+    // 年份」，把目前選的年份也套進去，列表就只會剩下那一年，等於選了之後
+    // 再也換不掉。
+    getNewsYears(category),
+    filtered ? [] : getTalks(lang, TALKS_PREVIEW_SIZE),
+    filtered ? 0 : countTalks(),
   ]);
 
   // A page number past the end is a 404 rather than an empty list — otherwise
@@ -90,6 +99,23 @@ export async function NewsRoute({
   // leads nowhere the day before they publish into it.
   if (page > 1 && page > newsPage.totalPages) notFound();
 
+  /*
+   * 沒有這一年的消息就是 404，不是空清單。
+   *
+   * 年份路由是 `dynamicParams = true`（跨年時新的一年必須立刻能用，不能等到
+   * 下一次 build），代價是任何四位數都會被路由接住。少了這道守門，
+   * /news/year/1999 會回 200 加一頁空白，被搜尋引擎收走之後就是無限多個
+   * 內容相同的空頁。
+   *
+   * 分類是相反的處理（空分類仍然回 200 並顯示空狀態）：分類是後台看得到、
+   * 系辦明天就會發文進去的固定四項；年份則是資料推導出來的，沒有資料的年份
+   * 在概念上就不存在。
+   *
+   * 用的是上面已經查好的 `years`，不另外發查詢；而且它已經套過 category，
+   * 所以「求職徵才 2015」這種分類有、該年沒有的組合也會正確 404。
+   */
+  if (year !== undefined && !years.some((y) => y.year === year)) notFound();
+
   return (
     <News
       lang={lang}
@@ -97,6 +123,8 @@ export async function NewsRoute({
       talks={talks}
       talkCount={talkCount}
       category={category}
+      year={year}
+      years={years}
     />
   );
 }

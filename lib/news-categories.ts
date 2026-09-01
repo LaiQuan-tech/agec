@@ -75,7 +75,30 @@ export function slugForCategory(category: string): string | null {
  * these routes dynamic, and every public page on this site is statically
  * prerendered with ISR.
  */
-export function newsPath(page: number, lang: Lang, slug?: string | null): string {
-  const base = slug ? `/news/category/${slug}` : "/news";
+export function newsPath(
+  page: number,
+  lang: Lang,
+  slug?: string | null,
+  year?: number | null
+): string {
+  // 分類在前、年份在後，而且順序固定。兩段可以各自出現、也可以同時出現，
+  // 所以 /news、/news/category/admissions、/news/year/2024 與
+  // /news/category/admissions/year/2024 是四種形狀 —— 每一種都對應一個路由檔。
+  let base = "/news";
+  if (slug) base += `/category/${slug}`;
+  if (year) base += `/year/${year}`;
   return localizePath(page === 1 ? base : `${base}/page/${page}`, lang);
+}
+
+/**
+ * 網址那一段 → 年份數字，不合格就是 null。
+ *
+ * 唯一把字串變成 `getNewsPage` 的 year 參數的地方。限定四位數是刻意的：
+ * 「115」（民國）、「2024a」、「０２４」都會在這裡變成 null → 404，而不是
+ * 傳進查詢變成一個查得到零筆的合法頁面。空頁與不存在的頁必須是兩件事，
+ * 否則 /news/year/115 會回 200 並被搜尋引擎收走。
+ */
+export function parseNewsYear(raw: string): number | null {
+  if (!/^\d{4}$/.test(raw)) return null;
+  return Number(raw);
 }

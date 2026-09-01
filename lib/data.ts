@@ -615,7 +615,15 @@ export async function getNewsPage(
    * matched against the column. `lib/news-categories.ts` is the only place that
    * turns a URL slug into one of these.
    */
-  category?: string
+  category?: string,
+  /**
+   * A four-digit calendar year, or undefined for every year.
+   *
+   * ⚠️ 民國年不收。`published_at` 是西元的 timestamptz，這裡直接組成半開區間
+   * 去比對；傳 115 進來會查出空的一頁而不是報錯。`lib/news-years.ts` 是唯一
+   * 把網址那一段轉成這個數字的地方，它會擋掉不是四位數的東西。
+   */
+  year?: number
 ): Promise<NewsPage> {
   const supabase = createServerClient();
   const from = (page - 1) * NEWS_PAGE_SIZE;
@@ -633,6 +641,21 @@ export async function getNewsPage(
     ? query.eq("category", category)
     : query.neq("category", TALKS_CATEGORY);
 
+  /*
+   * 半開區間 [year-01-01, year+1-01-01)，不是 `published_at::text like '2024%'`。
+   *
+   * 用 like 會讓 Postgres 放棄 published_at 的索引（它得先把每一列轉成字串），
+   * 而這個欄位正是清單的排序鍵。半開區間則是兩個可以走索引的比較。
+   *
+   * ⚠️ 上界用 `lt` 不是 `lte`：published_at 是 timestamptz，`lte '2024-12-31'`
+   * 會漏掉 12/31 當天 00:00 之後的每一則。
+   */
+  if (year !== undefined) {
+    query = query
+      .gte("published_at", `${year}-01-01`)
+      .lt("published_at", `${year + 1}-01-01`);
+  }
+
   const { data, error, count } = await query
     // Pinned first inside a category too: a notice worth pinning is worth
     // pinning wherever it is listed.
@@ -642,7 +665,10 @@ export async function getNewsPage(
     .returns<NewsRow[]>();
 
   if (error) {
-    console.error(`[lib/data] getNewsPage(${category ?? "all"}) failed:`, error.message);
+    console.error(
+      `[lib/data] getNewsPage(${category ?? "all"}, ${year ?? "all years"}) failed:`,
+      error.message
+    );
     return { items: [], page: 1, totalPages: 1 };
   }
 
@@ -652,6 +678,67 @@ export async function getNewsPage(
     // At least 1: an empty table still has a page 1 to render the empty state on.
     totalPages: Math.max(1, Math.ceil((count ?? 0) / NEWS_PAGE_SIZE)),
   };
+}
+
+/**
+ * 消息實際存在的年份，新到舊，各附筆數。
+ *
+ * 給年份導覽列與 generateStaticParams 用，兩邊同一支 —— 否則會出現「導覽列
+ * 上有 2016，點下去卻是沒有預產的空頁」這種只在線上才看得到的落差。
+ *
+ * ## 為什麼是抓一整欄回來自己算
+ *
+ * PostgREST 沒有 GROUP BY。可選的是建一個 view 或 RPC，或是把 published_at
+ * 這一欄整批取回在 JS 端數。這裡選後者，理由是量：585 列 × 一個日期字串大約
+ * 18KB，一次查詢，而且結果被 ISR 快取五分鐘。系辦一年發幾十則，這個規模在
+ * 可預見的年份內不會變成問題。
+ *
+ * ⚠️ 但它確實是「整表掃描」。如果哪天這張表到了幾萬列，就該換成一個
+ * `news_years` view（select distinct extract(year …), count(*)）—— 換的時候
+ * 只要動這一支，呼叫端的形狀不變。
+ *
+ * ⚠️ `.eq("status", PUBLISHED)` 不能省：service-role 繞過 RLS，少了它草稿的
+ * 年份會出現在公開的導覽列上，等於洩漏「某年有還沒發佈的東西」。
+ */
+export type NewsYear = { year: number; count: number };
+
+export async function getNewsYears(category?: string): Promise<NewsYear[]> {
+  const supabase = createServerClient();
+
+  let query = supabase
+    .from("news")
+    .select("published_at")
+    .eq("status", PUBLISHED);
+
+  // 與 getNewsPage 完全相同的分類述詞。兩邊若分岔，就會出現「年份列說 2015
+  // 有資料，該年的頁面卻是空的」。
+  query = category
+    ? query.eq("category", category)
+    : query.neq("category", TALKS_CATEGORY);
+
+  const { data, error } = await query.returns<{ published_at: string }[]>();
+
+  if (error) {
+    console.error(
+      `[lib/data] getNewsYears(${category ?? "all"}) failed:`,
+      error.message
+    );
+    // 空陣列＝不顯示年份列。清單本身照樣渲染，這是刻意讓錯誤只影響一列而不是
+    // 整頁（同 lib/data.ts 其他 getter 的降級方式）。
+    return [];
+  }
+
+  const counts = new Map<number, number>();
+  for (const row of data ?? []) {
+    // slice 而不是 new Date()：published_at 存的是台北時間的日期，交給 Date
+    // 解析再取 getFullYear 會在跨年那幾個小時把 1/1 的消息算成前一年。
+    const year = Number(row.published_at.slice(0, 4));
+    if (Number.isSafeInteger(year)) counts.set(year, (counts.get(year) ?? 0) + 1);
+  }
+
+  return [...counts.entries()]
+    .map(([year, count]) => ({ year, count }))
+    .sort((a, b) => b.year - a.year);
 }
 
 /**

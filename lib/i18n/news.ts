@@ -59,6 +59,28 @@ export const NEWS = {
   /** aria-label of the `.filter-tabs` row; the tabs are NEWS_FILTER_TABS. */
   filterLabel: { zh: "消息分類", en: "News categories" },
 
+  /* --- 年份導覽 ------------------------------------------------------------
+   * 585 則消息橫跨十一個年份，分類籤把它切成四份仍然是 17 到 20 頁一份。
+   * 年份是第二個維度，與分類可以疊加（/news/category/admissions/year/2024）。
+   */
+  yearLabel: { zh: "年份", en: "Year" },
+  /** 年份列的 aria-label。與分類籤分開命名，讀屏才分得出兩排是不同的東西。 */
+  yearNavLabel: { zh: "依年份瀏覽消息", en: "Browse news by year" },
+  /** 年份列的第一項：取消年份篩選。 */
+  yearAll: { zh: "全部年份", en: "All years" },
+  /** 單一年份連結的 aria-label；{year} 與 {count} 會被代換。 */
+  yearHint: { zh: "{year} 年，共 {count} 則", en: "{year}, {count} items" },
+  /** 該年份沒有消息時的說明（理論上不會出現——年份列只列出有資料的年份）。 */
+  yearEmpty: {
+    zh: "這一年沒有消息。",
+    en: "There is no news from this year.",
+  },
+  /** 篩到某一年時，標題下方那句補充。{year} 會被代換。 */
+  yearLead: {
+    zh: "{year} 年的消息。",
+    en: "News published in {year}.",
+  },
+
   /** alt of `.inner-news-feature>img` when the first row has no cover of its own. */
   featureAlt: {
     zh: "農業綜合館中庭",

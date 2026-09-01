@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { NewsItem, NewsPage } from "@/lib/data";
+import type { NewsItem, NewsPage, NewsYear } from "@/lib/data";
 import { localizePath, translate, type Lang } from "@/lib/i18n";
 import {
   NEWS,
@@ -14,6 +14,7 @@ import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
 import { SectionTitle } from "./SectionTitle";
 import { FilterTabLinks } from "./FilterTabLinks";
+import { NewsYearNav } from "./NewsYearNav";
 import { NextRoute } from "./NextRoute";
 import { Pagination } from "./Pagination";
 import { TalkList } from "./TalkList";
@@ -60,6 +61,8 @@ export function News({
   talks,
   talkCount,
   category,
+  year,
+  years,
 }: {
   lang: Lang;
   newsPage: NewsPage;
@@ -73,10 +76,15 @@ export function News({
    * Drives the heading, the active tab and every link on the page.
    */
   category?: string;
+  /** 篩選的年份，undefined 表示全部年份。 */
+  year?: number;
+  /** 這個分類下實際有消息的年份，新到舊。年份列從這裡來。 */
+  years: NewsYear[];
 }) {
   const t = translate(NEWS, lang);
   const { items, page, totalPages } = newsPage;
   const slug = category ? slugForCategory(category) : null;
+  const filtered = Boolean(category || year);
   const copy = slug
     ? translate(NEWS_CATEGORY_PAGES[slug as keyof typeof NEWS_CATEGORY_PAGES], lang)
     : null;
@@ -93,7 +101,7 @@ export function News({
    * The talks split happens in lib/data.ts rather than here, because it decides
    * the page count as well as the contents.
    */
-  const feature = page === 1 && !category ? items[0] : undefined;
+  const feature = page === 1 && !filtered ? items[0] : undefined;
   const rest = feature ? items.slice(1) : items;
 
   return (
@@ -106,14 +114,22 @@ export function News({
         // No route number on a filtered view: it is one lens on route 02, not a
         // ninth route, and `NN / 08` is computed from lib/nav.ts. Same reasoning
         // as Talks.tsx.
-        routeNo={category ? undefined : "02"}
-        lead={copy ? copy.lead : t.lead}
+        routeNo={filtered ? undefined : "02"}
+        /* 只篩年份時沒有分類文案可用，用年份那一句補上，而不是印回未篩選的
+           那段引言 —— 那會讓 /news/year/2020 讀起來像沒有被篩選。 */
+        lead={
+          copy
+            ? copy.lead
+            : year
+              ? t.yearLead.replace("{year}", String(year))
+              : t.lead
+        }
         imageAlt={t.heroAlt}
       />
       {/* The strip is a table of contents for a page with several sections, and
           a filtered page is a single list — `#section-2` is not rendered, so
           LocalNav would collapse to one item that navigates nowhere. */}
-      {category ? null : (
+      {filtered ? null : (
         <LocalNav
           lang={lang}
           label={t.localNavLabel}
@@ -137,10 +153,26 @@ export function News({
             <FilterTabLinks
               tabs={translate(NEWS_FILTER_TABS, lang)}
               activeValue={category ?? ALL_TABS_VALUE}
+              /* 換分類時保留年份。兩排若各自把對方清掉，讀者每縮小一次範圍
+                 就會失去另一次 —— 那不是兩個篩選器，是兩個互相打架的開關。 */
               hrefFor={(value) =>
-                newsPath(1, lang, value === ALL_TABS_VALUE ? null : slugForCategory(value))
+                newsPath(
+                  1,
+                  lang,
+                  value === ALL_TABS_VALUE ? null : slugForCategory(value),
+                  year
+                )
               }
               ariaLabel={t.filterLabel}
+            />
+            {/* 年份列。`years` 已經是「這個分類底下真的有消息的年份」，所以
+                在「招生」頁看到的年份跟在全部消息看到的可以不一樣，而且不會
+                有點下去是空頁的連結。 */}
+            <NewsYearNav
+              lang={lang}
+              years={years}
+              activeYear={year ?? null}
+              hrefFor={(y) => newsPath(1, lang, slug, y)}
             />
             {/* `.inner-news-layout` is a `.78fr 1.22fr` grid: the feature card
                 on the left, the list on the right. The card only exists on page
@@ -212,10 +244,12 @@ export function News({
                 footer are how a reader finds it. Longer pieces live there;
                 this page is announcements. */}
             {rest.length === 0 && !feature ? (
-              <p className="news-empty">{t.categoryEmpty}</p>
+              <p className="news-empty">
+                {category ? t.categoryEmpty : t.yearEmpty}
+              </p>
             ) : null}
             <p className="news-to-blog">
-              {category ? (
+              {filtered ? (
                 <Link className="text-action" href={newsPath(1, lang)}>
                   {t.categoryBackToAll}
                 </Link>
@@ -229,7 +263,7 @@ export function News({
               lang={lang}
               page={page}
               totalPages={totalPages}
-              hrefFor={(n) => newsPath(n, lang, slug)}
+              hrefFor={(n) => newsPath(n, lang, slug, year)}
             />
           </div>
         </section>
