@@ -247,9 +247,12 @@ export function Faculty({
               eyebrow="AFFILIATED FACULTY"
               heading={t.affiliated.heading}
             />
-            {/* `.faculty-grid-secondary` narrows the grid to 3 columns and
-                indents it by 28%; it is still `.faculty-grid`, so both classes
-                are required. Cards here drop `.faculty-category`. */}
+            {/* Still `.faculty-grid` as well — both classes are required.
+                Cards here drop `.faculty-category`.
+
+                site.css makes this 3 columns indented 28%; site-extensions.css
+                overrides it to 4 columns flush left above 860px, so the cards
+                come out the same 369.75px as §1's. See the note there. */}
             <div className="faculty-grid faculty-grid-secondary">
               {affiliated.map((member) => (
                 <FacultyCard
