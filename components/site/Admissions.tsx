@@ -1,6 +1,8 @@
+import Link from "next/link";
 import type { LinkItem, Program } from "@/lib/data";
 import { translate, type Lang } from "@/lib/i18n";
 import { ADMISSIONS } from "@/lib/i18n/admissions";
+import { newsPath } from "@/lib/news-categories";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
@@ -119,7 +121,23 @@ export function Admissions({
                     <h3>{program.name}</h3>
                     <h4>{copy?.tagline ?? program.description}</h4>
                     <p>{copy?.methods ?? program.description}</p>
-                    <a href="#section-2">{t.section1.cta}</a>
+                    {/*
+                      原本是 `href="#section-2"`，也就是同一頁的「重要時程」。
+                      那在站上還沒有招生內容時是唯一能指的地方；現在 /news 有
+                      157 則招生公告（簡章、口試時間、報名系統、正備取名單），
+                      「查看招生資訊」該指的就是那裡。
+
+                      四張卡指向同一個網址是刻意的：招生消息沒有「這則屬於哪個
+                      學制」的欄位，學制只寫在標題裡。與其用關鍵字猜著篩、篩錯
+                      還沒人會發現，不如四張都進同一份完整清單 —— 讀者在那一頁
+                      還有年份可以縮小範圍。
+
+                      走 newsPath() 而不是自己拼字串：消息的網址只能有一個產生
+                      處，否則哪天路由改了，這裡會變成一個沒人記得要改的死連結。
+                    */}
+                    <Link href={newsPath(1, lang, "admissions")}>
+                      {t.section1.cta}
+                    </Link>
                   </article>
                 );
               })}
