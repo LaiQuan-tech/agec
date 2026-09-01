@@ -1,6 +1,7 @@
 import type { Course, LinkItem, Program } from "@/lib/data";
 import { translate, type Lang } from "@/lib/i18n";
 import { COURSES } from "@/lib/i18n/courses";
+import { EYEBROWS } from "@/lib/i18n/eyebrows";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
@@ -39,6 +40,7 @@ export function Courses({
   links: LinkItem[];
 }) {
   const t = translate(COURSES, lang);
+  const eb = translate(EYEBROWS, lang);
 
   /**
    * `.resource-row` — 常用表格. Falls back to the reference site's four labels
@@ -111,7 +113,7 @@ export function Courses({
           <div className="container">
             <SectionTitle
               no="01"
-              eyebrow="CURRICULUM"
+              eyebrow={eb.curriculum}
               heading={t.section1.heading}
               description={t.section1.description}
             />
@@ -155,7 +157,7 @@ export function Courses({
           <div className="container">
             <SectionTitle
               no="02"
-              eyebrow="DEGREE REQUIREMENTS"
+              eyebrow={eb.degreeRequirements}
               heading={t.section2.heading}
             />
             {/* `.document-grid` — 修業規定 PDF cards.
@@ -194,7 +196,7 @@ export function Courses({
 
         <section className="inner-section" id="section-3">
           <div className="container">
-            <SectionTitle no="03" eyebrow="FORMS" heading={t.section3.heading} />
+            <SectionTitle no="03" eyebrow={eb.forms} heading={t.section3.heading} />
             {/* `.resource-row a` carries the cell borders and the 120px min
                 height, so every cell stays an <a> — MaybeLink only removes the
                 href when the row has no url, which is most of them until the

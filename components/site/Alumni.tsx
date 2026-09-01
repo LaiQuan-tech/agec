@@ -1,6 +1,7 @@
 import type { AlumniEvent } from "@/lib/alumni-events";
 import { translate, type Lang } from "@/lib/i18n";
 import { ALUMNI } from "@/lib/i18n/alumni";
+import { EYEBROWS } from "@/lib/i18n/eyebrows";
 import { ALUMNI_EVENTS } from "@/lib/i18n/alumni-events";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
@@ -43,8 +44,13 @@ import { AlumniEventList } from "./AlumniEventList";
 
 /**
  * `.alumni-sectors` — 5 tags; `grid-template-columns:repeat(5,1fr)`.
- * Not in the dictionary: uppercase Latin in the reference design, identical in
- * both languages, exactly like `SectionTitle`'s eyebrow.
+ *
+ * Not in the dictionary: these are sector names set as uppercase Latin, and the
+ * reference design uses them as a typographic row rather than as reading copy.
+ *
+ * ⚠️ 這一點與區塊小標不同。小標已經改成雙語（見 lib/i18n/eyebrows.ts）——
+ * 那是因為小標是「這一段在講什麼」的標籤，中文讀者需要讀懂它；這五個是產業
+ * 類別的標籤雲，五格固定寬，翻成中文會變成五個長度不一的詞而撐壞版面。
  */
 /**
  * 「前往捐贈專區」 and the 系友捐贈 link both land here.
@@ -72,6 +78,7 @@ export function Alumni({
   events: AlumniEvent[];
 }) {
   const t = translate(ALUMNI, lang);
+  const eb = translate(EYEBROWS, lang);
   const ev = translate(ALUMNI_EVENTS, lang);
 
   return (
@@ -93,7 +100,7 @@ export function Alumni({
           <div className="container">
             <SectionTitle
               no="01"
-              eyebrow="DISTINGUISHED ALUMNI"
+              eyebrow={eb.distinguishedAlumni}
               heading={
                 <>
                   {t.section1.heading.line1}
@@ -141,7 +148,7 @@ export function Alumni({
                 holds only the <h2>. */}
             <SectionTitle
               no="02"
-              eyebrow="ALUMNI NEWS"
+              eyebrow={eb.alumniNews}
               heading={t.section2.heading}
             />
             <div className="story-grid">
@@ -175,7 +182,7 @@ export function Alumni({
           <div className="container">
             <SectionTitle
               no="03"
-              eyebrow="ALUMNI EVENTS"
+              eyebrow={eb.alumniEvents}
               heading={ev.sectionHeading}
               description={ev.sectionDescription}
             />
@@ -188,7 +195,7 @@ export function Alumni({
         <section className="inner-section donation-section" id="section-3">
           <div className="container donation-grid">
             <div>
-              <p className="eyebrow light">SUPPORT AGEC</p>
+              <p className="eyebrow light">{eb.supportAgec}</p>
               <h2>
                 {t.section3.heading.line1}
                 <br />
@@ -212,7 +219,7 @@ export function Alumni({
           <div className="container">
             <SectionTitle
               no="04"
-              eyebrow="LEE TENG-HUI ARCHIVE"
+              eyebrow={eb.leeArchive}
               heading={t.section4.heading}
               description={t.section4.description}
             />

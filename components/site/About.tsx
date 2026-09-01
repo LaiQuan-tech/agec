@@ -5,6 +5,7 @@ import { SectionTitle } from "./SectionTitle";
 import { NextRoute } from "./NextRoute";
 import { translate, type Lang } from "@/lib/i18n";
 import { ABOUT } from "@/lib/i18n/about";
+import { EYEBROWS } from "@/lib/i18n/eyebrows";
 
 /**
  * 本系簡介 (/about) — route 03 / 08.
@@ -31,6 +32,7 @@ import { ABOUT } from "@/lib/i18n/about";
  */
 export function About({ lang }: { lang: Lang }) {
   const t = translate(ABOUT, lang);
+  const eb = translate(EYEBROWS, lang);
 
   return (
     <SiteShell lang={lang} variant="interior">
@@ -67,7 +69,7 @@ export function About({ lang }: { lang: Lang }) {
                 sections below. */}
             <SectionTitle
               no="01"
-              eyebrow="OUR HISTORY"
+              eyebrow={eb.ourHistory}
               heading={t.history.heading}
               description={t.history.description}
             />
@@ -102,7 +104,7 @@ export function About({ lang }: { lang: Lang }) {
           <div className="container">
             <SectionTitle
               no="02"
-              eyebrow="MISSION & VISION"
+              eyebrow={eb.missionVision}
               heading={t.mission.heading}
             />
             <blockquote className="mission-quote">{t.mission.quote}</blockquote>
@@ -125,7 +127,7 @@ export function About({ lang }: { lang: Lang }) {
           <div className="container">
             <SectionTitle
               no="03"
-              eyebrow="HONORS"
+              eyebrow={eb.honors}
               heading={t.honors.heading}
             />
             <div className="honor-grid">
@@ -143,7 +145,7 @@ export function About({ lang }: { lang: Lang }) {
           <div className="container">
             <SectionTitle
               no="04"
-              eyebrow="ENVIRONMENT"
+              eyebrow={eb.environment}
               heading={t.environment.heading}
             />
             {/* <figure>/<figcaption> can't be swapped for <div>s —

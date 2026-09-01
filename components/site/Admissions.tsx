@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { LinkItem, Program } from "@/lib/data";
 import { translate, type Lang } from "@/lib/i18n";
 import { ADMISSIONS } from "@/lib/i18n/admissions";
+import { EYEBROWS } from "@/lib/i18n/eyebrows";
 import { newsPath } from "@/lib/news-categories";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
@@ -56,6 +57,7 @@ export function Admissions({
   links: LinkItem[];
 }) {
   const t = translate(ADMISSIONS, lang);
+  const eb = translate(EYEBROWS, lang);
 
   // Same guard as the home page: the grid's positional border rules assume at
   // most 4 cards, so extra rows are dropped rather than allowed to break the
@@ -94,7 +96,7 @@ export function Admissions({
           <div className="container">
             <SectionTitle
               no="01"
-              eyebrow="PROGRAMS"
+              eyebrow={eb.programs}
               heading={t.section1.heading}
               description={t.section1.description}
             />
@@ -149,7 +151,7 @@ export function Admissions({
           <div className="container">
             <SectionTitle
               no="02"
-              eyebrow="KEY DATES"
+              eyebrow={eb.keyDates}
               heading={t.section2.heading}
             />
             <div className="schedule-line">
@@ -169,7 +171,7 @@ export function Admissions({
           <div className="container">
             <SectionTitle
               no="03"
-              eyebrow="WHAT YOU WILL BUILD"
+              eyebrow={eb.whatYouWillBuild}
               heading={t.section3.heading}
             />
             <div className="capability-cloud">
@@ -184,7 +186,7 @@ export function Admissions({
           <div className="container">
             <SectionTitle
               no="04"
-              eyebrow="NEED HELP?"
+              eyebrow={eb.needHelp}
               heading={t.section4.heading}
             />
             {/* Anchors, never <div>s — `.resource-row a` owns the cell border,

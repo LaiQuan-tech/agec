@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
  * component in the port.
  *
  * site.css addresses it positionally:
- *   .inner-section-title>div:first-child   → the 序號 + English eyebrow row
+ *   .inner-section-title>div:first-child   → the 序號 + eyebrow row
  *   .inner-section-title>div:last-child>p  → the optional description
  *
  * So the output must be exactly two <div>s, and `description` must be a direct

@@ -8,6 +8,7 @@ import {
   NEWS_LOCAL_NAV,
   NEWS_TITLE,
 } from "@/lib/i18n/news";
+import { EYEBROWS } from "@/lib/i18n/eyebrows";
 import { newsPath, slugForCategory } from "@/lib/news-categories";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
@@ -82,6 +83,7 @@ export function News({
   years: NewsYear[];
 }) {
   const t = translate(NEWS, lang);
+  const eb = translate(EYEBROWS, lang);
   const { items, page, totalPages } = newsPage;
   const slug = category ? slugForCategory(category) : null;
   const filtered = Boolean(category || year);
@@ -139,11 +141,9 @@ export function News({
       <div className="interior-content">
         <section className="inner-section" id="section-1">
           <div className="container">
-            {/* `eyebrow` stays English on both sites — it is the reference
-                site's Latin-caps device, not copy. */}
             <SectionTitle
               no="01"
-              eyebrow="LATEST UPDATES"
+              eyebrow={eb.latestUpdates}
               heading={copy ? copy.heading : t.sectionHeading}
               description={copy ? copy.description : t.sectionDescription}
             />
@@ -271,7 +271,7 @@ export function News({
             <div className="container">
               <SectionTitle
                 no="02"
-                eyebrow="TALKS & SEMINARS"
+                eyebrow={eb.talksSeminars}
                 heading={t.talksHeading}
                 description={t.talksDescription}
               />

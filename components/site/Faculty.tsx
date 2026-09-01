@@ -1,6 +1,7 @@
 import type { Faculty as FacultyMember } from "@/lib/data";
 import { translate, type Lang } from "@/lib/i18n";
 import { FACULTY, categoryLabel, displayName, fill, namePair } from "@/lib/i18n/faculty";
+import { EYEBROWS } from "@/lib/i18n/eyebrows";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
@@ -144,6 +145,7 @@ export function Faculty({
   faculty: FacultyMember[];
 }) {
   const t = translate(FACULTY, lang);
+  const eb = translate(EYEBROWS, lang);
 
   const visiting = faculty.filter((m) => m.category === VISITING);
   const emeritus = faculty.filter((m) => m.category === EMERITUS);
@@ -232,7 +234,7 @@ export function Faculty({
                 same string on /faculty and /en/faculty. */}
             <SectionTitle
               no="01"
-              eyebrow="FULL-TIME FACULTY"
+              eyebrow={eb.fullTimeFaculty}
               heading={t.fullTime.heading}
               description={t.fullTime.description}
             />
@@ -244,7 +246,7 @@ export function Faculty({
           <div className="container">
             <SectionTitle
               no="02"
-              eyebrow="AFFILIATED FACULTY"
+              eyebrow={eb.affiliatedFaculty}
               heading={t.affiliated.heading}
             />
             {/* Still `.faculty-grid` as well — both classes are required.
@@ -270,7 +272,7 @@ export function Faculty({
           <div className="container">
             <SectionTitle
               no="03"
-              eyebrow="LEGACY & VISITING"
+              eyebrow={eb.legacyVisiting}
               heading={t.legacy.heading}
               description={t.legacy.description}
             />
@@ -279,7 +281,7 @@ export function Faculty({
                 accordion. All three are populated by the 2026 seed, so this
                 matches the reference site one-for-one with real data. */}
             {visiting.length > 0 ? (
-              <LegacyGroup eyebrow="VISITING FACULTY" heading={t.legacy.visiting}>
+              <LegacyGroup eyebrow={eb.visitingFaculty} heading={t.legacy.visiting}>
                 <div className="visiting-profile-list">
                   {visiting.map((member) => (
                     <article key={member.id}>
@@ -323,7 +325,7 @@ export function Faculty({
               </LegacyGroup>
             ) : null}
             {emeritus.length > 0 ? (
-              <LegacyGroup eyebrow="EMERITUS FACULTY" heading={t.legacy.emeritus}>
+              <LegacyGroup eyebrow={eb.emeritusFaculty} heading={t.legacy.emeritus}>
                 <LegacyResumeList
                   lang={lang}
                   members={emeritus}
@@ -332,7 +334,7 @@ export function Faculty({
               </LegacyGroup>
             ) : null}
             {retired.length > 0 ? (
-              <LegacyGroup eyebrow="RETIRED FACULTY" heading={t.legacy.retired}>
+              <LegacyGroup eyebrow={eb.retiredFaculty} heading={t.legacy.retired}>
                 <LegacyResumeList
                   lang={lang}
                   members={retired}
@@ -347,7 +349,7 @@ export function Faculty({
           <div className="container">
             <SectionTitle
               no="04"
-              eyebrow="ADMINISTRATION"
+              eyebrow={eb.administration}
               heading={t.administration.heading}
             />
             {/* `.admin-grid article` is the card selector. Note these mailto

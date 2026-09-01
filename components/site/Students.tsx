@@ -1,6 +1,7 @@
 import type { LinkItem } from "@/lib/data";
 import { translate, type Lang } from "@/lib/i18n";
 import { STUDENTS } from "@/lib/i18n/students";
+import { EYEBROWS } from "@/lib/i18n/eyebrows";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
@@ -32,6 +33,7 @@ const CAMPUS_MAP_URL = "https://map.ntu.edu.tw/";
 
 export function Students({ lang, links }: { lang: Lang; links: LinkItem[] }) {
   const t = translate(STUDENTS, lang);
+  const eb = translate(EYEBROWS, lang);
 
   return (
     <SiteShell lang={lang} variant="interior">
@@ -50,7 +52,7 @@ export function Students({ lang, links }: { lang: Lang; links: LinkItem[] }) {
           <div className="container">
             <SectionTitle
               no="01"
-              eyebrow="START HERE"
+              eyebrow={eb.startHere}
               heading={t.section1.heading}
               description={t.section1.description}
             />
@@ -74,7 +76,7 @@ export function Students({ lang, links }: { lang: Lang; links: LinkItem[] }) {
             <div>
               <SectionTitle
                 no="02"
-                eyebrow="CAMPUS LIFE"
+                eyebrow={eb.campusLife}
                 heading={t.section2.heading}
               />
               {/* Styled by `.student-life-grid>div>p` — a direct child only. */}
@@ -98,7 +100,7 @@ export function Students({ lang, links }: { lang: Lang; links: LinkItem[] }) {
           <div className="container">
             <SectionTitle
               no="03"
-              eyebrow="STUDENT ASSOCIATION"
+              eyebrow={eb.studentAssociation}
               heading={t.section3.heading}
             />
             <div className="association-chart">
@@ -124,7 +126,7 @@ export function Students({ lang, links }: { lang: Lang; links: LinkItem[] }) {
           <div className="container">
             <SectionTitle
               no="04"
-              eyebrow="QUICK ACCESS"
+              eyebrow={eb.quickAccess}
               heading={t.section4.heading}
             />
             {/* `.resource-row a` carries every border, min-height and hover

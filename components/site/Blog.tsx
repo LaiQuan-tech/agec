@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Post } from "@/lib/data";
 import { localizePath, translate, type Lang } from "@/lib/i18n";
 import { BLOG, BLOG_TITLE } from "@/lib/i18n/blog";
+import { EYEBROWS } from "@/lib/i18n/eyebrows";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
@@ -33,6 +34,7 @@ const FEATURE_FALLBACK_IMAGE = "/images/courtyard.jpg";
 
 export function Blog({ lang, posts }: { lang: Lang; posts: Post[] }) {
   const t = translate(BLOG, lang);
+  const eb = translate(EYEBROWS, lang);
   const [feature, ...rest] = posts;
 
   return (
@@ -53,11 +55,9 @@ export function Blog({ lang, posts }: { lang: Lang; posts: Post[] }) {
       <div className="interior-content">
         <section className="inner-section" id="section-1">
           <div className="container">
-            {/* `eyebrow` stays English on both sites — the reference site's
-                Latin-caps device, not copy. */}
             <SectionTitle
               no="01"
-              eyebrow="WRITING"
+              eyebrow={eb.writing}
               heading={t.listHeading}
               description={t.listDescription}
             />

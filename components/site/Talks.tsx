@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { NewsPage } from "@/lib/data";
 import { localizePath, translate, type Lang } from "@/lib/i18n";
 import { NEWS } from "@/lib/i18n/news";
+import { EYEBROWS } from "@/lib/i18n/eyebrows";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
 import { SectionTitle } from "./SectionTitle";
@@ -29,6 +30,7 @@ import { TalkList } from "./TalkList";
  */
 export function Talks({ lang, talksPage }: { lang: Lang; talksPage: NewsPage }) {
   const t = translate(NEWS, lang);
+  const eb = translate(EYEBROWS, lang);
   const { items, page, totalPages } = talksPage;
 
   return (
@@ -51,7 +53,7 @@ export function Talks({ lang, talksPage }: { lang: Lang; talksPage: NewsPage }) 
           <div className="container">
             <SectionTitle
               no="01"
-              eyebrow="TALKS & SEMINARS"
+              eyebrow={eb.talksSeminars}
               heading={t.talksArchiveHeading}
               description={t.talksDescription}
             />
