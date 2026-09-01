@@ -27,6 +27,34 @@ import { RICH_TEXT_SANITIZE } from "../lib/sanitize";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DATA = join(HERE, "data");
 const WRITE = process.argv.includes("--write");
+/**
+ * Add the new rows without touching the ones already there.
+ *
+ * ⚠️ Plain `--write` empties the table first, and that is not recoverable in the
+ * way it looks. `news.id` is an identity column, so DELETE does not rewind the
+ * sequence: the ids currently in the table run 443–870, not 1–428, precisely
+ * because an earlier `--write` deleted rows numbered from 1. Re-running it
+ * would hand every row a fresh id above 870, so all 428 existing
+ * `/news/<id>` URLs would 404 with no mapping from the old id to the new one.
+ * It would also drop, silently: everything the office has edited since the
+ * import, every pinned flag (the prepared rows hard-code `is_pinned: false`),
+ * every hand-written English column, every draft, and every `content_json`.
+ *
+ * So the admissions batch appends. `--only` narrows the rows to one category,
+ * which is an exact definition of "the new ones" while that category is still
+ * empty — no matching, no schema change. The guard below enforces that it is.
+ *
+ * ⚠️ This is safe exactly once per category. There is still no column linking a
+ * row to its CMS record, so a second run would insert duplicates rather than
+ * update. Giving `news` a `legacy_id` with a unique index, and switching to
+ * `Prefer: resolution=merge-duplicates`, is what would make this step genuinely
+ * re-runnable — see scripts/README.md.
+ */
+const APPEND = process.argv.includes("--append");
+const ONLY = (() => {
+  const i = process.argv.indexOf("--only");
+  return i >= 0 ? process.argv[i + 1] : undefined;
+})();
 
 /** Plain-text standfirst length. Long enough to be a sentence, short enough to
  *  sit on the feature card without wrapping past three lines at 1440px. */
@@ -52,6 +80,11 @@ const CATEGORY_EN: Record<string, string> = {
   演講公告: "Talks",
   求職徵才: "Careers",
   活動剪影: "Event highlights",
+  // The six recruit lists on the old site collapse to this one category — see
+  // CATEGORY_MAP in fetch-news.py. "Admissions" is what the three admission
+  // rows in legacy-news-backup.json already carried, checked against the
+  // department's own English site at the time, and what NEWS_FILTER_TABS shows.
+  招生: "Admissions",
 };
 
 type Parsed = {
@@ -321,18 +354,21 @@ function main() {
   for (const p of prepared) byCategory.set(p.category, (byCategory.get(p.category) ?? 0) + 1);
   console.log("\n分類：" + [...byCategory].map(([k, v]) => `${k} ${v}`).join("、"));
 
+  const selected = ONLY ? prepared.filter((p) => p.category === ONLY) : prepared;
+  if (ONLY) console.log(`\n--only ${ONLY}：${selected.length} 則將寫入`);
+
   if (!WRITE) {
     console.log("\n（--dry：沒有寫入資料庫。加 --write 才會真的寫）");
     return;
   }
-  void writeRows(prepared);
+  void writeRows(selected);
 }
 
 /* ------------------------------------------------------------------ *
  * Write                                                               *
  * ------------------------------------------------------------------ */
 
-async function writeRows(prepared: unknown[]) {
+async function writeRows(prepared: { category: string }[]) {
   const base = env("NEXT_PUBLIC_SUPABASE_URL");
   const key = env("SUPABASE_SERVICE_ROLE_KEY");
   const headers = {
@@ -341,12 +377,33 @@ async function writeRows(prepared: unknown[]) {
     "Content-Type": "application/json",
   };
 
-  // Everything currently in the table goes. The eleven rows there are the
-  // hand-made samples the site was built against, one of them literally titled
-  // ＴＥＳＴ２ and sitting on the home page's feature card.
-  const cleared = await fetch(`${base}/rest/v1/news?id=gt.0`, { method: "DELETE", headers });
-  if (!cleared.ok) throw new Error(`清空失敗：${cleared.status} ${await cleared.text()}`);
-  console.log("\n已清空 news");
+  if (APPEND) {
+    // The guard that makes appending safe: --only names a category, and this
+    // insists the table holds none of it yet. If it does, either this already
+    // ran or the office has been publishing into it — and in both cases a
+    // second pass would duplicate rather than update, because nothing here
+    // knows which CMS record a row came from.
+    const categories = [...new Set(prepared.map((p) => p.category))];
+    for (const category of categories) {
+      const url = `${base}/rest/v1/news?select=id&category=eq.${encodeURIComponent(category)}&limit=1`;
+      const existing = (await (await fetch(url, { headers })).json()) as unknown[];
+      if (existing.length) {
+        throw new Error(
+          `中止：news 已經有「${category}」的資料。--append 只安全一次；` +
+            `再跑會插出重複的列，因為沒有欄位能對回 CMS 記錄。`
+        );
+      }
+    }
+    console.log(`\n--append：不清空，只新增 ${categories.join("、")}`);
+  } else {
+    // Everything currently in the table goes. ⚠️ See the note on APPEND: this
+    // renumbers every row and breaks every /news/<id> URL. It was right for the
+    // first import, when the table held eleven hand-made samples; it is not
+    // right for a second batch.
+    const cleared = await fetch(`${base}/rest/v1/news?id=gt.0`, { method: "DELETE", headers });
+    if (!cleared.ok) throw new Error(`清空失敗：${cleared.status} ${await cleared.text()}`);
+    console.log("\n已清空 news");
+  }
 
   // Batched: 428 rows in one request is a several-megabyte body once the HTML
   // is included, and a failure part-way through tells you nothing about which

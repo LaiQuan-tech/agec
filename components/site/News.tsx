@@ -3,15 +3,17 @@ import type { NewsItem, NewsPage } from "@/lib/data";
 import { localizePath, translate, type Lang } from "@/lib/i18n";
 import {
   NEWS,
+  NEWS_CATEGORY_PAGES,
   NEWS_FILTER_TABS,
   NEWS_LOCAL_NAV,
   NEWS_TITLE,
 } from "@/lib/i18n/news";
+import { newsPath, slugForCategory } from "@/lib/news-categories";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
 import { SectionTitle } from "./SectionTitle";
-import { FilterTabs } from "./FilterTabs";
+import { FilterTabLinks } from "./FilterTabLinks";
 import { NextRoute } from "./NextRoute";
 import { Pagination } from "./Pagination";
 import { TalkList } from "./TalkList";
@@ -33,64 +35,91 @@ import { formatNewsDate } from "./format";
  * container.
  */
 
+/**
+ * The first tab's `value`, which means "no filter" rather than a category.
+ *
+ * Chinese in both languages, like every other value in NEWS_FILTER_TABS: those
+ * are matched against `news.category`, which is always the Chinese string. This
+ * one matches nothing on purpose — it is the sentinel, so it must not be
+ * translated either, or /en's first tab would stop being recognised as "all".
+ */
+const ALL_TABS_VALUE = "全部";
+
 /** Reference feature image, used whenever the first row has no cover_url. */
 const FEATURE_FALLBACK_IMAGE = "/images/courtyard.jpg";
 
-/**
- * Page 1 lives at /news, the rest at /news/page/N.
- *
- * Path segments rather than `?page=N`: reading searchParams would make this
- * route dynamic, and every other page on the site is statically prerendered
- * with ISR. `/news/page/2` also does not collide with `/news/[id]` — a static
- * segment wins over a dynamic sibling, and the two have different depths.
+/*
+ * The path helpers moved to lib/news-categories.ts when the tabs started
+ * navigating: the tab hrefs and the pagination hrefs must come from one
+ * function, or a tab can end up linking to the page the reader is already on.
  */
-function newsPagePath(page: number, lang: Lang): string {
-  return localizePath(page === 1 ? "/news" : `/news/page/${page}`, lang);
-}
 
 export function News({
   lang,
   newsPage,
   talks,
   talkCount,
+  category,
 }: {
   lang: Lang;
   newsPage: NewsPage;
-  /** The most recent few, not all of them — see `talkCount`. */
+  /** The most recent few, not all of them — see `talkCount`. Empty when
+   *  filtered: a category page is one list, not the whole front page. */
   talks: NewsItem[];
   /** How many talks exist in total, for the link to the archive. */
   talkCount: number;
+  /**
+   * The `news.category` this page is filtered to, or undefined for /news.
+   * Drives the heading, the active tab and every link on the page.
+   */
+  category?: string;
 }) {
   const t = translate(NEWS, lang);
   const { items, page, totalPages } = newsPage;
+  const slug = category ? slugForCategory(category) : null;
+  const copy = slug
+    ? translate(NEWS_CATEGORY_PAGES[slug as keyof typeof NEWS_CATEGORY_PAGES], lang)
+    : null;
 
   /**
    * The feature card is the newest item, so it only belongs on page 1 — a card
    * labelled `FEATURED` holding the 9th-newest announcement would be a lie.
    * Later pages are a plain full-width list.
    *
+   * Filtered pages get none either, for the same reason one step out: the newest
+   * 招生 notice is not the newest thing the department has said, and `FEATURED`
+   * would be claiming it is.
+   *
    * The talks split happens in lib/data.ts rather than here, because it decides
    * the page count as well as the contents.
    */
-  const feature = page === 1 ? items[0] : undefined;
-  const rest = page === 1 ? items.slice(1) : items;
+  const feature = page === 1 && !category ? items[0] : undefined;
+  const rest = feature ? items.slice(1) : items;
 
   return (
     <SiteShell lang={lang} variant="interior">
       <InteriorHero
         lang={lang}
         slug="news"
-        titleZh={NEWS_TITLE.zh}
-        titleEn={NEWS_TITLE.en}
-        routeNo="02"
-        lead={t.lead}
+        titleZh={slug ? NEWS_CATEGORY_PAGES[slug as keyof typeof NEWS_CATEGORY_PAGES].title.zh : NEWS_TITLE.zh}
+        titleEn={slug ? NEWS_CATEGORY_PAGES[slug as keyof typeof NEWS_CATEGORY_PAGES].title.en : NEWS_TITLE.en}
+        // No route number on a filtered view: it is one lens on route 02, not a
+        // ninth route, and `NN / 08` is computed from lib/nav.ts. Same reasoning
+        // as Talks.tsx.
+        routeNo={category ? undefined : "02"}
+        lead={copy ? copy.lead : t.lead}
         imageAlt={t.heroAlt}
       />
-      <LocalNav
-        lang={lang}
-        label={t.localNavLabel}
-        items={translate(NEWS_LOCAL_NAV, lang)}
-      />
+      {/* The strip is a table of contents for a page with several sections, and
+          a filtered page is a single list — `#section-2` is not rendered, so
+          LocalNav would collapse to one item that navigates nowhere. */}
+      {category ? null : (
+        <LocalNav
+          lang={lang}
+          label={t.localNavLabel}
+          items={translate(NEWS_LOCAL_NAV, lang)}
+        />
+      )}
       <div className="interior-content">
         <section className="inner-section" id="section-1">
           <div className="container">
@@ -99,12 +128,18 @@ export function News({
             <SectionTitle
               no="01"
               eyebrow="LATEST UPDATES"
-              heading={t.sectionHeading}
-              description={t.sectionDescription}
+              heading={copy ? copy.heading : t.sectionHeading}
+              description={copy ? copy.description : t.sectionDescription}
             />
-            {/* Cosmetic only — no `onChange`. See FilterTabs. */}
-            <FilterTabs
+            {/* Navigation, not a toggle — one URL per category. Rendered on
+                filtered pages too: without it 「全部」 is only reachable with
+                the browser's back button. */}
+            <FilterTabLinks
               tabs={translate(NEWS_FILTER_TABS, lang)}
+              activeValue={category ?? ALL_TABS_VALUE}
+              hrefFor={(value) =>
+                newsPath(1, lang, value === ALL_TABS_VALUE ? null : slugForCategory(value))
+              }
               ariaLabel={t.filterLabel}
             />
             {/* `.inner-news-layout` is a `.78fr 1.22fr` grid: the feature card
@@ -176,16 +211,25 @@ export function News({
                 renumber every interior hero's "NN / 08"), so this and the
                 footer are how a reader finds it. Longer pieces live there;
                 this page is announcements. */}
+            {rest.length === 0 && !feature ? (
+              <p className="news-empty">{t.categoryEmpty}</p>
+            ) : null}
             <p className="news-to-blog">
-              <Link className="text-action" href={localizePath("/blog", lang)}>
-                {t.toBlog} <span>→</span>
-              </Link>
+              {category ? (
+                <Link className="text-action" href={newsPath(1, lang)}>
+                  {t.categoryBackToAll}
+                </Link>
+              ) : (
+                <Link className="text-action" href={localizePath("/blog", lang)}>
+                  {t.toBlog} <span>→</span>
+                </Link>
+              )}
             </p>
             <Pagination
               lang={lang}
               page={page}
               totalPages={totalPages}
-              hrefFor={(n) => newsPagePath(n, lang)}
+              hrefFor={(n) => newsPath(n, lang, slug)}
             />
           </div>
         </section>
@@ -193,7 +237,7 @@ export function News({
         {/* Page 1 only. Repeating the block under page 2's list would show
             the same items again and put one panel at two URLs. LocalNav drops
             its 演講 anchor by itself when the section is absent. */}
-        {page === 1 && talks.length > 0 ? (
+        {page === 1 && !category && talks.length > 0 ? (
           <section className="inner-section tint" id="section-2">
             <div className="container">
               <SectionTitle

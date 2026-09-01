@@ -607,23 +607,42 @@ export type NewsPage = {
  */
 export async function getNewsPage(
   page: number,
-  lang: Lang
+  lang: Lang,
+  /**
+   * One `news.category` value, or undefined for the whole list.
+   *
+   * ⚠️ The exact Chinese string as stored, never a translated label — it is
+   * matched against the column. `lib/news-categories.ts` is the only place that
+   * turns a URL slug into one of these.
+   */
+  category?: string
 ): Promise<NewsPage> {
   const supabase = createServerClient();
   const from = (page - 1) * NEWS_PAGE_SIZE;
 
-  const { data, error, count } = await supabase
+  let query = supabase
     .from("news")
     .select(NEWS_COLUMNS, { count: "exact" })
-    .eq("status", PUBLISHED)
-    .neq("category", TALKS_CATEGORY)
+    .eq("status", PUBLISHED);
+
+  // Either narrow to one category, or exclude the talks — never both. On the
+  // same column an `.eq` beside the `.neq` is redundant when they differ and
+  // silently empties the page when they do not, and an empty page with no
+  // reason on it is the worst of the three outcomes.
+  query = category
+    ? query.eq("category", category)
+    : query.neq("category", TALKS_CATEGORY);
+
+  const { data, error, count } = await query
+    // Pinned first inside a category too: a notice worth pinning is worth
+    // pinning wherever it is listed.
     .order("is_pinned", { ascending: false })
     .order("published_at", { ascending: false })
     .range(from, from + NEWS_PAGE_SIZE - 1)
     .returns<NewsRow[]>();
 
   if (error) {
-    console.error("[lib/data] getNewsPage failed:", error.message);
+    console.error(`[lib/data] getNewsPage(${category ?? "all"}) failed:`, error.message);
     return { items: [], page: 1, totalPages: 1 };
   }
 

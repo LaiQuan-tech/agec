@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { LANGS, localizePath } from "@/lib/i18n";
 import { getNewsIds, getPostSlugs } from "@/lib/data";
+import { NEWS_CATEGORIES } from "@/lib/news-categories";
 import { SITE_ORIGIN } from "@/lib/site-routes";
 
 const ROUTES = [
@@ -18,6 +19,9 @@ const ROUTES = [
   // talks block. Its own pages 2..n stay out for the same reason /news/page/N
   // does — see the note below.
   "/news/talks",
+  // The filtered views of /news. Their own pages 2..n stay out for the same
+  // reason /news/page/N does — see the note below.
+  ...NEWS_CATEGORIES.map((c) => `/news/category/${c.slug}`),
 ];
 
 /**

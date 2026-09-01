@@ -48,7 +48,15 @@ export const NEWS = {
     en: "Clear categories and a strict chronological order, so every announcement reaches the people who need it.",
   },
 
-  /** aria-label of the `.filter-tabs` toolbar; the tabs are NEWS_FILTER_TABS. */
+  /** Shown in place of the list when a category has nothing in it. */
+  categoryEmpty: {
+    zh: "這個分類目前沒有消息。",
+    en: "There is nothing in this category yet.",
+  },
+  /** Back to the unfiltered list, at the foot of a category page. */
+  categoryBackToAll: { zh: "← 返回全部消息", en: "← Back to all news" },
+
+  /** aria-label of the `.filter-tabs` row; the tabs are NEWS_FILTER_TABS. */
   filterLabel: { zh: "消息分類", en: "News categories" },
 
   /** alt of `.inner-news-feature>img` when the first row has no cover of its own. */
@@ -159,33 +167,96 @@ export const NEWS = {
 export const NEWS_LOCAL_NAV = [
   { href: "#section-1", label: { zh: "全部消息", en: "All news" } },
   { href: "#section-2", label: { zh: "演講", en: "Talks" } },
-  { href: "#section-3", label: { zh: "活動花絮", en: "Event highlights" } },
-  { href: "#section-4", label: { zh: "招生", en: "Admissions" } },
-  { href: "#section-5", label: { zh: "徵才", en: "Careers" } },
+  // #section-3…#section-5 (活動花絮 / 招生 / 徵才) used to sit here, inherited
+  // from the reference site, which named three blocks it never built. LocalNav
+  // dropped them at runtime because their targets do not exist, so they were
+  // harmless — but they were also the three things the reader most plausibly
+  // wanted, and the filter tabs now genuinely provide them. Keeping dead
+  // anchors beside working links for the same three ideas would be the
+  // confusing half of both.
 ] satisfies { href: string; label: Msg }[];
 
 /**
- * The `.filter-tabs` labels, copied from the reference markup rather than
- * derived from the data.
+ * The `.filter-tabs` labels on /news.
  *
- * The reference ships six. 演講公告 is dropped here because those rows moved to
- * their own `#section-2`: a tab for a category the list below it no longer
- * contains would be the one place the tabs' cosmetic-only nature actually
- * misleads someone.
+ * ⚠️ `value` is a **query key**, not an identity string: it is matched against
+ * `news.category` character for character, and `lib/news-categories.ts` maps
+ * each one to a URL slug. Change one here without changing it there and the tab
+ * links to a page that renders nothing.
  *
- * They deliberately do NOT line up with `news.category`: the data also has
- * 榮譽/系友榮耀, which has no tab, and the data says 招生資訊 where the tab says
- * 招生. On the reference site the tabs never filter anything (site.js only moves
- * the `active` class), so the mismatch is invisible there — and deriving the
- * list from the rows instead would make this port render a different tab strip
- * from the original. PORT-REPORT §2.4 flags this as a decision to record: we
- * keep the reference's six.
+ * This note used to say the opposite — that the values deliberately did not
+ * line up with the data ("the data says 招生資訊 where the tab says 招生"),
+ * because the reference site's tabs never filtered anything and the mismatch
+ * was therefore invisible. That was true of the port and is not true now: the
+ * tabs navigate, and every value below matches a category the table actually
+ * holds. The 榮譽 / 系友榮耀 categories that note mentioned no longer exist
+ * either; the migrated data has exactly these four plus 演講公告.
  *
- * `value` is only an identity for the active-tab state, since nothing here
- * filters. It holds the Chinese label so the key stays stable across languages
- * — and so it would already be the right shape if these tabs ever did start
- * matching `news.category`, which is Chinese in the database.
+ * 演講公告 has no tab on purpose. Those rows are excluded from the list below
+ * and live in `#section-2` and at /news/talks, whose rows carry a speaker, a
+ * time and a venue that an announcement row has no room for.
  */
+/**
+ * Per-category page copy, keyed by the slug in lib/news-categories.ts.
+ *
+ * The heading is deliberately not the tab's own label. Every row a few
+ * centimetres below already prints the category name in its second column, so
+ * repeating it as the page heading says nothing — `Talks.tsx` faced the same
+ * choice and went with 「歷年演講與研討會」 rather than 「演講公告」.
+ *
+ * `lead` is the hero standfirst; `description` sits under the section heading.
+ */
+export const NEWS_CATEGORY_PAGES = {
+  announcements: {
+    title: { zh: "最新公告", en: "Announcements" },
+    lead: {
+      zh: "系上與校方的公告、獎助學金、法規修訂與行政事項。",
+      en: "Departmental and university notices, scholarships, regulatory changes and administrative matters.",
+    },
+    heading: { zh: "系上公告", en: "Departmental announcements" },
+    description: {
+      zh: "需要申請、需要留意期限的事情，都會出現在這一區。",
+      en: "Anything with a form to file or a deadline to watch appears here.",
+    },
+  },
+  highlights: {
+    title: { zh: "活動剪影", en: "Event highlights" },
+    lead: {
+      zh: "系上活動、研討會與交流場合的紀錄。",
+      en: "A record of departmental events, symposia and exchanges.",
+    },
+    heading: { zh: "活動紀錄", en: "Event coverage" },
+    description: {
+      zh: "從畢業典禮到國際交流研討會，現場留下來的影像與紀事。",
+      en: "From the graduation ceremony to international symposia — what was photographed and written down on the day.",
+    },
+  },
+  admissions: {
+    title: { zh: "招生資訊", en: "Admissions" },
+    lead: {
+      zh: "大學部、碩士班、博士班、碩士在職專班與國際專班的招生公告。",
+      en: "Admission notices for the undergraduate, master's, doctoral, executive master's and international programmes.",
+    },
+    heading: { zh: "招生資訊", en: "Admissions notices" },
+    description: {
+      zh: "簡章、書面資料格式、口試時間與錄取名單，依公告日期排列。",
+      en: "Prospectuses, document formats, interview schedules and admission lists, newest first.",
+    },
+  },
+  careers: {
+    title: { zh: "求職徵才", en: "Careers" },
+    lead: {
+      zh: "系上與合作單位的職缺、研究助理與實習機會。",
+      en: "Vacancies, research assistantships and internships at the department and its partners.",
+    },
+    heading: { zh: "職缺與徵才", en: "Openings and recruitment" },
+    description: {
+      zh: "專任、兼任、計畫助理與實習，來自系上、研究團隊與產學夥伴。",
+      en: "Full-time, part-time, project and internship openings from the department, its research teams and its industry partners.",
+    },
+  },
+} satisfies Record<string, Record<string, Msg>>;
+
 export const NEWS_FILTER_TABS = [
   { value: "全部", label: { zh: "全部", en: "All" } },
   { value: "最新公告", label: { zh: "最新公告", en: "Announcements" } },

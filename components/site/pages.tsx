@@ -57,28 +57,47 @@ export async function HomeRoute({ lang }: { lang: Lang }) {
 export async function NewsRoute({
   lang,
   page = 1,
+  category,
 }: {
   lang: Lang;
   /** 1-based. Page 1 is /news; the rest are /news/page/N. */
   page?: number;
+  /**
+   * A `news.category` value to filter to, from
+   * `categoryForSlug()` — never a raw URL segment.
+   */
+  category?: string;
 }) {
   // Separate queries, not one list filtered in the component: the talks block
   // shows recent talks regardless of which page of announcements you are on,
   // and the main list's page count has to be computed from the announcements
   // alone. The count is its own head-only request rather than a length — the
   // block is a preview, so the number it advertises is not the number it holds.
+  // The talks block only appears on the unfiltered first page, so a filtered
+  // request skips both of its queries rather than fetching what it will not
+  // render.
   const [newsPage, talks, talkCount] = await Promise.all([
-    getNewsPage(page, lang),
-    getTalks(lang, TALKS_PREVIEW_SIZE),
-    countTalks(),
+    getNewsPage(page, lang, category),
+    category ? [] : getTalks(lang, TALKS_PREVIEW_SIZE),
+    category ? 0 : countTalks(),
   ]);
 
   // A page number past the end is a 404 rather than an empty list — otherwise
   // /news/page/99 is a real URL serving a blank column.
-  if (page > newsPage.totalPages) notFound();
+  //
+  // Page 1 is exempt: a category with nothing in it still has a page 1, and it
+  // says so. 404ing there would mean a tab the office can see in the admin
+  // leads nowhere the day before they publish into it.
+  if (page > 1 && page > newsPage.totalPages) notFound();
 
   return (
-    <News lang={lang} newsPage={newsPage} talks={talks} talkCount={talkCount} />
+    <News
+      lang={lang}
+      newsPage={newsPage}
+      talks={talks}
+      talkCount={talkCount}
+      category={category}
+    />
   );
 }
 
