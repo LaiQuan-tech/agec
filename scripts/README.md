@@ -12,9 +12,13 @@ python3 scripts/parse-news.py                           # 3  HTML → 結構化�
 python3 scripts/fetch-assets.py                         # 4a 下載圖片與附件
 python3 scripts/upload-assets.py                        # 4b 上傳 Supabase Storage
 npx tsx scripts/import-news.ts --dry                    # 5  轉換＋消毒，只看報告
-npx tsx scripts/import-news.ts --write                  # 5  清空 news 後寫入
+npx tsx scripts/import-news.ts --write                  # 5  ⚠️ 清空 news 後全量寫入
+npx tsx scripts/import-news.ts --write --append --only 招生   # 5' 只新增某一類
 python3 scripts/shrink-oversized.py                     # 6  縮掉過大的圖（選用）
 ```
+
+另有一支獨立的 `scripts/build-logos.py`（從客戶的識別母檔產 logo SVG），與消息
+搬運無關，說明在檔案開頭。
 
 每一步都可以單獨重跑：抓取會沿用快取，上傳走 `x-upsert`，只有最後一步會動資料庫。
 前四步的快取放在 `/tmp`（`AGEC_CACHE`、`AGEC_ASSETS` 可覆寫），不進 repo。
@@ -35,7 +39,7 @@ python3 scripts/shrink-oversized.py                     # 6  縮掉過大的圖�
 
 | 檔案 | 內容 |
 |---|---|
-| `titles-en.json` | 428 則英文標題。172 則非演講類與 41 則無講者的演講是逐句翻的；其餘 215 則由講者＋日期組出來 |
+| `titles-en.json` | 585 則英文標題。329 則（172 一般 + 157 招生 + 41 無講者的演講）是逐句翻的；其餘 215 則演講由講者＋日期組出來 |
 | `speakers-en.json` | 208 個不重複的講者字串中譯英。同一個人在九年的公告裡有好幾種寫法，所以是「逐字串」不是「逐人」 |
 | `legacy-news-backup.json` | 被清空的那 11 列。它們的 `category_en` 是當初對照系上英文站查證過的，`import-news.ts` 的 `CATEGORY_EN` 直接沿用 |
 | `assets-dead.json` | 抓不到的來源檔案，依主機分組。舊站有四分之一的內文圖是連到早就掛掉的外部主機 |
@@ -45,6 +49,24 @@ python3 scripts/shrink-oversized.py                     # 6  縮掉過大的圖�
 
 沒進版控的（`.gitignore` 有列，重跑即可重建）：
 `news-list.json`、`news-parsed.json`（4MB，內容就是舊站 HTML）、`news-prepared.json`。
+
+## ⚠️ 第 5 步只有第一次能用 `--write`
+
+`news.id` 是 identity 欄位，**DELETE 不會把序列倒回去**。證據就在資料裡：目前
+的 id 是 443–870 而不是 1–428，因為第一次匯入刪掉的是編號從 1 開始的那批。
+
+所以再跑一次 `--write`，585 則會拿到 871 以上的全新號碼，**現有每一個
+`/news/<id>` 網址都會 404，而且新舊之間沒有任何對照表可以重導**。順帶還會賠掉：
+系辦自搬運後在 /admin 做的所有編輯、所有置頂（prepared 把 `is_pinned` 寫死
+false）、手工填的英文欄、所有草稿（`id=gt.0` 連草稿一起刪）、所有 `content_json`。
+
+第二批（157 則招生）因此走 `--append --only 招生`：不清空，只寫入該分類。
+`--only` 在那個分類還是空的時候，就是「新列」的精確定義——不需要比對，也不
+需要改 schema。腳本會先查該分類現有筆數，非 0 就中止。
+
+**這個做法每個分類只安全一次。** 真正讓第 5 步可重跑的做法是給 `news` 一個
+`legacy_id` 欄加 unique index，改用 `Prefer: resolution=merge-duplicates` upsert。
+還沒做——下一次搬運之前應該先做。
 
 ## 第 6 步在做什麼
 
