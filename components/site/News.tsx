@@ -239,26 +239,21 @@ export function News({
                 ))}
               </div>
             </div>
-            {/* /blog is not in the site-wide nav (adding a ninth route would
-                renumber every interior hero's "NN / 08"), so this and the
-                footer are how a reader finds it. Longer pieces live there;
-                this page is announcements. */}
             {rest.length === 0 && !feature ? (
               <p className="news-empty">
                 {category ? t.categoryEmpty : t.yearEmpty}
               </p>
             ) : null}
-            <p className="news-to-blog">
-              {filtered ? (
+            {/* 這裡原本還有一條「閱讀專欄文章 →」通往 /blog，已依需求移除。
+                現在只剩篩選後的返回連結，所以整個 <p> 也只在有篩選時才渲染 ——
+                留一個空的 <p> 會在列表與分頁之間多出 40px 的空白。 */}
+            {filtered ? (
+              <p className="news-to-blog">
                 <Link className="text-action" href={newsPath(1, lang)}>
                   {t.categoryBackToAll}
                 </Link>
-              ) : (
-                <Link className="text-action" href={localizePath("/blog", lang)}>
-                  {t.toBlog} <span>→</span>
-                </Link>
-              )}
-            </p>
+              </p>
+            ) : null}
             <Pagination
               lang={lang}
               page={page}

@@ -27,13 +27,6 @@ import { MaybeLink } from "./MaybeLink";
  * `programRank` and `tabs` below.
  */
 
-/**
- * `.software-line` — A-class. site.css pins this to `repeat(7,1fr)` at desktop
- * (then 4, then 2), so the seven entries are a layout constant, not data.
- * Not in the dictionary: they are product names, identical in both languages.
- */
-const SOFTWARE = ["STATA", "R", "PYTHON", "SAS", "SPSS", "MATLAB", "GAMS"];
-
 export function Courses({
   lang,
   courses,
@@ -220,20 +213,6 @@ export function Courses({
           </div>
         </section>
 
-        <section className="inner-section dark-section" id="section-4">
-          <div className="container">
-            <SectionTitle
-              no="04"
-              eyebrow="LEARNING RESOURCES"
-              heading={t.section4.heading}
-            />
-            <div className="software-line">
-              {SOFTWARE.map((name) => (
-                <span key={name}>{name}</span>
-              ))}
-            </div>
-          </div>
-        </section>
       </div>
       <NextRoute lang={lang} />
     </SiteShell>

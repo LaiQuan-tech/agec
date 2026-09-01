@@ -43,7 +43,6 @@ export const COURSES = {
       },
       { href: "#section-2", label: { zh: "修業規定", en: "Requirements" } },
       { href: "#section-3", label: { zh: "常用表格", en: "Forms" } },
-      { href: "#section-4", label: { zh: "學習資源", en: "Resources" } },
     ],
   },
   section1: {
@@ -134,10 +133,4 @@ export const COURSES = {
     { zh: "離校程序表格", en: "Departure clearance forms" },
     { zh: "研究計畫申請", en: "Research project application" },
   ],
-  section4: {
-    heading: {
-      zh: "讓資料成為理解世界的工具",
-      en: "Turning data into a way of understanding the world",
-    },
-  },
 } satisfies Dict;

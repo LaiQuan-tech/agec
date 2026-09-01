@@ -9,7 +9,6 @@ export const dynamic = "force-dynamic";
 /** Tables backing each section, for the row counts on the dashboard. */
 const COUNT_TARGETS = [
   { table: "news", label: "最新消息", href: "/admin/news" },
-  { table: "posts", label: "部落格文章", href: "/admin/posts" },
   { table: "faculty", label: "系所成員", href: "/admin/faculty" },
   { table: "courses", label: "課程", href: "/admin/courses" },
   { table: "programs", label: "招生學制", href: "/admin/programs" },

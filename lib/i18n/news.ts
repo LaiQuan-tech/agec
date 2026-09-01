@@ -120,7 +120,6 @@ export const NEWS = {
   talksBackToNews: { zh: "← 返回最新消息", en: "← Back to news" },
 
   /** Link out to /blog, which has no place in the site-wide navigation. */
-  toBlog: { zh: "閱讀專欄文章", en: "Read our features" },
 
   /** `.pagination`: its aria-label, then the two non-numeric labels. */
   paginationLabel: { zh: "消息分頁", en: "News pagination" },

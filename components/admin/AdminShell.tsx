@@ -6,7 +6,6 @@ import { Button } from "@/components/admin/ui/Button";
 /** Sidebar entries. Order matches how often the office staff will need them. */
 export const ADMIN_SECTIONS = [
   { href: "/admin/news", label: "最新消息" },
-  { href: "/admin/posts", label: "部落格" },
   { href: "/admin/faculty", label: "系所成員" },
   { href: "/admin/courses", label: "課程資訊" },
   { href: "/admin/programs", label: "招生學制" },
