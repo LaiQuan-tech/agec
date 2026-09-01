@@ -71,6 +71,20 @@ BRAND_INK = "#231916"
 ENGLISH_STRAPLINE_Y = 169.5
 ENGLISH_STRAPLINE_PATHS = 37
 
+# 拿掉小標之後，剩下的字塊要往下移多少才對得齊標誌。
+#
+# ⚠️ 這一步不能省。母檔八頁的橫式 lockup 有一條一致的規則：**字塊比標誌矮時，
+# 字塊的底對齊標誌的腳**，標誌的尖端就高過字。p4（標誌＋中文，無 AGEC）與
+# p7（標誌＋三行英文）都是這樣排的；p1 看起來像是上下都齊，只是因為它那四行
+# 剛好跟標誌一樣高。所以把 p1 最下面兩行英文刪掉之後，字塊會停在原地、標誌的
+# 腳整整多出 23pt —— 畫面上就是「字浮在上面」。
+#
+# 位移量不寫死，從 p4 推導：p4 是母檔裡唯一「標誌＋中文」的核可版本，它的字塊
+# 底比標誌腳低 overhang（中文字沒有下伸部，這個值很小），把它依兩頁的標誌高度
+# 換算過來就是 p1 該有的關係。母檔改版時這個數字會自己跟著走。
+CHINESE_ONLY_PAGE = 4
+CHINESE_ONLY_PATHS = 15  # 2 金 + 1 綠 + 12 個中文字，沒有 AGEC 也沒有英文
+
 
 def run(*args: str) -> None:
     result = subprocess.run(args, capture_output=True, text=True)
@@ -108,6 +122,57 @@ def drop_english_strapline(svg: str) -> str:
         )
     body = re.sub(r"<path[^>]*/>", "", svg)
     return body.replace("</svg>", "\n".join(keep) + "\n</svg>")
+
+
+def split_mark_and_type(svg: str) -> tuple[list[str], list[str]]:
+    """標誌（金＋綠）與文字（近黑）兩堆。顏色是 pdftocairo 尚未換色前的原值。"""
+    paths = re.findall(r"<path[^>]*/>", svg)
+    mark = [p for p in paths if GOLD in p or GREEN in p]
+    return mark, [p for p in paths if p not in mark]
+
+
+def vertical_bounds(paths: list[str]) -> tuple[float, float]:
+    bounds = [path_bounds(p) for p in paths]
+    return min(b[0] for b in bounds), max(b[1] for b in bounds)
+
+
+def type_overhang() -> float:
+    """
+    p4 的字塊底比標誌腳低多少（以 p4 自己的座標計）。
+
+    這是母檔對「字塊底對齊標誌腳」的實際容差 —— 中文字沒有下伸部，所以只有
+    不到 1pt 的視覺溢出。回傳值還沒換算到 p1 的尺度，交給呼叫端做。
+    """
+    svg = page_to_svg(CHINESE_ONLY_PAGE, "/tmp/agec-logo-build/p4.svg")
+    paths = re.findall(r"<path[^>]*/>", svg)
+    if len(paths) != CHINESE_ONLY_PATHS:
+        raise SystemExit(
+            f"母檔 p{CHINESE_ONLY_PAGE} 預期 {CHINESE_ONLY_PATHS} 條路徑，實際 {len(paths)} 條。"
+            "這一頁應該是「標誌＋中文」的核可版本，母檔可能改過了。"
+        )
+    mark, type_ = split_mark_and_type(svg)
+    return vertical_bounds(type_)[1] - vertical_bounds(mark)[1]
+
+
+def bottom_align_type(svg: str, overhang_ratio: float) -> tuple[str, float]:
+    """
+    把文字路徑整塊下移，讓字塊的底對齊標誌的腳。
+
+    移的是整塊，所以 AGEC 與兩行中文之間的行距維持母檔原樣 —— 那是設計師排的，
+    這裡沒有理由重排。標誌一步都不動：它是識別的錨點，動它等於改標誌。
+    """
+    mark, type_ = split_mark_and_type(svg)
+    mark_top, mark_bottom = vertical_bounds(mark)
+    type_top, type_bottom = vertical_bounds(type_)
+    overhang = overhang_ratio * (mark_bottom - mark_top)
+    dy = mark_bottom + overhang - type_bottom
+
+    # <path> 沒有 y 屬性可以調，所以用一層 <g transform> 包起來，路徑資料原封不動。
+    body = svg
+    for path in type_:
+        body = body.replace(path, "", 1)
+    group = f'<g transform="translate(0 {dy:.3f})">\n' + "\n".join(type_) + "\n</g>"
+    return body.replace("</svg>", group + "\n</svg>"), dy
 
 
 def trim(svg: str, pad: float = 2.0) -> str:
@@ -192,12 +257,29 @@ def group_span(svg: str, start_tag: str) -> tuple[int, int]:
     raise SystemExit(f"找不到 {start_tag} 的結尾 </g>")
 
 
-def build_zh_motion(template: str) -> str:
-    """Template minus the English strapline group."""
+def build_zh_motion(template: str, dy: float) -> str:
+    """
+    Template minus the English strapline group, with the rest of the type moved
+    down by the same amount the static Chinese lockup moves.
+
+    模板就是 p1 的 1:1 平移（AGEC 25.60pt、中文 35.10pt、小標 19.70pt，三個高度
+    與母檔 p1 逐項相符），所以位移量可以直接沿用，不必再換算尺度。
+
+    ⚠️ 位移加在 `#agec-lockup` 上，不是加在個別路徑上：三個遮罩只作用於標誌
+    （#agec-peak／#agec-band-o／#agec-band-g），文字是用 opacity/translate 的
+    class 做動畫，所以整組平移不會動到任何一個遮罩的對位。
+    """
     a, b = group_span(template, '<g id="agec-en"')
+    svg = template[:a] + template[b:]
+    c, _ = group_span(svg, '<g id="agec-lockup"')
+    svg = (
+        svg[:c]
+        + f'<g id="agec-lockup" transform="translate(0 {dy:.3f})"'
+        + svg[c + len('<g id="agec-lockup"'):]
+    )
     return label(
-        template[:a] + template[b:],
-        "中文動效 lockup（以 agec_logo_motion.svg 為模板，移除英文小標）",
+        svg,
+        "中文動效 lockup（以 agec_logo_motion.svg 為模板，移除英文小標並下移字塊對齊標誌腳）",
     )
 
 
@@ -255,7 +337,11 @@ def main() -> int:
     os.makedirs(tmp, exist_ok=True)
     os.makedirs(OUT, exist_ok=True)
 
-    zh = drop_english_strapline(page_to_svg(1, f"{tmp}/p1.svg"))
+    p1 = page_to_svg(1, f"{tmp}/p1.svg")
+    mark_bounds = vertical_bounds(split_mark_and_type(p1)[0])
+    overhang_ratio = type_overhang() / (mark_bounds[1] - mark_bounds[0])
+    zh, dy = bottom_align_type(drop_english_strapline(p1), overhang_ratio)
+    print(f"  中文字塊下移 {dy:.2f}pt 對齊標誌腳（p4 溢出比 {overhang_ratio:.5f}）")
     en = page_to_svg(7, f"{tmp}/p7.svg")
 
     built = []
@@ -271,7 +357,7 @@ def main() -> int:
 
     template = open(f"{OUT}/agec_logo_motion.svg", encoding="utf-8").read()
     for name, svg in (
-        ("agec_logo_zh_motion", build_zh_motion(template)),
+        ("agec_logo_zh_motion", build_zh_motion(template, dy)),
         ("agec_logo_en_motion", build_en_motion(template, recolour(en, False))),
     ):
         path = f"{OUT}/{name}.svg"
