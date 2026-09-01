@@ -185,8 +185,14 @@
 }
 
 /* A reading measure, not the 1200px `.container` the section pages use.
-   `.container` still supplies the gutters and centring. */
+   `.container` still supplies the gutters and centring.
+
+   `.post-cover` 後來也加進來了。原本它刻意留在容器寬（1480px）當滿版首圖，
+   那是給橫幅照片的做法；但這個站的封面幾乎都是**直式海報**（演講公告的內文
+   有 92% 就只有一張海報），1480px 寬的直式海報會算成 2140px 高，等於兩個
+   螢幕。與文字同寬之後它才像一份文件而不是一面牆。 */
 .post-page .post-head,
+.post-page .post-cover,
 .post-page .post-body,
 .post-page .post-foot {
   max-width: 760px;
@@ -229,9 +235,24 @@
 .post-cover {
   margin-top: clamp(40px, 5vw, 64px);
 }
-.post-cover img {
-  width: 100%;
+
+/* 封面與內文的圖用同一組規則。
+ *
+ * 🔴 關鍵是 `width:auto` 取代 `width:100%`。`width:100%` 不只是「最多滿版」，
+ * 它會把比容器小的圖**放大**：實測 /news/458 的海報原檔 1043px 寬，被撐成
+ * 1480px（1.42 倍），既模糊又佔掉兩個螢幕。改成 `max-width:100%` + `width:auto`
+ * 之後，圖永遠不會超過自己的原始尺寸，也不會超過欄寬。
+ *
+ * `margin-inline:auto` 是配套：不再滿版之後，比欄窄的圖需要自己置中，
+ * 否則會靠左而跟文字的左緣對不齊（Preflight 的 img{display:block} 讓它是
+ * 區塊元素，不會被 text-align 影響）。 */
+.post-cover img,
+.post-body img {
+  display: block;
+  width: auto;
   height: auto;
+  max-width: 100%;
+  margin-inline: auto;
 }
 
 /* --- the injected markup ------------------------------------------------- */
@@ -284,9 +305,7 @@
 }
 .post-body a:hover { color: var(--gold); }
 .post-body img {
-  width: 100%;
-  height: auto;
-  margin: 2em 0;
+  margin: 2em auto;
 }
 .post-body pre {
   background: var(--cream);
