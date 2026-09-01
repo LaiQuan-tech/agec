@@ -30,6 +30,8 @@ const AFFECTED_ROUTES = {
   // page keeps serving its ISR copy, and they save again.
   links: ["/students", "/courses", "/admissions", "/alumni"],
   posts: ["/blog"],
+  // 系友活動：列表在 /alumni，詳情頁在下面用動態路徑一併處理。
+  events: ["/alumni"],
 } as const;
 
 export type RevalidateEntity = keyof typeof AFFECTED_ROUTES;
@@ -55,13 +57,39 @@ export function revalidateFor(entity: RevalidateEntity, ...slugs: (string | null
     // Editing one item changes the list's ordering and can move items across
     // page boundaries, so every paginated page goes with it — and the item's
     // own page in both languages.
-    revalidatePath("/news/page/[page]", "page");
-    revalidatePath(`${EN_PREFIX}/news/page/[page]`, "page");
-    revalidatePath("/news/[id]", "page");
-    revalidatePath(`${EN_PREFIX}/news/[id]`, "page");
+    //
+    // ⚠️ 分類頁與年份頁也在這裡。它們是同一批資料的另外幾種切法，漏掉的話
+    // 系辦改完一則消息、切到「招生」分類看，會看到五分鐘前的舊內容 ——
+    // 而且只有在那幾個頁面才會發生，最不容易被發現的那種。
+    for (const pattern of [
+      "/news/page/[page]",
+      "/news/[id]",
+      "/news/category/[slug]",
+      "/news/category/[slug]/page/[page]",
+      "/news/year/[year]",
+      "/news/year/[year]/page/[page]",
+      "/news/category/[slug]/year/[year]",
+      "/news/category/[slug]/year/[year]/page/[page]",
+      "/news/talks",
+      "/news/talks/page/[page]",
+    ]) {
+      revalidatePath(pattern, "page");
+      revalidatePath(`${EN_PREFIX}${pattern}`, "page");
+    }
     for (const id of slugs) {
       if (!id) continue;
       for (const path of bothLanguages(`/news/${id}`)) revalidatePath(path);
+    }
+  }
+
+  if (entity === "events") {
+    // 活動詳情頁。slugs 帶舊值與新值兩個 —— 改了 slug 而只重新驗證新的，
+    // 舊網址會繼續供應快取內容（與 posts 同樣的處理）。
+    revalidatePath("/alumni/events/[slug]", "page");
+    revalidatePath(`${EN_PREFIX}/alumni/events/[slug]`, "page");
+    for (const slug of slugs) {
+      if (!slug) continue;
+      for (const path of bothLanguages(`/alumni/events/${slug}`)) revalidatePath(path);
     }
   }
 

@@ -6,6 +6,8 @@ import {
   getNewsById,
   getNewsHome,
   getNewsIds,
+  getAlumniEventBySlug,
+  getAlumniEvents,
   getNewsPage,
   getNewsYears,
   getTalks,
@@ -18,6 +20,7 @@ import {
 } from "@/lib/data";
 import type { Lang } from "@/lib/i18n";
 import { Home } from "./Home";
+import { AlumniEventPage } from "./AlumniEventPage";
 import { News } from "./News";
 import { Talks } from "./Talks";
 import { NewsPost } from "./NewsPost";
@@ -129,6 +132,21 @@ export async function NewsRoute({
   );
 }
 
+/** 單一系友活動 (/alumni/events/[slug], /en/alumni/events/[slug]). */
+export async function AlumniEventRoute({
+  lang,
+  slug,
+}: {
+  lang: Lang;
+  slug: string;
+}) {
+  const event = await getAlumniEventBySlug(slug, lang);
+  // 草稿與不存在的 slug 都走這裡：getAlumniEventBySlug 只回 published 與
+  // cancelled，所以草稿在前台就是 404，不需要在這裡再判一次狀態。
+  if (!event) notFound();
+  return <AlumniEventPage lang={lang} event={event} />;
+}
+
 /** 演講公告封存 (/news/talks, /news/talks/page/N). */
 export async function TalksRoute({
   lang,
@@ -218,8 +236,11 @@ export async function StudentsRoute({ lang }: { lang: Lang }) {
  * `.story-grid`, whose cards need an eyebrow and an action label that the
  * `links` table has no columns for (see the note in components/site/Alumni.tsx).
  */
-export function AlumniRoute({ lang }: { lang: Lang }) {
-  return <Alumni lang={lang} />;
+export async function AlumniRoute({ lang }: { lang: Lang }) {
+  // 只取還沒結束的活動，近的在前。歷屆活動不列在這一區：這是「要不要來」的
+  // 區塊，不是封存。真的需要封存頁時再另開路由，不要把它塞進同一份清單。
+  const events = await getAlumniEvents(lang);
+  return <Alumni lang={lang} events={events} />;
 }
 
 export async function BlogRoute({ lang }: { lang: Lang }) {

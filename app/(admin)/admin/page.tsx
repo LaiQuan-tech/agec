@@ -14,6 +14,7 @@ const COUNT_TARGETS = [
   { table: "courses", label: "課程", href: "/admin/courses" },
   { table: "programs", label: "招生學制", href: "/admin/programs" },
   { table: "links", label: "連結卡片", href: "/admin/links" },
+  { table: "alumni_events", label: "系友活動", href: "/admin/events" },
 ] as const;
 
 export default async function AdminDashboard() {

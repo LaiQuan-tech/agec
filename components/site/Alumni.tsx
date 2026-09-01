@@ -1,11 +1,14 @@
+import type { AlumniEvent } from "@/lib/alumni-events";
 import { translate, type Lang } from "@/lib/i18n";
 import { ALUMNI } from "@/lib/i18n/alumni";
+import { ALUMNI_EVENTS } from "@/lib/i18n/alumni-events";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
 import { SectionTitle } from "./SectionTitle";
 import { NextRoute } from "./NextRoute";
 import { MaybeLink } from "./MaybeLink";
+import { AlumniEventList } from "./AlumniEventList";
 
 /**
  * 系友專區 (/alumni) — route 08 / 08.
@@ -60,8 +63,16 @@ const SECTORS = [
   "INTERNATIONAL",
 ];
 
-export function Alumni({ lang }: { lang: Lang }) {
+export function Alumni({
+  lang,
+  events,
+}: {
+  lang: Lang;
+  /** 還沒結束的系友活動，近的在前。空陣列時那一區顯示一句說明，不是空框。 */
+  events: AlumniEvent[];
+}) {
   const t = translate(ALUMNI, lang);
+  const ev = translate(ALUMNI_EVENTS, lang);
 
   return (
     <SiteShell lang={lang} variant="interior">
@@ -152,6 +163,23 @@ export function Alumni({ lang }: { lang: Lang }) {
                 </MaybeLink>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* 系友回娘家。
+            id 是 `#section-events` 而不是接續的號碼：參考站的四個區塊已經佔掉
+            section-1..4，改號會動到既有錨點。SectionTitle 的 no 用 "03" —— 那個
+            號碼目前沒有人在用（捐贈區刻意沒有 SectionTitle），所以插進來不必
+            重排任何一個既有區塊的編號。 */}
+        <section className="inner-section" id="section-events">
+          <div className="container">
+            <SectionTitle
+              no="03"
+              eyebrow="ALUMNI EVENTS"
+              heading={ev.sectionHeading}
+              description={ev.sectionDescription}
+            />
+            <AlumniEventList lang={lang} events={events} />
           </div>
         </section>
 

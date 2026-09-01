@@ -1,4 +1,5 @@
 import { createServerClient } from "@/lib/supabase/server";
+import type { AlumniEvent } from "@/lib/alumni-events";
 import { pick, pickNullable, type Lang } from "@/lib/i18n";
 
 /**
@@ -868,4 +869,154 @@ export async function getNewsIds(): Promise<number[]> {
     return [];
   }
   return (data ?? []).map((row) => row.id);
+}
+
+/* ===========================================================================
+ * 系友活動 alumni_events
+ *
+ * ⚠️ 這裡只讀 `alumni_events`，永遠不讀 `alumni_event_registrations`。
+ * 報名紀錄是個資，只有後台（lib/admin/events.ts）碰得到；把它的查詢放進這個
+ * 檔案，等於讓任何公開頁面隨手就能 import 到。
+ * ========================================================================= */
+
+const ALUMNI_EVENT_COLUMNS =
+  "id, slug, title, title_en, summary, summary_en, body, body_en, starts_at, " +
+  "ends_at, location, location_en, address, capacity, seats_taken, " +
+  "registration_closes_at, cover_url, contact, status";
+
+type AlumniEventRow = {
+  id: number;
+  slug: string;
+  title: string;
+  title_en: string | null;
+  summary: string | null;
+  summary_en: string | null;
+  body: string | null;
+  body_en: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  location: string | null;
+  location_en: string | null;
+  address: string | null;
+  capacity: number | null;
+  seats_taken: number;
+  registration_closes_at: string | null;
+  cover_url: string | null;
+  contact: string | null;
+  status: string;
+};
+
+function toAlumniEvent(row: AlumniEventRow, lang: Lang): AlumniEvent {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: pick(row.title, row.title_en, lang),
+    summary: pickNullable(row.summary, row.summary_en, lang),
+    body: pickNullable(row.body, row.body_en, lang),
+    startsAt: row.starts_at,
+    endsAt: row.ends_at,
+    location: pickNullable(row.location, row.location_en, lang),
+    address: row.address,
+    capacity: row.capacity,
+    seatsTaken: row.seats_taken,
+    registrationClosesAt: row.registration_closes_at,
+    coverUrl: row.cover_url,
+    contact: row.contact,
+    status: row.status as AlumniEvent["status"],
+  };
+}
+
+/**
+ * 前台看得到的活動狀態。
+ *
+ * ⚠️ `cancelled` 也在裡面，而且是刻意的：活動取消時把它從前台整個抽掉，
+ * 已經報名的人會以為自己記錯了。取消的活動要留在頁面上並且明確寫著取消。
+ * 真正不能外流的是 `draft`。
+ *
+ * 與 PUBLISHED 同一個道理：service_role 繞過 RLS，這個過濾少一次就是草稿
+ * 直接上線，不會有任何錯誤訊息。
+ */
+const PUBLIC_EVENT_STATUSES = ["published", "cancelled"];
+
+/**
+ * 前台的活動清單，近的在前。
+ *
+ * `includePast = false` 時只回還沒結束的：以 `ends_at`（沒填就用 `starts_at`）
+ * 為準而不是 `starts_at` —— 一場 10:00–16:00 的回娘家，下午兩點還在進行中，
+ * 那時候最需要它留在頁面上。
+ */
+export async function getAlumniEvents(
+  lang: Lang,
+  options: { includePast?: boolean; limit?: number } = {}
+): Promise<AlumniEvent[]> {
+  const supabase = createServerClient();
+
+  let query = supabase
+    .from("alumni_events")
+    .select(ALUMNI_EVENT_COLUMNS)
+    .in("status", PUBLIC_EVENT_STATUSES);
+
+  if (!options.includePast) {
+    // coalesce(ends_at, starts_at) >= now() 用 PostgREST 表達不出來，所以拿
+    // starts_at 當粗篩（一場活動不會跨超過一天），精確的過濾在下面用 JS 做。
+    // 粗篩的目的只是不要把九年份的活動全撈回來。
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    query = query.gte("starts_at", yesterday);
+  }
+
+  const { data, error } = await query
+    .order("starts_at", { ascending: !options.includePast })
+    .returns<AlumniEventRow[]>();
+
+  if (error) {
+    // 表還不存在時（migration 尚未執行）也走這裡：回空陣列，前台那一區整塊
+    // 不渲染，而不是讓 /alumni 掛掉。與這個檔案其他 getter 相同的降級方式。
+    console.error("[lib/data] getAlumniEvents failed:", error.message);
+    return [];
+  }
+
+  const now = Date.now();
+  const events = (data ?? []).map((row) => toAlumniEvent(row, lang));
+  const visible = options.includePast
+    ? events
+    : events.filter((e) => Date.parse(e.endsAt ?? e.startsAt) >= now);
+
+  return options.limit ? visible.slice(0, options.limit) : visible;
+}
+
+export async function getAlumniEventBySlug(
+  slug: string,
+  lang: Lang
+): Promise<AlumniEvent | null> {
+  const supabase = createServerClient();
+
+  const { data, error } = await supabase
+    .from("alumni_events")
+    .select(ALUMNI_EVENT_COLUMNS)
+    .eq("slug", slug)
+    .in("status", PUBLIC_EVENT_STATUSES)
+    .maybeSingle<AlumniEventRow>();
+
+  if (error) {
+    console.error(`[lib/data] getAlumniEventBySlug(${slug}) failed:`, error.message);
+    return null;
+  }
+  return data ? toAlumniEvent(data, lang) : null;
+}
+
+/** generateStaticParams 用。草稿不會出現在這裡，所以不會被預產成靜態頁。 */
+export async function getAlumniEventSlugs(): Promise<string[]> {
+  const supabase = createServerClient();
+
+  const { data, error } = await supabase
+    .from("alumni_events")
+    .select("slug")
+    .in("status", PUBLIC_EVENT_STATUSES)
+    .returns<{ slug: string }[]>();
+
+  if (error) {
+    console.error("[lib/data] getAlumniEventSlugs failed:", error.message);
+    return [];
+  }
+  return (data ?? []).map((row) => row.slug);
 }

@@ -846,3 +846,294 @@
   color: var(--green);
   font-weight: 700;
 }
+
+/* ===========================================================================
+ * 系友活動與線上報名
+ *
+ * site.css 完全沒有這些 class —— 參考站沒有活動報名這件事。
+ *
+ * ⚠️ 表單元素必須逐項給樣式。site.css 裡是參考站的完整建置，含 Tailwind
+ * Preflight，而 Preflight 把 input/select/textarea 的背景設成透明、圓角歸零，
+ * 再加上通用的 `border:0 solid`。不寫的話，欄位在畫面上會變成一條看不見的線，
+ * 而且是那種「在你的機器上剛好還看得到游標」的壞法。
+ * ========================================================================= */
+
+/* --- /alumni 的活動列表 -------------------------------------------------- */
+
+.event-list {
+  border-top: 1px solid var(--line);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.event-row {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  /* 日期｜主要內容｜名額｜CTA。與快樂手的場次列同一組欄位，因為要回答的
+     問題一樣：什麼時候、在哪裡、還有沒有位子、怎麼報名。 */
+  grid-template-columns: 96px 1fr max-content max-content;
+  gap: 28px;
+  padding: 28px 0;
+}
+.event-date {
+  text-align: center;
+}
+.event-date-md {
+  color: var(--green-deep);
+  display: block;
+  font: 600 26px / 1.1 var(--serif);
+}
+.event-date-y {
+  color: var(--muted);
+  display: block;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+}
+.event-row-main {
+  min-width: 0;
+}
+.event-row h3 {
+  font: 600 22px / 1.4 var(--serif);
+  margin: 0;
+}
+.event-row h3 a {
+  color: var(--ink);
+  /* 上下 padding 把標題的點擊區撐開，負邊距讓它不撐高整列。 */
+  display: inline-block;
+  margin: -8px 0;
+  padding: 8px 0;
+  transition: color 0.2s;
+}
+.event-row h3 a:hover {
+  color: var(--green);
+}
+.event-row-when {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 8px 0 0;
+}
+.event-row-summary {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.8;
+  margin: 8px 0 0;
+}
+.event-tag {
+  border: 1px solid var(--green);
+  border-radius: 99px;
+  color: var(--green);
+  display: inline-block;
+  font-size: 13px;
+  padding: 6px 14px;
+  white-space: nowrap;
+}
+/* 額滿／截止／取消：灰掉但仍然印出來。把狀態藏起來會讓人以為還可以報名。 */
+.event-tag-off {
+  border-color: var(--line);
+  color: var(--muted);
+}
+.event-row-cta {
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  /* 四欄在窄螢幕會把標題擠成一字一行。改成日期在左、其餘堆疊。 */
+  .event-row {
+    grid-template-columns: 72px 1fr;
+    gap: 8px 18px;
+  }
+  .event-row-main,
+  .event-row-seats,
+  .event-row-cta {
+    grid-column: 2;
+  }
+  .event-row-seats {
+    margin-top: 10px;
+  }
+  .event-row-cta {
+    margin-top: 6px;
+  }
+}
+
+/* --- 活動頁 -------------------------------------------------------------- */
+
+/* 純文字內文。資料庫那一欄不存 HTML，所以換行要靠 CSS 保留。 */
+.event-body-text {
+  white-space: pre-line;
+}
+.event-address {
+  color: var(--muted);
+  font-size: 14px;
+}
+.event-register {
+  border-top: 1px solid var(--line);
+  margin-top: 48px;
+  padding-top: 40px;
+}
+.event-register h2 {
+  color: var(--green-deep);
+  font: 600 28px / 1.4 var(--serif);
+  margin: 0 0 10px;
+}
+.event-register > p {
+  color: var(--muted);
+  margin: 0 0 28px;
+}
+.event-closed {
+  background: var(--cream);
+  border-left: 3px solid var(--gold);
+  font-size: 16px;
+  line-height: 1.9;
+  margin-top: 48px;
+  padding: 20px 24px;
+}
+.event-closed strong {
+  color: var(--green-deep);
+}
+
+/* --- 報名表單 ------------------------------------------------------------ */
+
+.event-form-grid {
+  display: grid;
+  gap: 22px 24px;
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (max-width: 700px) {
+  .event-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.event-field {
+  display: flex;
+  flex-direction: column;
+}
+.event-field-wide {
+  margin-top: 22px;
+}
+.event-field label {
+  color: var(--green-deep);
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.event-field label em {
+  color: var(--muted);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 400;
+}
+.event-field input,
+.event-field select,
+.event-field textarea {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  color: var(--ink);
+  /* 16px 不是排版偏好：iOS Safari 會在 font-size 小於 16px 的欄位獲得焦點時
+     自動放大整個頁面，而且不會縮回去。 */
+  font-size: 16px;
+  padding: 12px 14px;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+/* Preflight 把 select 的原生箭頭留著但背景清成透明，在白底上會看不出它是
+   可以展開的。給一個自訂箭頭。 */
+.event-field select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 20px) 50%, calc(100% - 14px) 50%;
+  background-repeat: no-repeat;
+  background-size: 6px 6px, 6px 6px;
+  padding-right: 40px;
+}
+.event-field input:focus,
+.event-field select:focus,
+.event-field textarea:focus {
+  border-color: var(--green);
+  outline: 2px solid var(--green);
+  outline-offset: 1px;
+}
+.event-field input[aria-invalid="true"] {
+  border-color: #b3261e;
+}
+.event-field-hint {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 6px 0 0;
+}
+.event-field-error {
+  color: #b3261e;
+  font-size: 13px;
+  margin: 6px 0 0;
+}
+.event-form-error {
+  background: #fdeceb;
+  border-left: 3px solid #b3261e;
+  color: #7f1d1a;
+  font-size: 15px;
+  line-height: 1.8;
+  margin: 0 0 24px;
+  padding: 14px 18px;
+}
+.event-form-privacy {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.9;
+  margin: 26px 0 22px;
+}
+/* Honeypot。移到畫面外而不是 display:none —— 部分機器人會跳過
+   display:none 的欄位，照樣填會被移走的那種。 */
+.event-form-trap {
+  height: 0;
+  left: -9999px;
+  overflow: hidden;
+  position: absolute;
+  width: 0;
+}
+
+/* --- 報名成功 ------------------------------------------------------------ */
+
+.event-success {
+  background: var(--cream);
+  border-left: 3px solid var(--green);
+  padding: 28px 30px;
+}
+.event-success h3 {
+  color: var(--green-deep);
+  font: 600 24px / 1.4 var(--serif);
+  margin: 0 0 16px;
+}
+.event-success p {
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.9;
+  margin: 0 0 12px;
+}
+.event-code {
+  align-items: baseline;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.event-code span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.event-code strong {
+  color: var(--green-deep);
+  /* 等寬：這串要被抄下來或用電話唸出去，比例字型下 0 和 O 分不出來
+     （雖然十六進位不會有 O，但使用者不知道這件事）。 */
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 24px;
+  letter-spacing: 0.12em;
+}
+.event-success-contact {
+  border-top: 1px solid var(--line);
+  margin-top: 18px;
+  padding-top: 14px;
+}

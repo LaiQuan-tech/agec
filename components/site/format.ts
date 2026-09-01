@@ -53,3 +53,41 @@ export function formatEventTime(eventAt: string, lang: "zh" | "en"): string {
 
   return parts;
 }
+
+/**
+ * 一段活動時間：「2026年6月8日（週一）10:00 – 16:00」。
+ *
+ * 同一天時只印一次日期；跨日則兩端都完整印出。沒有結束時間就只印開始。
+ *
+ * ⚠️ 與 formatEventTime 同樣是 Server Component only —— 它用 new Date()
+ * 把 timestamptz 轉成台北時間，在 client 端重算會拿到瀏覽器自己的時區。
+ */
+export function formatEventRange(
+  startsAt: string,
+  endsAt: string | null,
+  lang: "zh" | "en"
+): string {
+  const start = formatEventTime(startsAt, lang);
+  if (!endsAt) return start;
+
+  const from = new Date(startsAt);
+  const to = new Date(endsAt);
+  if (Number.isNaN(to.getTime())) return start;
+
+  const locale = lang === "en" ? "en-GB" : "zh-TW";
+  const sameDay =
+    new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(from) ===
+    new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(to);
+
+  if (sameDay) {
+    const endTime = new Intl.DateTimeFormat(locale, {
+      timeZone: "Asia/Taipei",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).format(to);
+    // 短破折號兩側留空白：中文全形字之間的「–」不留白會黏成一團。
+    return `${start} – ${endTime}`;
+  }
+  return `${start} – ${formatEventTime(endsAt, lang)}`;
+}

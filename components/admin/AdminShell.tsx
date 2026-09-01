@@ -11,6 +11,7 @@ export const ADMIN_SECTIONS = [
   { href: "/admin/courses", label: "課程資訊" },
   { href: "/admin/programs", label: "招生學制" },
   { href: "/admin/links", label: "連結卡片" },
+  { href: "/admin/events", label: "系友活動" },
 ] as const;
 
 export function AdminShell({

@@ -46,6 +46,10 @@ export const ALUMNI = {
         label: { zh: "傑出系友", en: "Distinguished alumni" },
       },
       { href: "#section-2", label: { zh: "系友動態", en: "Alumni news" } },
+      /* 系友回娘家。id 是 `#section-events` 而不是接續的 `#section-3`：
+         參考站的四個區塊已經佔掉 1–4，改號會動到既有的錨點，而這一區是這次
+         新增的功能區塊，不是原設計的第五段。 */
+      { href: "#section-events", label: { zh: "系友回娘家", en: "Homecoming" } },
       { href: "#section-3", label: { zh: "支持農經", en: "Support AGEC" } },
       {
         href: "#section-4",
