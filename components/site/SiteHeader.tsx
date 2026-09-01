@@ -116,9 +116,22 @@ export function SiteHeader({ lang }: { lang: Lang }) {
             href={localizePath("/", lang)}
             aria-label={t.brandHome}
           >
-            {/* <img>, not inline SVG: agec_logo_motion.svg ships its own
-                <style> + @keyframes. */}
-            <img src="/brand/agec_logo_motion.svg" alt={t.departmentFull} />
+            {/* <img>, not inline SVG: these ship their own <style> +
+                @keyframes.
+
+                One lockup per language, not one lockup with a swapped caption.
+                The identity has an approved horizontal mark for each — the
+                Chinese one carries AGEC over 國立臺灣大學農業經濟學系, the
+                English one three lines of English beside the mark — and they
+                are different widths, so this is a different asset rather than
+                different text. Both are built from the client's master by
+                scripts/build-logos.py; the Chinese one has had the small
+                "Department of Agricultural Economics, NTU" strapline removed at
+                the client's request. */}
+            <img
+              src={`/brand/agec_logo_${lang}_motion.svg`}
+              alt={t.departmentFull}
+            />
           </Link>
 
           <nav className="desktop-nav" aria-label={t.mainNav}>
@@ -156,7 +169,21 @@ export function SiteHeader({ lang }: { lang: Lang }) {
       >
         <div className="menu-top container">
           <Link href={localizePath("/", lang)} onClick={closeOnNavigate}>
-            <img src="/brand/header_agec_logo.svg" alt={t.departmentFull} />
+            {/* Reversed, and no motion: the overlay is already animating
+                itself open, and a logo that redraws every time the menu is
+                opened would be the loudest thing on a page whose job is to get
+                out of the way.
+
+                The reversed file exists because this sits on --green-deep. The
+                original lockup's type is near-black, which is why the ported
+                CSS put a paper-coloured plate behind it — that plate is
+                overridden in site-extensions.css, and the type is white here
+                instead. The gold peak is kept: it reads fine on the dark green
+                and it is the half of the mark anyone recognises. */}
+            <img
+              src={`/brand/agec_logo_${lang}_reversed.svg`}
+              alt={t.departmentFull}
+            />
           </Link>
           {/* `.menu-top button span:last-child` rotates the second bar into the
               X. Keep exactly two spans, and keep this the only <button> in

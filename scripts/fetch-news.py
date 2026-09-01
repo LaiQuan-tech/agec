@@ -18,9 +18,38 @@ BASE = "https://www.agec.ntu.edu.tw"
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
       "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36")
 
-# The four lists under 舊站「最新消息」. Their Chinese names are the values
-# `news.category` stores — never the English labels, which are display-only.
-WANTED = {"最新公告", "演講公告", "求職徵才", "活動剪影"}
+# Which of the old site's lists to migrate, keyed by the name the crawler
+# recorded for each row.
+#
+# The first four live under 「最新消息」. The rest are a separate section of the
+# old site — /zh_tw/recruit/recruit1…5 — split six ways by degree programme.
+#
+# All six collapse to one `招生` category here. The site has a single 招生 filter
+# tab, and six tabs for one topic would overflow the pill row on a phone; the
+# programme is still in every one of those headlines
+# （「115學年度博士班招生簡章公告」）, so nothing is actually lost.
+CATEGORY_MAP = {
+    "最新公告": "最新公告",
+    "演講公告": "演講公告",
+    "求職徵才": "求職徵才",
+    "活動剪影": "活動剪影",
+    "大學部招生資訊": "招生",
+    "招生資訊-大學部招生（個人申請）": "招生",
+    "招生資訊-碩士班招生": "招生",
+    "招生資訊-博士班招生": "招生",
+    "招生資訊-碩士在職專班": "招生",
+    "招生資訊-國際專班": "招生",
+}
+WANTED = set(CATEGORY_MAP)
+
+# ⚠️ Deduplication below is "first one wins", and the old CMS lists the same
+# record under several paths. A row reachable from both /recruit and 最新公告
+# should be tagged 招生 — the more specific of the two — so the recruit lists
+# are visited first.
+CATEGORY_ORDER = {c: i for i, c in enumerate(
+    [k for k, v in CATEGORY_MAP.items() if v == "招生"]
+    + [k for k, v in CATEGORY_MAP.items() if v != "招生"]
+)}
 
 # The trailing digits of a detail URL are the CMS record id. The same record is
 # reachable from several list paths (/news, /news/news1, /phd/phd1 …), so this
@@ -30,6 +59,7 @@ ID_RE = re.compile(r"-(\d+)/?$")
 
 def main() -> int:
     rows = [r for r in json.load(open(SOURCE, encoding="utf-8")) if r["cat"] in WANTED]
+    rows.sort(key=lambda r: CATEGORY_ORDER[r["cat"]])   # see CATEGORY_ORDER
 
     items, seen = [], set()
     for r in rows:
@@ -44,7 +74,11 @@ def main() -> int:
         # "2026-08/31" is how the CMS prints its dates. Postgres wants a real date.
         items.append({
             "id": rid,
-            "category": r["cat"],
+            # The mapped name, not the crawler's. The source `cat` records
+            # *which list this row came from*, which is evidence and stays
+            # verbatim in the crawl output; "six admission lists become one
+            # category" is this repo's decision and belongs here.
+            "category": CATEGORY_MAP[r["cat"]],
             "title": r["title"],
             "published_at": r["date"].replace("/", "-"),
             "url": BASE + r["url"],

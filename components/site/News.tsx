@@ -107,7 +107,23 @@ export function News({
               tabs={translate(NEWS_FILTER_TABS, lang)}
               ariaLabel={t.filterLabel}
             />
-            <div className="inner-news-layout">
+            {/* `.inner-news-layout` is a `.78fr 1.22fr` grid: the feature card
+                on the left, the list on the right. The card only exists on page
+                one, so from page two the list was the grid's only child — and a
+                lone child takes the *first* track, leaving the 1.22fr column
+                empty. At 1920px that is a 552px list against 864px of nothing,
+                on 21 of the 22 pages.
+
+                Invisible until this table held more than one page of news.
+                Blog.tsx:64-71 already carries the mirror image of this fix (one
+                post, feature but no list) with the same reasoning, and
+                `#section-2` below drops the wrapper for the same reason.
+
+                Fixed here rather than in CSS with `:has(> :only-child)`:
+                site.css is frozen so the rule would have to live in
+                site-extensions.css, where it would silently reach /blog too —
+                and the condition is already known at render time. */}
+            <div className={feature ? "inner-news-layout" : undefined}>
               {feature ? (
                 <article className="inner-news-feature">
                   {/* Direct <img> child: `.inner-news-feature>img` is what

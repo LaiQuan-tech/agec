@@ -632,3 +632,24 @@
   }
 
 }
+
+/* --- 選單覆蓋層的標誌 -----------------------------------------------------
+ *
+ * site.css 給這顆 logo 墊了一張紙色卡片：
+ *   .menu-top>a{background:var(--paper);padding:4px 9px}
+ *
+ * 那不是設計，是補丁。參考站用的橫式 lockup 文字是近黑色，壓在
+ * --green-deep（#022f21）上會整片消失，所以移植時墊了一張紙讓它看得見。
+ * 現在 SiteHeader 改用真正的反白版（金色山峰保留、道路條紋與文字轉白，見
+ * scripts/build-logos.py），卡片就只剩下「深綠底上一塊白色矩形」這個副作用。
+ *
+ * ⚠️ 這條規則寫在這裡而不是直接改 site.css——那份是參考站逐位元組複製的，
+ * layout.tsx 明令保持原樣。這個檔在它之後載入，同權重時勝出。
+ *
+ * 頁尾早就是這個做法：site.css 自己對 .footer-brand-mark 就寫了
+ * `background:0 0; padding:0`，因為它用的也是全白版。
+ */
+.menu-top > a {
+  background: 0 0;
+  padding: 0;
+}
