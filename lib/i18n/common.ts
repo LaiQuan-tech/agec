@@ -36,6 +36,14 @@ export const COMMON = {
    * the language toggle as the bar's only control on mobile.
    */
   contact: { zh: "聯絡我們", en: "Contact" },
+
+  /* --- 頁尾的外部連結 ------------------------------------------------------
+   * 站外的兩個去處。`university` 已經存在（機構列在用），這裡直接沿用同一個
+   * 名稱 —— 同一個機構在同一頁上有兩種寫法會讓人以為是兩個東西。
+   */
+  facebook: { zh: "農經系 Facebook", en: "AGEC on Facebook" },
+  /** 這一組連結的 aria-label，讓讀屏使用者知道接下來是站外連結。 */
+  externalLinksLabel: { zh: "相關連結", en: "Related links" },
   sitemap: { zh: "網站導覽", en: "Sitemap" },
 
   /** Department name; the alt text of the brand mark in header and footer. */
