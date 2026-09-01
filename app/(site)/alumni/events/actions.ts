@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { EN_PREFIX } from "@/lib/i18n";
 import { createServerClient } from "@/lib/supabase/server";
-import { MAX_GUESTS, PROGRAM_OPTIONS, toGregorianYear } from "@/lib/alumni-events";
+import {
+  MAX_GUESTS,
+  PROGRAM_OPTIONS,
+  toGregorianYear,
+  type RegistrationState,
+} from "@/lib/alumni-events";
 
 /**
  * 前台報名的 Server Action。
@@ -30,16 +35,14 @@ import { MAX_GUESTS, PROGRAM_OPTIONS, toGregorianYear } from "@/lib/alumni-event
  * 有心人。migration 檔尾記了最小的補法。
  */
 
-export type RegistrationState = {
-  ok: boolean;
-  /** i18n 字典的 key，不是給人看的字串 —— 這支不知道當下是中文還是英文頁。 */
-  messageKey?: string;
-  /** 成功時的報名代碼。 */
-  code?: string;
-  fieldErrors?: Record<string, string>;
-};
-
-export const idleRegistration: RegistrationState = { ok: false };
+/*
+ * ⚠️ 這個檔案只能 export async 函式。
+ *
+ * `"use server"` 在檔案頂端時，Next 會把每一個 export 都當成 Server Function，
+ * 所以型別與 `idleRegistration` 常數都放在 lib/alumni-events.ts —— 放在這裡
+ * 會讓表單一送出就 500，而且 `next build` 不會擋（實際踩過）。
+ * 後台六個 action 檔的 `idleState` 也是同樣放在 lib/admin/action-result.ts。
+ */
 
 /**
  * ⚠️ 欄位錯誤的訊息也是 key，理由同上：這支 action 由中英兩個頁面共用，

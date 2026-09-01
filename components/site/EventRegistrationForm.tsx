@@ -2,12 +2,13 @@
 
 import { useActionState, useId } from "react";
 import { useFormStatus } from "react-dom";
+import { registerForEvent } from "@/app/(site)/alumni/events/actions";
 import {
   idleRegistration,
-  registerForEvent,
+  MAX_GUESTS,
+  PROGRAM_OPTIONS,
   type RegistrationState,
-} from "@/app/(site)/alumni/events/actions";
-import { MAX_GUESTS, PROGRAM_OPTIONS } from "@/lib/alumni-events";
+} from "@/lib/alumni-events";
 import { translate, type Lang } from "@/lib/i18n";
 import { ALUMNI_EVENTS } from "@/lib/i18n/alumni-events";
 

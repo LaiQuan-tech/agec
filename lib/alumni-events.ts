@@ -111,3 +111,28 @@ export const PROGRAM_OPTIONS = [
   "碩士在職專班",
   "其他",
 ] as const;
+
+/* ---------------------------------------------------------------------------
+ * 報名 Server Action 的回傳形狀
+ *
+ * 🔴 為什麼放在這裡而不是 action 檔裡：
+ * `"use server"` 寫在檔案頂端時，Next 會把**該檔的每一個 export 都當成
+ * Server Function**（見 node_modules/next/dist/docs/01-app/01-getting-started/
+ * 07-mutating-data.md：「at the top of a separate file to mark all exports of
+ * that file」）。所以在 action 檔裡 `export const idleRegistration = {...}`
+ * 會讓一個純物件被當成可呼叫的伺服器函式 —— 表單一送出就是 500，而且
+ * `next build` 不會擋。
+ *
+ * 這個 repo 本來就有正確的做法：後台的 `idleState` 放在
+ * lib/admin/action-result.ts，六個 action 檔只 export async 函式。
+ * ------------------------------------------------------------------------ */
+export type RegistrationState = {
+  ok: boolean;
+  /** i18n 字典的 key，不是給人看的字串 —— action 不知道當下是中文還是英文頁。 */
+  messageKey?: string;
+  /** 成功時的報名代碼。 */
+  code?: string;
+  fieldErrors?: Record<string, string>;
+};
+
+export const idleRegistration: RegistrationState = { ok: false };
