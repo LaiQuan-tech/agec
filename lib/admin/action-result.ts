@@ -1,4 +1,8 @@
-import { NotAdminError, NotAuthenticatedError } from "@/lib/admin/errors";
+import {
+  NotAdminError,
+  NotAuthenticatedError,
+  NotManagerError,
+} from "@/lib/admin/errors";
 
 /**
  * The shape every admin Server Action returns, so FormShell can render the
@@ -81,6 +85,14 @@ export function toAuthErrorState(error: unknown): ActionState | null {
     return {
       ok: false,
       message: "你的帳號不在管理者名單內，請聯絡開發者",
+    };
+  }
+  if (error instanceof NotManagerError) {
+    // 與上一條分開：這個人可以用後台，只是這一件事不歸他。叫他去聯絡開發者
+    // 是錯的下一步 —— 正確的是找管理員。
+    return {
+      ok: false,
+      message: "這項操作限管理員，請聯絡系上的後台管理員",
     };
   }
   return null;

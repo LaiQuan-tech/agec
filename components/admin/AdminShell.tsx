@@ -2,24 +2,40 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { logoutAction } from "@/app/(admin)/admin/logout/actions";
 import { Button } from "@/components/admin/ui/Button";
+import type { AdminRole } from "@/lib/admin/auth";
 
-/** Sidebar entries. Order matches how often the office staff will need them. */
+/**
+ * Sidebar entries. Order matches how often the office staff will need them —
+ * 兩個 `managerOnly` 的放最後，它們是設定類，不是每天用的內容。
+ *
+ * ⚠️ `managerOnly` **不是授權**。Next 的 layout 在前端導覽時不會重新渲染，而
+ * Server Action 是對頁面路由的 POST —— 知道網址就打得到。真正擋住的是那兩個
+ * 頁面各自的 `requireManagerOrRedirect()`、每個 action 的 `requireManager()`，
+ * 以及資料庫的 `is_manager()` policy。這裡只是不要讓操作人員看到點不進去的
+ * 選項。
+ */
 export const ADMIN_SECTIONS = [
-  { href: "/admin/news", label: "最新消息" },
-  { href: "/admin/faculty", label: "系所成員" },
-  { href: "/admin/courses", label: "課程資訊" },
-  { href: "/admin/programs", label: "招生學制" },
-  { href: "/admin/links", label: "連結卡片" },
-  { href: "/admin/events", label: "系友活動" },
+  { href: "/admin/news", label: "最新消息", managerOnly: false },
+  { href: "/admin/faculty", label: "系所成員", managerOnly: false },
+  { href: "/admin/courses", label: "課程資訊", managerOnly: false },
+  { href: "/admin/programs", label: "招生學制", managerOnly: false },
+  { href: "/admin/links", label: "連結卡片", managerOnly: false },
+  { href: "/admin/events", label: "系友活動", managerOnly: false },
+  { href: "/admin/users", label: "人員管理", managerOnly: true },
+  { href: "/admin/logs", label: "操作日誌", managerOnly: true },
 ] as const;
 
 export function AdminShell({
   email,
+  role,
   children,
 }: {
   email: string | null;
+  /** 後台層級。null 幾乎不會發生（layout 已經擋掉），保守起見當成操作人員。 */
+  role: AdminRole | null;
   children: ReactNode;
 }) {
+  const isManager = role === "admin";
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-[1400px] flex-col lg:flex-row">
       <aside
@@ -59,7 +75,7 @@ export function AdminShell({
         </div>
 
         <nav className="flex gap-1 overflow-x-auto px-3 pb-3 lg:flex-col lg:overflow-visible lg:pb-0">
-          {ADMIN_SECTIONS.map((s) => (
+          {ADMIN_SECTIONS.filter((s) => isManager || !s.managerOnly).map((s) => (
             <Link
               key={s.href}
               href={s.href}
@@ -78,6 +94,9 @@ export function AdminShell({
           {email && (
             <p className="mb-2 truncate text-[12px]" style={{ color: "var(--muted)" }}>
               {email}
+              {/* 印出層級：操作人員看不到「人員管理」時，至少知道那是層級造成的，
+                  而不是以為後台壞了。 */}
+              <span className="ml-1">（{isManager ? "管理員" : "操作人員"}）</span>
             </p>
           )}
           <div className="flex flex-col gap-2">

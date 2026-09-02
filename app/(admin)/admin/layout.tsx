@@ -21,6 +21,10 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { email } = await requireAdminOrRedirect();
-  return <AdminShell email={email}>{children}</AdminShell>;
+  const { email, role } = await requireAdminOrRedirect();
+  return (
+    <AdminShell email={email} role={role}>
+      {children}
+    </AdminShell>
+  );
 }

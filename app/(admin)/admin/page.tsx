@@ -14,14 +14,24 @@ const COUNT_TARGETS = [
   { table: "programs", label: "招生學制", href: "/admin/programs" },
   { table: "links", label: "連結卡片", href: "/admin/links" },
   { table: "alumni_events", label: "系友活動", href: "/admin/events" },
+  // ⚠️ managerOnly：操作人員的 RLS 讀不到 admin_users，撈出來一定是 0，
+  //    印一個假的「0 筆」比不印更糟。
+  { table: "admin_users", label: "後台人員", href: "/admin/users", managerOnly: true },
 ] as const;
 
-export default async function AdminDashboard() {
+export default async function AdminDashboard({
+  searchParams,
+}: {
+  // Next 16：searchParams 是 promise。後台是 force-dynamic，讀它沒有副作用。
+  searchParams: Promise<{ error?: string }>;
+}) {
   // Re-checked here rather than relying on the layout — see lib/admin/auth.ts.
-  const { supabase, email } = await requireAdminOrRedirect();
+  const { supabase, email, role } = await requireAdminOrRedirect();
+  const { error: errorCode } = await searchParams;
+  const isManager = role === "admin";
 
   const counts = await Promise.all(
-    COUNT_TARGETS.map(async (t) => {
+    COUNT_TARGETS.filter((t) => isManager || !("managerOnly" in t && t.managerOnly)).map(async (t) => {
       const { count, error } = await supabase
         .from(t.table)
         .select("id", { count: "exact", head: true });
@@ -43,6 +53,16 @@ export default async function AdminDashboard() {
           {email ? `${email}，` : ""}選擇左側的區塊開始編輯。前台頁面最多 5 分鐘內會同步更新。
         </p>
       </header>
+
+      {errorCode === "not_manager" && (
+        <p
+          role="alert"
+          className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] text-amber-800"
+        >
+          那一頁限「管理員」使用。你目前是「操作人員」，可以編輯所有內容，但不能
+          管理人員或查看操作日誌。需要的話請聯絡系上的後台管理員。
+        </p>
+      )}
 
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         {counts.map((c) => (
@@ -73,14 +93,14 @@ export default async function AdminDashboard() {
           小提醒
         </p>
         <ul className="mt-2 list-disc space-y-1 pl-5" style={{ color: "var(--ink-soft)" }}>
-          <li>「最新消息」放短公告，「部落格」放有內文的長文章。</li>
+          <li>「最新消息」可以只放一行公告，也可以用編輯器寫完整內文。</li>
           <li>刪除無法復原，刪除前系統會再問一次。</li>
           <li>存檔後前台會立刻更新；若沒看到變化，重新整理一次瀏覽器。</li>
         </ul>
       </section>
 
       <nav className="flex flex-wrap gap-2">
-        {ADMIN_SECTIONS.map((s) => (
+        {ADMIN_SECTIONS.filter((s) => isManager || !s.managerOnly).map((s) => (
           <Link
             key={s.href}
             href={s.href}

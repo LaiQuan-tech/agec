@@ -28,6 +28,7 @@
 | 7 | `migrations/20260814090400_faculty_extend.sql` | `faculty` 加 `name_en`、`experience` 兩欄（另有一行防禦性的 `email` if not exists）；註解記錄 7 種 category 對應的卡片版型 | ✅ 2026-08-14 |
 | 8 | `migrations/20260814090500_faculty_seed_2026.sql` | 師資頁 37 筆人員資料（22 主卡 + 客座 1 + 名譽 5 + 退休 6 + 行政 3）。以姓名為自然鍵 upsert，不刪任何資料 | ✅ 2026-08-14 |
 | 10 | `migrations/20260901120000_alumni_events.sql` | 建 `alumni_events` / `alumni_event_registrations` 兩張表、RLS、`register_for_alumni_event()` 與 `cancel_alumni_registration()` 兩支函式 | ⬜ 待執行 |
+| 11 | `migrations/20260902100000_admin_user_management.sql` | 後台兩層權限（`admin_users.role`、`admin_role()`、`is_manager()`）、`created_by`、保底 trigger、操作日誌 `admin_audit_log` 與通用稽核 trigger | ⬜ 待執行 |
 | 9 | **人工步驟** | 清掉 `faculty` 原本的 8 筆佔位假資料。語句在第 8 支檔案末尾的註解區塊，**先跑 select 版本確認清單再改成 delete** | ✅ 2026-08-14 |
 
 第 7、8 支必須照順序跑（seed 依賴 extend 新增的兩個欄位）。兩支都在本機
