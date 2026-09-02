@@ -27,16 +27,34 @@ export function AdminShell({
         style={{ borderColor: "var(--hairline)" }}
       >
         <div className="px-5 py-4">
-          <Link href="/admin" className="block">
-            <p
-              className="text-[10px] font-semibold tracking-[0.18em]"
-              style={{ color: "var(--gold-deep)" }}
+          {/*
+            標誌 ＋ 一行標題。原本這裡是「NTU AGEC」的文字替身，標誌到位之後
+            兩者並存就是同一件事說兩次，所以文字那行移除。
+
+            ⚠️ 用只有標誌的方形版（1.09:1）而不是完整橫式 lockup（2.29:1）：
+            側欄只有 184px 可用寬（w-56 減 px-5），lockup 撐滿是 80px 高 ——
+            在常駐工具欄上太重，而且側欄在 lg 以下會變成橫向頂列，那個高度會
+            直接吃掉手機視窗。
+
+            ⚠️ 一定要指定高度。scripts/build-logos.py 的 trim() 會刪掉 SVG 的
+            width/height 屬性（刻意的，讓 CSS 依 viewBox 比例決定尺寸），沒給
+            高度它會塌掉或撐滿。
+
+            alt 是機構名而不是「後台」：整塊是一個 <Link>，讀屏會把 alt 與旁邊
+            的文字串起來唸成「國立臺灣大學農業經濟學系 網站管理後台」。
+          */}
+          <Link href="/admin" className="flex items-center gap-3">
+            <img
+              src="/brand/agec_mark.svg"
+              alt="國立臺灣大學農業經濟學系"
+              className="h-[34px] w-auto shrink-0"
+            />
+            <span
+              className="text-[15px] font-bold leading-tight"
+              style={{ color: "var(--brand-green)" }}
             >
-              NTU AGEC
-            </p>
-            <p className="text-[15px] font-bold" style={{ color: "var(--brand-green)" }}>
               網站管理後台
-            </p>
+            </span>
           </Link>
         </div>
 

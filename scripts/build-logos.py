@@ -85,6 +85,11 @@ ENGLISH_STRAPLINE_PATHS = 37
 CHINESE_ONLY_PAGE = 4
 CHINESE_ONLY_PATHS = 15  # 2 金 + 1 綠 + 12 個中文字，沒有 AGEC 也沒有英文
 
+# 標誌本身的路徑數：2 條金（山峰）+ 1 條綠（道路條紋）。
+# 斷言的用意與 ENGLISH_STRAPLINE_PATHS 相同 —— 母檔改版時要吵，不要靜默產出
+# 一個少了半座山的標記檔。
+MARK_PATHS = 3
+
 
 def run(*args: str) -> None:
     result = subprocess.run(args, capture_output=True, text=True)
@@ -173,6 +178,30 @@ def bottom_align_type(svg: str, overhang_ratio: float) -> tuple[str, float]:
         body = body.replace(path, "", 1)
     group = f'<g transform="translate(0 {dy:.3f})">\n' + "\n".join(type_) + "\n</g>"
     return body.replace("</svg>", group + "\n</svg>"), dy
+
+
+def build_mark(svg: str) -> str:
+    """
+    只有標誌、沒有任何文字的版本。
+
+    後台側欄只有 184px 寬（`lg:w-56` 減掉 `px-5`），完整橫式 lockup 是 2.29:1，
+    撐滿就是 80px 高 —— 在一條常駐工具欄上太重，而且側欄在 lg 以下會變成橫向
+    頂列，那個高度會直接吃掉手機視窗。所以需要一個接近正方的標記。
+
+    標誌的 bbox 是 100.35 × 91.43pt（約 1.10:1），本來就適合當方形標記。
+
+    ⚠️ 不要拿 `agec_loader.svg` 充當這個檔：那是旋轉的載入動畫，不是標誌。
+    """
+    mark, type_ = split_mark_and_type(svg)
+    if len(mark) != MARK_PATHS:
+        raise SystemExit(
+            f"預期標誌是 {MARK_PATHS} 條路徑（2 金 + 1 綠），實際 {len(mark)} 條。"
+            "母檔可能改過了 —— 先確認再改 MARK_PATHS。"
+        )
+    body = svg
+    for path in type_:
+        body = body.replace(path, "", 1)
+    return body
 
 
 def trim(svg: str, pad: float = 2.0) -> str:
@@ -354,6 +383,16 @@ def main() -> int:
             path = f"{OUT}/{name}{suffix}.svg"
             open(path, "w", encoding="utf-8").write(svg)
             built.append((os.path.basename(path), len(svg)))
+
+    # 只有標誌的方形版本，給後台側欄用（見 build_mark 的說明）。
+    # 只產淺底版：後台每一個表面都是白底或 #f6f7f8。
+    mark_svg = label(
+        trim(recolour(build_mark(p1), False)),
+        "標誌（無文字，識別母檔 p1），後台側欄與小尺寸場合用",
+    )
+    mark_path = f"{OUT}/agec_mark.svg"
+    open(mark_path, "w", encoding="utf-8").write(mark_svg)
+    built.append((os.path.basename(mark_path), len(mark_svg)))
 
     template = open(f"{OUT}/agec_logo_motion.svg", encoding="utf-8").read()
     for name, svg in (
