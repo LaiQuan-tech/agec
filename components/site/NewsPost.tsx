@@ -77,10 +77,10 @@ function dropCoverImage(html: string, coverUrl: string | null): string {
  * the arrow at the end of each row jumped to the top of the document. This
  * exists because the client asked for the arrow to open the item.
  *
- * Shares `.post-*` from site-extensions.css with /blog rather than getting its
- * own styles: the two pages are the same shape (breadcrumb, date + category,
- * title, standfirst, cover, body, back link), and one prose stylesheet is one
- * place to keep in step with the editor's sanitiser allowlist.
+ * Shares `.post-*` from site-extensions.css with /alumni/events/[slug] rather
+ * than getting its own styles: the two pages are the same shape (breadcrumb,
+ * date + category, title, standfirst, cover, body, back link), and one prose
+ * stylesheet is one place to keep in step with the sanitiser allowlist.
  */
 export function NewsPost({ lang, item }: { lang: Lang; item: NewsItem }) {
   const t = translate(NEWS, lang);

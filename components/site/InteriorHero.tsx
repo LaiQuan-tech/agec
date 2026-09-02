@@ -23,7 +23,7 @@ export type InteriorHeroProps = {
    * "NN" half of the route number; the "/ 08" denominator is added here.
    *
    * Omit it for a page that is not one of the eight routes in lib/nav.ts —
-   * /blog is the only one today. `.interior-title-row` is
+   * `.interior-title-row` is
    * `justify-content: space-between`, so dropping the second child simply
    * leaves the title block left-aligned rather than breaking the row.
    */

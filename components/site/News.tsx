@@ -182,14 +182,12 @@ export function News({
                 on 21 of the 22 pages.
 
                 Invisible until this table held more than one page of news.
-                Blog.tsx:64-71 already carries the mirror image of this fix (one
-                post, feature but no list) with the same reasoning, and
                 `#section-2` below drops the wrapper for the same reason.
 
                 Fixed here rather than in CSS with `:has(> :only-child)`:
                 site.css is frozen so the rule would have to live in
-                site-extensions.css, where it would silently reach /blog too —
-                and the condition is already known at render time. */}
+                site-extensions.css, where it would reach every other user of
+                the class — and the condition is already known at render time. */}
             <div className={feature ? "inner-news-layout" : undefined}>
               {feature ? (
                 <article className="inner-news-feature">
@@ -248,7 +246,7 @@ export function News({
                 現在只剩篩選後的返回連結，所以整個 <p> 也只在有篩選時才渲染 ——
                 留一個空的 <p> 會在列表與分頁之間多出 40px 的空白。 */}
             {filtered ? (
-              <p className="news-to-blog">
+              <p className="news-list-action">
                 <Link className="text-action" href={newsPath(1, lang)}>
                   {t.categoryBackToAll}
                 </Link>
@@ -285,7 +283,7 @@ export function News({
                   stacked under the announcements. It is a preview now, and this
                   is the way to the rest. Rendered only when there is a rest. */}
               {talkCount > talks.length ? (
-                <p className="news-to-blog">
+                <p className="news-list-action">
                   <Link className="text-action" href={localizePath("/news/talks", lang)}>
                     {t.talksAll.replace("{n}", String(talkCount))} <span>→</span>
                   </Link>

@@ -95,7 +95,7 @@ export default async function EditNewsPage({
   // has a page of its own. /en is the half nobody on staff would otherwise
   // open — which is exactly the half where a missing translation shows.
   //
-  // Unconditional, unlike the blog's pair: `news` has no `status` column and no
+  // Unconditional: every published row is already on the public site and
   // future-dated publishing, so there is no draft state that would make
   // /news/[id] 404 and nothing for an isPostLive()-style guard to test. The id
   // is a bigint from the database and needs no escaping.
@@ -110,7 +110,7 @@ export default async function EditNewsPage({
         <span className="flex flex-wrap items-baseline gap-3">
           {/* A draft 404s on the public site, so offering the link would send
               the office to an error page and leave them wondering what they
-              broke. Same rule the blog's editor follows with isPostLive(). */}
+              broke. */}
           {data.status === "published" ? (
             <>
               <Link

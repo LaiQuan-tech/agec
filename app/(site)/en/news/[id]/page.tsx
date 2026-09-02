@@ -19,8 +19,7 @@ export async function generateMetadata({
   const { id } = await params;
   const item = /^\d+$/.test(id) ? await getNewsById(Number(id), "en") : null;
   if (!item) notFound();
-  // Shared with /blog: a news item has the same three things a post does —
-  // a title, a standfirst and an optional cover.
+  // 與 /alumni/events/[slug] 共用：三樣東西完全相同 —— 標題、前言、封面。
   return articleMetadata(`/news/${id}`, "en", {
     title: item.title,
     excerpt: item.body,

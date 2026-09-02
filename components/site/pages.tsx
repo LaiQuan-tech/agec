@@ -14,8 +14,6 @@ import {
   getTalksPage,
   countTalks,
   TALKS_PREVIEW_SIZE,
-  getPostBySlug,
-  getPosts,
   getPrograms,
 } from "@/lib/data";
 import type { Lang } from "@/lib/i18n";
@@ -30,8 +28,6 @@ import { Admissions } from "./Admissions";
 import { Courses } from "./Courses";
 import { Students } from "./Students";
 import { Alumni } from "./Alumni";
-import { Blog } from "./Blog";
-import { BlogPost } from "./BlogPost";
 
 /**
  * One renderer per public route, parameterised by language.
@@ -243,29 +239,3 @@ export async function AlumniRoute({ lang }: { lang: Lang }) {
   return <Alumni lang={lang} events={events} />;
 }
 
-export async function BlogRoute({ lang }: { lang: Lang }) {
-  const posts = await getPosts(lang);
-
-  return <Blog lang={lang} posts={posts} />;
-}
-
-/**
- * One post, or a 404.
- *
- * `getPostBySlug` returns null for a draft and for a post whose `published_at`
- * is still in the future as well as for an unknown slug — all three must look
- * identical from outside, otherwise the 404-vs-200 difference tells anyone who
- * guesses a slug that an unpublished post exists under it.
- */
-export async function BlogPostRoute({
-  lang,
-  slug,
-}: {
-  lang: Lang;
-  slug: string;
-}) {
-  const post = await getPostBySlug(slug, lang);
-  if (!post) notFound();
-
-  return <BlogPost lang={lang} post={post} />;
-}

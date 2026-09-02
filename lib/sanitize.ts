@@ -5,11 +5,10 @@ import sanitizeHtml from "sanitize-html";
  * or renders it.
  *
  * It lives here — a plain module, not beside either consumer — because it has
- * three of them and they are in different trees:
+ * two of them and they are in different trees:
  *
- *   app/(admin)/admin/posts/actions.ts   on save
  *   app/(admin)/admin/news/actions.ts    on save
- *   components/site/BlogPost / NewsPost  on render
+ *   components/site/NewsPost.tsx         on render
  *
  * It cannot live in either actions.ts: those are `"use server"` files, which
  * may only export async functions, so the constant would have to be duplicated

@@ -154,14 +154,16 @@
   transform: scaleX(1);
 }
 
-/* /news → /blog. `.text-action` supplies the type; this only positions it in
-   the gap between the list and the decorative pagination row. */
-.news-to-blog {
+/* `.text-action` 的定位（列表與分頁之間的空隙）。由 /news 的「返回全部消息」
+   與演講封存的「查看全部 N 場演講」共用。
+   （原名 .news-to-blog —— 它最早是通往 /blog 的那條連結；/blog 收掉之後名稱
+   已經名不副實，一併改成 .news-list-action。）*/
+.news-list-action {
   margin: 40px 0 0;
 }
 
 /* ---------------------------------------------------------------------------
- * 單篇文章 — /blog/[slug]
+ * 單篇文章 — /news/[id] 與 /alumni/events/[slug]
  *
  * The only page on the site with no `.interior-hero`, and the only one that
  * injects stored markup. Both facts drive everything here.

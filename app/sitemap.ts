@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { LANGS, localizePath } from "@/lib/i18n";
-import { getNewsIds, getNewsYears, getPostSlugs } from "@/lib/data";
+import { getNewsIds, getNewsYears } from "@/lib/data";
 import { NEWS_CATEGORIES } from "@/lib/news-categories";
 import { SITE_ORIGIN } from "@/lib/site-routes";
 
@@ -13,7 +13,6 @@ const ROUTES = [
   "/courses",
   "/students",
   "/alumni",
-  "/blog",
   // 演講公告 are excluded from /news's paginated list, so without this entry
   // the archive's first page would be reachable only from a link inside the
   // talks block. Its own pages 2..n stay out for the same reason /news/page/N
@@ -26,7 +25,7 @@ const ROUTES = [
 
 /**
  * Both language versions of every public route — the eight in lib/nav.ts, plus
- * /blog, plus one entry per published post and per news item — each carrying
+ * one entry per news item — each carrying
  * the `alternates.languages` block so a crawler that finds one version knows
  * the other exists. /admin and /login are omitted deliberately.
  *
@@ -34,20 +33,12 @@ const ROUTES = [
  * purpose: they hold no content of their own, and every item on them already
  * has its own entry here.
  *
- * Async because the post list comes from the database. Drafts and scheduled
- * posts are excluded by getPostSlugs, so this never advertises a URL that
- * would 404.
+ * Async because the item list comes from the database. Drafts are excluded by
+ * getNewsIds, so this never advertises a URL that would 404.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [slugs, newsIds, years] = await Promise.all([
-    getPostSlugs(),
-    getNewsIds(),
-    getNewsYears(),
-  ]);
-  const articles = [
-    ...slugs.map((slug) => `/blog/${slug}`),
-    ...newsIds.map((id) => `/news/${id}`),
-  ];
+  const [newsIds, years] = await Promise.all([getNewsIds(), getNewsYears()]);
+  const articles = newsIds.map((id) => `/news/${id}`);
 
   /*
    * 年份頁。這些是真正的封存索引 —— 十一年的消息，年份是讀者實際會用來找東西

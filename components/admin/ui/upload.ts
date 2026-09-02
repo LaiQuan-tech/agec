@@ -6,7 +6,7 @@
  */
 
 /** Which store a file goes to. Mirrors BUCKETS in the route handler. */
-export type UploadBucket = "posters" | "photos" | "blog" | "attachments";
+export type UploadBucket = "posters" | "photos" | "attachments";
 
 export type UploadedFile = {
   url: string;

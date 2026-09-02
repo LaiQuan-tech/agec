@@ -163,10 +163,9 @@ export default async function NewsListPage() {
                         </Button>
                       </Link>
                       {/*
-                        Unconditional, unlike the blog's: `news` has no `status`
-                        column and no future-dated publishing, so every row here
-                        is already on the public site and /news/[id] can never
-                        404 on one. Chinese only — the /en twin lives on the edit
+                        Unconditional: `news` has no future-dated publishing,
+                        so every published row is already on the public site.
+                        Chinese only — the /en twin lives on the edit
                         page, where someone is actually translating and has a
                         reason to look at it; two ↗︎ links per row would crowd out
                         the two buttons that do the work.

@@ -143,11 +143,9 @@ function parseContentJson(raw: string, column: string): unknown {
  * body" — while `content_json` still holds a document, and reopening the item
  * would show an editor full of text the site refuses to display.
  *
- * Unlike the blog, this runs on the Chinese body too. `posts.content_html` is
- * NOT NULL and is the only rendering source an article has, so an empty one is
- * stored as the editor produced it; `news.content_html` is nullable because a
- * one-line announcement genuinely has nothing to read, and null is how
- * /news/[id] is told to render the item without a body block.
+ * 中英兩邊的內文都會跑這一關。`news.content_html` 是 nullable —— 一行的短
+ * 公告本來就沒有內文可讀，而 null 正是 /news/[id] 用來決定「不要渲染內文區塊」
+ * 的訊號。存成 Tiptap 吐出來的 `<p></p>` 空殼會讓那一頁多出一塊空白。
  */
 function parseEditorBody(
   form: FormData,
@@ -173,7 +171,7 @@ function parseEditorBody(
  *               and on the single feature card at the top of /news. Both render
  *               it as a text node, so it must not be HTML.
  *   content_html the article body on /news/[id], and only there. Sanitised HTML
- *               from the same Tiptap editor the blog uses. Null is the ordinary
+ *               from the Tiptap editor. Null is the ordinary
  *               case, not a fault: the page says so in words (NEWS.noBody)
  *               rather than ending at the title.
  *   cover_url   shown on every item's own page, and doubles as the feature

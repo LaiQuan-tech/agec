@@ -65,15 +65,6 @@ const ROUTES = {
     title: { zh: "系友專區", en: "Alumni" },
     description: DEFAULT_DESCRIPTION,
   },
-  /**
-   * Not one of the eight routes in lib/nav.ts, on purpose: those eight are the
-   * department's agreed IA and every interior hero prints its position as
-   * "NN / 08". Adding a ninth would renumber all of them. /blog is reached from
-   * the footer and from /news instead.
-   */
-  "/blog": {
-    title: { zh: "專欄文章", en: "Features & Essays" },
-  },
 } satisfies Record<string, RouteMeta>;
 
 export type SiteRoute = keyof typeof ROUTES;
@@ -115,8 +106,8 @@ export function routeMetadata(route: SiteRoute, lang: Lang): Metadata {
 }
 
 /**
- * Metadata for one piece of content at a dynamic route — a blog post
- * (`/blog/<slug>`) or a news item (`/news/<id>`).
+ * Metadata for one piece of content at a dynamic route — a news item
+ * (`/news/<id>`) or a 系友活動 (`/alumni/events/<slug>`).
  *
  * `routeMetadata` above is keyed on the fixed route table, which neither of
  * those has an entry in, hence a sibling that takes the values directly. It
@@ -125,7 +116,7 @@ export function routeMetadata(route: SiteRoute, lang: Lang): Metadata {
  * hreflang pair, and an OpenGraph block.
  *
  * @param route the language-neutral path, leading slash included, e.g.
- *   "/blog/my-post" or "/news/14". `localizePath` adds the /en prefix.
+ *   "/news/14" or "/alumni/events/homecoming-2026"。`localizePath` 會補 /en。
  */
 export function articleMetadata(
   route: string,

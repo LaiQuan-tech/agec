@@ -3,7 +3,6 @@ import { footerColumns } from "./nav";
 import { navHref } from "@/lib/nav";
 import { localizePath, translate, type Lang } from "@/lib/i18n";
 import { COMMON } from "@/lib/i18n/common";
-import { BLOG_TITLE } from "@/lib/i18n/blog";
 import { MaybeLink } from "./MaybeLink";
 
 /**
@@ -85,23 +84,20 @@ export function SiteFooter({ lang }: { lang: Lang }) {
           </p>
         </div>
         {/* Exactly two <div>s: site.css addresses them as `.footer-links div`
-            and the pair is the column grid. /blog is appended inside the second
-            one rather than becoming a third column — and it is appended here
-            rather than added to lib/nav.ts, because that list also drives the
-            "NN / 08" route number on every interior hero. */}
+            and the pair is the column grid.
+
+            這裡原本還會在第二欄末尾補一條 /blog，那是因為 /blog 不在
+            lib/nav.ts 的八條路線裡（加第九條會讓每個內頁的「NN / 08」全部
+            重編號），所以它只能從頁尾與 /news 進去。/blog 整個收掉之後，
+            這兩欄就單純是 lib/nav.ts 的八條路線。 */}
         <div className="footer-links" id="sitemap">
-          {footerColumns(lang).map((column, i, all) => (
+          {footerColumns(lang).map((column, i) => (
             <div key={i}>
               {column.map((item) => (
                 <Link key={item.href} href={navHref(item.href, lang)}>
                   {item.label}
                 </Link>
               ))}
-              {i === all.length - 1 ? (
-                <Link href={localizePath("/blog", lang)}>
-                  {BLOG_TITLE[lang]}
-                </Link>
-              ) : null}
             </div>
           ))}
         </div>

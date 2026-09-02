@@ -183,7 +183,9 @@ export function Editor({
       if (!editor) return;
       setUploading(true);
       try {
-        const { url } = await uploadFile(file, "blog");
+        // posters：消息的圖片桶。這個編輯器原本住在部落格區、傳到 blog 桶，
+        // 部落格收掉之後它唯一的使用者是最新消息，桶子也跟著換過來。
+        const { url } = await uploadFile(file, "posters");
         // alt is left empty rather than filled with the filename: a decorative
         // image wants an empty alt, and "poster-web.jpg" read aloud is worse
         // than silence. The author can add a real one.

@@ -23,7 +23,7 @@ import { TalkList } from "./TalkList";
  * The old site arranged them the same way — its 演講公告 list is thirteen pages
  * of its own — so this is the source's own IA rather than a new invention.
  *
- * Deliberately absent from lib/nav.ts, for the same reason /blog is: those
+ * Deliberately absent from lib/nav.ts: those
  * eight routes drive the "NN / 08" counter in every interior hero, and a ninth
  * would renumber the whole site. Readers arrive from the block on /news.
  * `InteriorHero.routeNo` is optional for exactly this case.
@@ -59,7 +59,7 @@ export function Talks({ lang, talksPage }: { lang: Lang; talksPage: NewsPage }) 
             />
             <TalkList lang={lang} talks={items} />
 
-            <p className="news-to-blog">
+            <p className="news-list-action">
               <Link className="text-action" href={localizePath("/news", lang)}>
                 {t.talksBackToNews}
               </Link>

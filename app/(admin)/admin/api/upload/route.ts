@@ -91,7 +91,6 @@ const FILE_TYPES: Record<string, string> = {
 const BUCKETS = {
   posters: { types: IMAGE_TYPES, limit: 10 * 1024 * 1024 },
   photos: { types: IMAGE_TYPES, limit: 10 * 1024 * 1024 },
-  blog: { types: IMAGE_TYPES, limit: 10 * 1024 * 1024 },
   attachments: { types: FILE_TYPES, limit: 50 * 1024 * 1024 },
 } as const;
 

@@ -17,7 +17,7 @@ import { formatEventRange, formatEventTime } from "./format";
 /**
  * 單一系友活動 (/alumni/events/[slug]).
  *
- * 沿用 /blog 與 /news/[id] 的 `.post-*` 版型而不是自己另做一套：形狀完全相同
+ * 沿用 /news/[id] 的 `.post-*` 版型而不是自己另做一套：形狀完全相同
  * （麵包屑、日期、標題、前言、封面、內文、返回），而且那一套已經有 760px 的
  * 閱讀寬度與圖片不放大的規則。只有報名表單與活動資訊是新的樣式。
  *

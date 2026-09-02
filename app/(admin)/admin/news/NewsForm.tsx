@@ -9,14 +9,12 @@ import { UploadField } from "@/components/admin/ui/UploadField";
 import { AttachmentsField } from "@/components/admin/ui/AttachmentsField";
 import type { NewsAttachment } from "@/lib/data";
 /**
- * The blog's editor, used as-is rather than copied.
+ * The shared Tiptap editor.
  *
- * Editor.tsx holds no blog-specific anything: it was parameterised (htmlName /
- * jsonName / ariaLabel / lang) precisely so one form could mount it twice, and
- * mounting it in a second form costs nothing more. Copying it would fork ~270
- * lines whose trickiest part — writeField()'s prototype-setter write, which is
- * the only reason FormShell's unsaved-changes guard notices someone typing in
- * the editor — would then have to be fixed twice.
+ * 它原本住在部落格區（`admin/posts/Editor.tsx`），因為那裡是它的第一個使用者；
+ * 部落格收掉時搬到 `components/admin/ui/`，也就是其他後台 UI 元件的所在地。
+ * 它本來就沒有任何跟部落格綁定的東西 —— 參數化（htmlName / jsonName /
+ * ariaLabel / lang）正是為了讓一份表單掛兩次，所以搬家只是換 import 路徑。
  *
  * It is also half of the sanitiser contract: its StarterKit config (h2–h4 only,
  * underline off) is the client-side twin of SANITIZE_OPTIONS in actions.ts, and
@@ -26,7 +24,7 @@ import type { NewsAttachment } from "@/lib/data";
  * Reaching across into ../posts is the cost. See the note on the shared
  * hasEditorContent() in ./constants for where both of these belong instead.
  */
-import { Editor } from "../posts/Editor";
+import { Editor } from "@/components/admin/ui/Editor";
 import { NEWS_CATEGORIES } from "./constants";
 
 export type NewsFormValues = {

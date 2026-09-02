@@ -29,7 +29,6 @@ const AFFECTED_ROUTES = {
   // is the failure this file exists to prevent: the office saves a link, the
   // page keeps serving its ISR copy, and they save again.
   links: ["/students", "/courses", "/admissions", "/alumni"],
-  posts: ["/blog"],
   // 系友活動：列表在 /alumni，詳情頁在下面用動態路徑一併處理。
   events: ["/alumni"],
 } as const;
@@ -84,7 +83,7 @@ export function revalidateFor(entity: RevalidateEntity, ...slugs: (string | null
 
   if (entity === "events") {
     // 活動詳情頁。slugs 帶舊值與新值兩個 —— 改了 slug 而只重新驗證新的，
-    // 舊網址會繼續供應快取內容（與 posts 同樣的處理）。
+    // 舊網址會繼續供應快取內容。
     revalidatePath("/alumni/events/[slug]", "page");
     revalidatePath(`${EN_PREFIX}/alumni/events/[slug]`, "page");
     for (const slug of slugs) {
@@ -93,14 +92,4 @@ export function revalidateFor(entity: RevalidateEntity, ...slugs: (string | null
     }
   }
 
-  if (entity === "posts") {
-    // A path containing a dynamic segment needs the type argument, and the two
-    // language trees are separate route entries.
-    revalidatePath("/blog/[slug]", "page");
-    revalidatePath(`${EN_PREFIX}/blog/[slug]`, "page");
-    for (const slug of slugs) {
-      if (!slug) continue;
-      for (const path of bothLanguages(`/blog/${slug}`)) revalidatePath(path);
-    }
-  }
 }
