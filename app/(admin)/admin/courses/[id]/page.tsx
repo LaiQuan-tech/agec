@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { requireAdminOrRedirect } from "@/lib/admin/auth";
 import { CourseForm } from "../CourseForm";
 import { updateCourse } from "../actions";
+import { loadProgramNames } from "../programs";
 
 export const metadata: Metadata = { title: "編輯課程" };
 export const dynamic = "force-dynamic";
@@ -28,6 +29,7 @@ export default async function EditCoursePage({
   searchParams: Promise<{ created?: string }>;
 }) {
   const { supabase } = await requireAdminOrRedirect();
+  const programs = await loadProgramNames(supabase);
   const { id } = await params;
   const { created } = await searchParams;
 
@@ -68,6 +70,7 @@ export default async function EditCoursePage({
       <CourseForm
         action={updateCourse}
         submitLabel="儲存變更"
+        programs={programs}
         initial={{
           id: data.id,
           code: data.code,

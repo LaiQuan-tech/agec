@@ -11,9 +11,18 @@
  * Lives outside actions.ts because a `"use server"` file may only export async
  * functions; exporting these arrays from there is a build error.
  */
-// 國際專班 is deliberately absent: it was removed from the programs table in the
-// 2026 IA revision, so a course filed under it would render a tab on /courses
-// that no longer corresponds to a degree program.
+/**
+ * 學制清單的**備援**，不是主要來源。
+ *
+ * 主要來源是 `programs` 資料表 —— 課程表單的下拉現在讀它（見 loadProgramNames），
+ * 因為 `courses.program` 與 `programs.name` 是做文字比對的，寫死一份就會與系辦
+ * 在「招生學制」頁面實際維護的資料漂移。
+ *
+ * 這一份只在那次查詢失敗時用，讓表單不至於變成一個只有「其他」的空選單。
+ *
+ * 國際專班 deliberately absent: it was removed from the programs table in the
+ * 2026 IA revision.
+ */
 export const COURSE_PROGRAMS = [
   "大學部",
   "碩士班",

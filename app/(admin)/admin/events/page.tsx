@@ -5,6 +5,7 @@ import { loadEventList } from "@/lib/admin/events";
 import { Button } from "@/components/admin/ui/Button";
 import { EmptyState, Table, TBody, TD, TH, THead, TR } from "@/components/admin/ui/Table";
 import { EVENT_STATUS_SHORT, toEventStatus } from "./constants";
+import { EnBadge, enProgress } from "../_components/EnBadge";
 
 export const metadata: Metadata = { title: "系友活動" };
 export const dynamic = "force-dynamic";
@@ -74,6 +75,7 @@ export default async function EventsListPage() {
             <TH>活動名稱</TH>
             <TH className="w-[90px]">狀態</TH>
             <TH className="w-[130px]">報名</TH>
+            <TH className="w-[80px]">英文</TH>
             <TH className="w-[210px]">操作</TH>
           </THead>
           <TBody>
@@ -115,6 +117,11 @@ export default async function EventsListPage() {
                         ⚠
                       </span>
                     )}
+                  </TD>
+                  <TD>
+                    {/* 與最新消息、系所成員等列表同一個裝置：一眼看出哪幾場的
+                        英文還沒翻。系友活動原本是唯一沒有這一欄的實體。 */}
+                    <EnBadge {...enProgress(row.enPairs)} />
                   </TD>
                   <TD>
                     <div className="flex items-center gap-1">

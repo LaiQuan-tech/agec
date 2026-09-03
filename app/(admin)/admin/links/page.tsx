@@ -5,7 +5,7 @@ import { Button } from "@/components/admin/ui/Button";
 import { EmptyState, Table, TBody, TD, TH, THead, TR } from "@/components/admin/ui/Table";
 import { DeleteButton } from "@/components/admin/ui/DeleteButton";
 import { EnBadge, enProgress } from "../_components/EnBadge";
-import { isEditableSection, sectionLabel } from "./constants";
+import { isEditableSection, sectionLabel, sectionPath } from "./constants";
 import { deleteLink } from "./actions";
 
 export const metadata: Metadata = { title: "連結卡片" };
@@ -82,7 +82,7 @@ export default async function LinksListPage() {
             <TH>卡片文字</TH>
             <TH>連結</TH>
             <TH className="w-[80px]">英文</TH>
-            <TH className="w-[130px]">操作</TH>
+            <TH className="w-[200px]">操作</TH>
           </THead>
           <TBody>
             {rows.map((row) => {
@@ -133,6 +133,20 @@ export default async function LinksListPage() {
                           編輯
                         </Button>
                       </Link>
+                      {/*
+                        連到這張卡片實際出現的那一頁。
+                        `sectionPath()` 從一開始就寫好了，但沒有任何地方呼叫它 ——
+                        所以連結卡片是唯一一個「改完之後沒有辦法一鍵去看結果」
+                        的實體。未使用的 section（journal）回 null，那一列就不
+                        顯示這顆按鈕。
+                      */}
+                      {sectionPath(row.section) && (
+                        <Link href={sectionPath(row.section)!} target="_blank">
+                          <Button variant="ghost" size="sm" title="在新分頁開啟這張卡片所在的前台頁面">
+                            前台 ↗︎
+                          </Button>
+                        </Link>
+                      )}
                       <DeleteButton action={deleteLink} id={row.id} itemLabel={row.label} />
                     </div>
                   </TD>

@@ -1,5 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server";
 import type { AlumniEvent } from "@/lib/alumni-events";
+import { TALKS_CATEGORY } from "@/lib/news-categories";
 import { pick, pickNullable, type Lang } from "@/lib/i18n";
 
 /**
@@ -246,7 +247,7 @@ type LinkRow = LinkItem & { label_en: string | null };
  * instead of the main list. Chinese: `category` is never translated (it is the
  * grouping key), see NewsItem.category_zh.
  */
-export const TALKS_CATEGORY = "演講公告";
+export { TALKS_CATEGORY } from "@/lib/news-categories";
 
 const NEWS_COLUMNS =
   "id, published_at, category, title, body, content_html, cover_url, is_pinned, attachments, speaker, venue, event_at, title_en, body_en, category_en, content_html_en, speaker_en, venue_en";

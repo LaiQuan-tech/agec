@@ -32,6 +32,8 @@ export type EventListRow = {
   registrationCount: number;
   /** 由報名紀錄推導的總人數（含攜伴）。 */
   headcount: number;
+  /** 翻譯進度徽章用的中英欄位配對。 */
+  enPairs: ReadonlyArray<readonly [string | null, string | null]>;
 };
 
 export type RegistrationRow = {
@@ -49,8 +51,11 @@ export type RegistrationRow = {
   createdAt: string;
 };
 
+// ⚠️ 英文欄位是給列表的翻譯進度徽章用的（與最新消息、系所成員等列表一致）。
+// 少了它們，系友活動就是唯一一個看不出「翻到哪了」的實體。
 const EVENT_COLUMNS =
-  "id, slug, title, starts_at, ends_at, location, capacity, seats_taken, status";
+  "id, slug, title, title_en, summary, summary_en, body, body_en, " +
+  "location, location_en, starts_at, ends_at, capacity, seats_taken, status";
 const REGISTRATION_COLUMNS =
   "id, code, name, email, phone, grad_year, program, guests, dietary, note, status, created_at";
 
@@ -108,9 +113,15 @@ export async function loadEventList(
         id: number;
         slug: string;
         title: string;
+        title_en: string | null;
+        summary: string | null;
+        summary_en: string | null;
+        body: string | null;
+        body_en: string | null;
+        location: string | null;
+        location_en: string | null;
         starts_at: string;
         ends_at: string | null;
-        location: string | null;
         capacity: number | null;
         seats_taken: number;
         status: string;
@@ -145,6 +156,12 @@ export async function loadEventList(
         status: e.status,
         registrationCount: c.registrations,
         headcount: c.headcount,
+        enPairs: [
+          [e.title, e.title_en],
+          [e.summary, e.summary_en],
+          [e.body, e.body_en],
+          [e.location, e.location_en],
+        ],
       };
     }),
     error: "",

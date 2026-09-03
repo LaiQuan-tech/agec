@@ -53,6 +53,65 @@ export const NEWS_CATEGORIES: NewsCategory[] = [
  */
 export const TALKS_SLUG = "talks";
 
+/**
+ * 演講公告的 `news.category` 值。
+ *
+ * ⚠️ 住在這裡而不是 lib/data.ts，是因為後台的表單（Client Component）需要它，
+ * 而 lib/data.ts 會 import service-role 的 supabase client —— 從 client 元件
+ * import 它的執行期值，等於把那支 client 拉進瀏覽器 bundle 的相依圖。
+ * 這個檔只 import lib/i18n，從哪裡 import 都安全。
+ *
+ * lib/data.ts 改成從這裡 re-export，所以字串只有一份。
+ */
+export const TALKS_CATEGORY = "演講公告";
+
+/**
+ * 後台分類下拉要提供的完整清單。
+ *
+ * 🔴 從上面的對照表推導，不另外維護一份。
+ *
+ * 之前後台自己有一份寫死的七個值，比公開站多了「活動」與「榮譽」—— 那兩個
+ * 選了之後：前台沒有籤、沒有分類頁、沒有英文標籤，只會出現在「全部消息」裡，
+ * 而且再也篩不出來。下拉選單不該提供一個會把資料送進死路的選項。
+ *
+ * 要新增分類就得改這個檔（slug）＋ NEWS_FILTER_TABS（籤的標籤）＋
+ * NEWS_CATEGORY_PAGES（分類頁文案）三處 —— 那正是它不能是自由文字的原因。
+ *
+ * 順序是給人用的：最常發的排前面。
+ */
+export const NEWS_CATEGORY_CHOICES: readonly string[] = [
+  "最新公告",
+  TALKS_CATEGORY,
+  "招生",
+  "求職徵才",
+  "活動剪影",
+];
+
+/**
+ * 中文分類 → 英文分類。
+ *
+ * 🔴 讓後台在 `category_en` 留空時自動帶入，而不是要求系辦每次手打。
+ *
+ * 這一欄漏填的後果是靜默的：`pick()` 在英文為空時會退回中文，所以英文站的
+ * 那一列會出現一個中文分類，沒有任何錯誤、也不會有人注意到。而中文分類現在
+ * 是封閉列舉，英文完全是可推導的 —— 要求人重打一次只是在製造漏填的機會。
+ *
+ * ⚠️ 這裡的英文必須與 NEWS_FILTER_TABS 的 `label.en` 一致，否則列表上的分類
+ * 與篩選籤上的同一個分類會出現兩種寫法。
+ */
+const CATEGORY_EN: Record<string, string> = {
+  最新公告: "Announcements",
+  演講公告: "Talks",
+  招生: "Admissions",
+  求職徵才: "Careers",
+  活動剪影: "Event highlights",
+};
+
+/** 沒有對照時回 null —— 呼叫端就維持原本的值（可能是空的）。 */
+export function categoryEnFor(category: string): string | null {
+  return CATEGORY_EN[category] ?? null;
+}
+
 export function categoryForSlug(slug: string): string | null {
   if (slug === TALKS_SLUG) return null;
   return NEWS_CATEGORIES.find((c) => c.slug === slug)?.category ?? null;

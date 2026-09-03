@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import { requireAdminOrRedirect } from "@/lib/admin/auth";
 import { CourseForm } from "../CourseForm";
 import { createCourse } from "../actions";
+import { loadProgramNames } from "../programs";
 
 export const metadata: Metadata = { title: "新增課程" };
 export const dynamic = "force-dynamic";
 
 export default async function NewCoursePage() {
-  await requireAdminOrRedirect();
+  const { supabase } = await requireAdminOrRedirect();
+  const programs = await loadProgramNames(supabase);
 
   return (
     <div className="flex flex-col gap-5">
@@ -18,6 +20,7 @@ export default async function NewCoursePage() {
       <CourseForm
         action={createCourse}
         submitLabel="新增"
+        programs={programs}
         initial={{
           code: "",
           name: "",

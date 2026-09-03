@@ -26,6 +26,7 @@ import type { NewsAttachment } from "@/lib/data";
  */
 import { Editor } from "@/components/admin/ui/Editor";
 import { NEWS_CATEGORIES } from "./constants";
+import { ChoiceField } from "@/components/admin/ui/ChoiceField";
 
 export type NewsFormValues = {
   id?: number;
@@ -129,22 +130,23 @@ export function NewsForm({
               label="分類"
               required
               error={state.fieldErrors?.category}
-              hint="可從清單選，也可以直接打新的分類"
+              hint="要新增分類需要同時準備前台的籤與分類頁，請聯絡開發者。"
             >
-              <Input
+              {/*
+                封閉的列舉，沒有「其他」。
+                分類是比對鍵：它決定這則消息出現在哪個分類頁（見
+                lib/news-categories.ts）。清單以外的值前台沒有籤、沒有分類頁、
+                也沒有英文標籤 —— 選了就是把資料送進只出現在「全部消息」、
+                之後再也篩不出來的死路。既然那個值沒有地方去，就不該提供。
+              */}
+              <ChoiceField
                 id="category"
                 name="category"
-                list="news-categories"
+                options={NEWS_CATEGORIES}
                 defaultValue={initial.category}
                 required
-                maxLength={20}
-                aria-invalid={Boolean(state.fieldErrors?.category)}
+                ariaInvalid={Boolean(state.fieldErrors?.category)}
               />
-              <datalist id="news-categories">
-                {NEWS_CATEGORIES.map((c) => (
-                  <option key={c} value={c} />
-                ))}
-              </datalist>
             </Field>
           </div>
 

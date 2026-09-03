@@ -20,6 +20,7 @@ import {
   text,
 } from "@/lib/admin/validate";
 import type { NewsAttachment } from "@/lib/data";
+import { categoryEnFor } from "@/lib/news-categories";
 import { hasEditorContent } from "./constants";
 
 /** Matches the CHECK constraint on news.status. */
@@ -244,7 +245,12 @@ function parse(form: FormData): { values?: NewsInput; fieldErrors?: Record<strin
       content_json: content.json,
       // See the note on parse() above: null, not "", is what marks an English
       // column as "not translated yet".
-      category_en: categoryEn.value,
+      // 留空時依中文分類自動帶入英文。
+      // 這一欄漏填是靜默的：pick() 會退回中文，於是英文站出現一個中文分類，
+      // 沒有錯誤也沒人會注意到。中文分類現在是封閉列舉（見 lib/news-categories.ts），
+      // 英文完全可推導，要求人重打一次只是在製造漏填的機會。
+      // ⚠️ 有填就尊重原值 —— 系辦想用別的寫法時不該被蓋掉。
+      category_en: categoryEn.value ?? categoryEnFor(category.value!),
       title_en: titleEn.value,
       body_en: bodyEn.value,
       content_html_en: contentEn.html,

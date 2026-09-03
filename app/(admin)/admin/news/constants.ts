@@ -1,20 +1,13 @@
 /**
- * Categories currently in use on the site. Offered as a <datalist> rather than
- * a closed <select> — the column is free text and the office staff will
- * eventually need a category nobody thought of.
+ * 分類下拉的選項。
  *
- * Lives outside actions.ts because a `"use server"` file may only export async
- * functions; exporting this array from there is a build error.
+ * 🔴 直接引用 lib/news-categories.ts 的推導結果，這裡不再自己維護一份。
+ *
+ * 之前這個檔有一份寫死的七個值，比公開站多了「活動」與「榮譽」——選了之後
+ * 前台沒有籤、沒有分類頁、沒有英文標籤，資料等於進了死路。四份清單各自維護
+ * 就是會這樣漂移。
  */
-export const NEWS_CATEGORIES = [
-  "最新公告",
-  "演講公告",
-  "招生",
-  "求職徵才",
-  "活動剪影",
-  "活動",
-  "榮譽",
-] as const;
+export { NEWS_CATEGORY_CHOICES as NEWS_CATEGORIES } from "@/lib/news-categories";
 
 /**
  * 「這個編輯器內文裡有東西嗎？」

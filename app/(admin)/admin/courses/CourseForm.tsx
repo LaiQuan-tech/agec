@@ -5,7 +5,8 @@ import type { ActionState } from "@/lib/admin/action-result";
 import { FormShell } from "@/components/admin/ui/FormShell";
 import { Field } from "@/components/admin/ui/Field";
 import { Input } from "@/components/admin/ui/Input";
-import { COURSE_PROGRAMS, COURSE_TYPES } from "./constants";
+import { COURSE_TYPES } from "./constants";
+import { ChoiceField } from "@/components/admin/ui/ChoiceField";
 
 export type CourseFormValues = {
   id?: number;
@@ -27,10 +28,13 @@ export function CourseForm({
   action,
   initial,
   submitLabel,
+  programs,
 }: {
   action: (prev: ActionState, form: FormData) => Promise<ActionState>;
   initial: CourseFormValues;
   submitLabel: string;
+  /** 「招生學制」頁面上實際存在的學制名稱（中文），依 sort_order。 */
+  programs: readonly string[];
 }) {
   return (
     <FormShell
@@ -96,22 +100,24 @@ export function CourseForm({
               label="學制"
               required
               error={state.fieldErrors?.program}
-              hint="前台的課程分頁就是依這個欄位分的，名稱請與現有課程一致。這一欄固定填中文，英文版頁面顯示的學制名稱是到「招生學制」那一頁的「英文名稱」去取的。"
+              hint="前台的課程分頁依這個欄位分。選項就是「招生學制」那一頁的學制，要新增請先到那裡建立。這一欄固定填中文，英文版顯示的名稱是到那一頁的「英文名稱」去取的。"
             >
-              <Input
+              {/*
+                🔴 選項來自 `programs` 資料表，不是寫死的清單。
+                這一欄與 `programs.name` 做**文字比對**（Courses.tsx 的
+                programRank 與分頁籤都靠它），寫死一份就會與系辦在「招生學制」
+                頁面實際維護的資料漂移 —— 而漂移的表現是「這門課排到最後面、
+                而且不屬於任何一個分頁籤」，沒有任何錯誤訊息。
+              */}
+              <ChoiceField
                 id="program"
                 name="program"
-                list="course-programs"
+                options={programs}
                 defaultValue={initial.program}
+                allowOther
                 required
-                maxLength={30}
-                aria-invalid={Boolean(state.fieldErrors?.program)}
+                ariaInvalid={Boolean(state.fieldErrors?.program)}
               />
-              <datalist id="course-programs">
-                {COURSE_PROGRAMS.map((p) => (
-                  <option key={p} value={p} />
-                ))}
-              </datalist>
             </Field>
 
             <Field
@@ -140,22 +146,19 @@ export function CourseForm({
               label="類型"
               required
               error={state.fieldErrors?.ctype}
-              hint="可從清單選，也可以直接打新的類型"
+              hint="必修或選修。這一欄只是顯示在課表上，不影響分類或排序。"
             >
-              <Input
+              {/* 留「其他」是因為它純顯示：填「群修」之類的值只會照樣印在課表
+                  的那一格，不會讓課程從任何地方消失。 */}
+              <ChoiceField
                 id="ctype"
                 name="ctype"
-                list="course-types"
+                options={COURSE_TYPES}
                 defaultValue={initial.ctype}
+                allowOther
                 required
-                maxLength={20}
-                aria-invalid={Boolean(state.fieldErrors?.ctype)}
+                ariaInvalid={Boolean(state.fieldErrors?.ctype)}
               />
-              <datalist id="course-types">
-                {COURSE_TYPES.map((t) => (
-                  <option key={t} value={t} />
-                ))}
-              </datalist>
             </Field>
           </div>
 

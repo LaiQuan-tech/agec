@@ -6,6 +6,7 @@ import { FormShell } from "@/components/admin/ui/FormShell";
 import { Field } from "@/components/admin/ui/Field";
 import { Input, Textarea } from "@/components/admin/ui/Input";
 import { FACULTY_CATEGORIES } from "./constants";
+import { ChoiceField } from "@/components/admin/ui/ChoiceField";
 
 export type FacultyFormValues = {
   id?: number;
@@ -132,22 +133,23 @@ export function FacultyForm({
               label="分類"
               required
               error={state.fieldErrors?.category}
-              hint="可從清單選，也可以直接打新的分類；前台的篩選按鈕依這個欄位產生"
+              hint="前台的篩選按鈕依這個欄位產生。清單裡這七個各自對應 /faculty 的一個區塊；填別的值會顯示在「專任師資」那一區的卡片裡。"
             >
-              <Input
+              {/*
+                這裡留了「其他」，與消息分類不同：清單外的值在 /faculty 會落到
+                §1 的標準卡（Faculty.tsx 的 `standard` 是「不屬於那四個特殊分類」
+                的補集），也就是會顯示、只是不在專屬區塊。消息分類則是完全沒有
+                去處，所以那邊是封閉的。
+              */}
+              <ChoiceField
                 id="category"
                 name="category"
-                list="faculty-categories"
+                options={FACULTY_CATEGORIES}
                 defaultValue={initial.category}
+                allowOther
                 required
-                maxLength={20}
-                aria-invalid={Boolean(state.fieldErrors?.category)}
+                ariaInvalid={Boolean(state.fieldErrors?.category)}
               />
-              <datalist id="faculty-categories">
-                {FACULTY_CATEGORIES.map((c) => (
-                  <option key={c} value={c} />
-                ))}
-              </datalist>
             </Field>
 
             <Field

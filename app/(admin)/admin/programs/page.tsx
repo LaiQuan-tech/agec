@@ -113,6 +113,13 @@ export default async function ProgramsListPage() {
                           編輯
                         </Button>
                       </Link>
+                      {/* 學制會出現在 /admissions 的學制卡與 /courses 的分頁籤。
+                          改完之後能一鍵去看，與其他列表一致。 */}
+                      <Link href="/admissions" target="_blank">
+                        <Button variant="ghost" size="sm" title="在新分頁開啟招生資訊頁">
+                          前台 ↗︎
+                        </Button>
+                      </Link>
                       <DeleteButton action={deleteProgram} id={row.id} itemLabel={row.name} />
                     </div>
                   </TD>
