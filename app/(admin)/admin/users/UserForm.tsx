@@ -18,35 +18,20 @@ import { ADMIN_ROLES, ROLE_HINT, ROLE_LABEL } from "./constants";
 export function UserForm({
   action,
   submitLabel = "建立帳號",
-  existing = false,
 }: {
   action: (prev: ActionState, form: FormData) => Promise<ActionState>;
   submitLabel?: string;
-  /** true = 加入一個已經存在的 auth 帳號（不建新帳號、不設密碼）。 */
-  existing?: boolean;
 }) {
   return (
     <FormShell action={action} submitLabel={submitLabel}>
       {(state: ActionState) => (
         <>
-          {existing && (
-            <Field
-              htmlFor="existing_user_id"
-              label="帳號編號（UUID）"
-              required
-              error={state.fieldErrors?.existing_user_id}
-              hint="在 Supabase 的 Authentication → Users 裡複製那個人的 User UID。"
-            >
-              <Input id="existing_user_id" name="existing_user_id" required />
-            </Field>
-          )}
-
           <Field
             htmlFor="email"
             label="電子信箱"
             required
             error={state.fieldErrors?.email}
-            hint={existing ? "要與該帳號的信箱一致，這一欄只是給人看的。" : "他之後就用這個信箱登入後台。"}
+            hint="他之後就用這個信箱登入後台。若這個信箱已經有帳號，系統會直接把他加回後台人員。"
           >
             <Input
               id="email"
@@ -58,26 +43,24 @@ export function UserForm({
             />
           </Field>
 
-          {!existing && (
-            <Field
-              htmlFor="password"
-              label="密碼"
+          <Field
+            htmlFor="password"
+            label="密碼"
+            required
+            error={state.fieldErrors?.password}
+            hint="建好之後請自行把密碼交給對方 —— 這個站沒有寄信服務，系統不會通知他。⚠️ 若這個信箱已經有帳號，這一欄會被忽略、他原本的密碼不變；要換請用列表上的「重設密碼」。"
+          >
+            <Input
+              id="password"
+              name="password"
+              type="text"
               required
-              error={state.fieldErrors?.password}
-              hint="建好之後請自行把密碼交給對方。⚠️ 這個站沒有寄信服務，系統不會通知他。"
-            >
-              <Input
-                id="password"
-                name="password"
-                type="text"
-                required
-                /* type="text" 不是 password：管理員是在幫別人設定，需要看得到
-                   自己打了什麼才能正確轉達。遮起來只會讓他打錯而不自知。 */
-                autoComplete="off"
-                aria-invalid={Boolean(state.fieldErrors?.password)}
-              />
-            </Field>
-          )}
+              /* type="text" 不是 password：管理員是在幫別人設定，需要看得到
+                 自己打了什麼才能正確轉達。遮起來只會讓他打錯而不自知。 */
+              autoComplete="off"
+              aria-invalid={Boolean(state.fieldErrors?.password)}
+            />
+          </Field>
 
           <Field
             htmlFor="role"

@@ -32,15 +32,24 @@ import { requireManager } from "@/lib/admin/auth";
 
 export type ProvisionResult =
   | { ok: true; userId: string }
-  | { ok: false; message: string };
+  /** `code` 讓呼叫端能分辨可以自動處理的情況，而不是比對中文訊息字串。 */
+  | { ok: false; message: string; code?: "EMAIL_EXISTS" };
+
+/** 這個 email 已經有 auth 帳號了嗎。⚠️ 判斷寫在這裡一次，不要讓呼叫端各自
+ *  比對英文訊息 —— GoTrue 換一次措辭就會有人漏改。 */
+function isEmailTaken(error: { message?: string; status?: number }): boolean {
+  return /already been registered|already exists|duplicate/i.test(error.message ?? "");
+}
 
 /** GoTrue 的錯誤訊息是英文的，轉成系辦看得懂的話。 */
 function describe(error: { message?: string; status?: number }): string {
   const message = error.message ?? "";
   console.error("[admin/provision] GoTrue 失敗:", error.status, message);
 
-  if (/already been registered|already exists|duplicate/i.test(message)) {
-    return "這個電子信箱已經有帳號了。若他還不是後台人員，請改用「加入現有帳號」。";
+  if (isEmailTaken(error)) {
+    // 呼叫端會自己接手（找出既有帳號、直接加進白名單），所以這句話理論上
+    // 看不到；留著是為了那條路也失敗時有話可說。
+    return "這個電子信箱已經有帳號，而且找不到它的編號。請聯絡開發者。";
   }
   if (/password/i.test(message)) {
     // 這個專案沒有設最短密碼長度（admin 五碼建得起來就是證據），所以會走到
@@ -76,11 +85,55 @@ export async function createAuthUser(
     email_confirm: true,
   });
 
-  if (error) return { ok: false, message: describe(error) };
+  if (error) {
+    return {
+      ok: false,
+      message: describe(error),
+      ...(isEmailTaken(error) ? { code: "EMAIL_EXISTS" as const } : {}),
+    };
+  }
   if (!data.user?.id) {
     return { ok: false, message: "帳號建立後沒有拿到編號，請截圖回報" };
   }
   return { ok: true, userId: data.user.id };
+}
+
+/**
+ * 依 email 找出既有的 auth 帳號。
+ *
+ * 用在「新增人員」撞到『這個信箱已經註冊過』的時候：那個人可能是先前被
+ * 「移除管理權限」（auth 帳號會留著）、也可能自己在前台註冊過（這個 Supabase
+ * 專案的 email 註冊是開著的）。少了這一支，被移除權限的人就再也加不回來 ——
+ * 只能請開發者去 Dashboard 撈 UUID。
+ *
+ * ⚠️ GoTrue 的 admin API **沒有依 email 查詢的端點**（listUsers 只吃 page /
+ * perPage），所以只能翻頁比對。上限訂在 20 頁 × 1000 筆：這個站的帳號是個位數，
+ * 兩萬筆遠超過任何合理情況，而無上限的迴圈遇到異常資料就會變成一個打不完的
+ * 請求。翻完沒找到就回 null，呼叫端會顯示「請聯絡開發者」而不是無聲失敗。
+ */
+export async function findAuthUserByEmail(email: string): Promise<string | null> {
+  await requireManager();
+
+  const supabase = createServerClient();
+  const target = email.trim().toLowerCase();
+  const PER_PAGE = 1000;
+  const MAX_PAGES = 20;
+
+  for (let page = 1; page <= MAX_PAGES; page += 1) {
+    const { data, error } = await supabase.auth.admin.listUsers({
+      page,
+      perPage: PER_PAGE,
+    });
+    if (error) {
+      console.error("[admin/provision] listUsers 失敗:", error.message);
+      return null;
+    }
+    const hit = data.users.find((u) => (u.email ?? "").toLowerCase() === target);
+    if (hit) return hit.id;
+    if (data.users.length < PER_PAGE) return null;
+  }
+  console.error("[admin/provision] 翻過 20 頁仍未找到:", target);
+  return null;
 }
 
 /** 重設某個人的密碼。帳號與白名單都不動。 */

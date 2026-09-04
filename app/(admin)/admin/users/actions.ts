@@ -11,6 +11,7 @@ import { collect, oneOf, text } from "@/lib/admin/validate";
 import {
   createAuthUser,
   deleteAuthUser,
+  findAuthUserByEmail,
   setUserPassword,
 } from "@/lib/admin/provision";
 import { ADMIN_ROLES, toAdminRole } from "./constants";
@@ -82,61 +83,32 @@ export async function createUser(
     });
     if (fieldErrors) return { ok: false, message: "請修正下列欄位", fieldErrors };
 
+    /*
+     * 信箱已經有 auth 帳號時自動接手，而不是要人去 Supabase 撈 UUID。
+     *
+     * 兩種情況會走到這裡：
+     *   1. 這個人先前被「移除管理權限」—— 那個動作刻意保留 auth 帳號，
+     *      所以「加回來」本來就該從這裡走。
+     *   2. 他自己在前台註冊過（這個專案的 email 註冊是開著的）。
+     *
+     * ⚠️ **不動他原本的密碼。** 管理員在表單上打的那組密碼在這條路上會被
+     * 忽略，因為靜默改掉一個既有帳號的密碼是很糟的事：那可能是別人正在用的
+     * 帳號。訊息會明講，需要換密碼請用列表上的「重設密碼」。
+     */
+    let userId: string;
+    let reusedExisting = false;
+
     const created = await createAuthUser(email.value!, password);
-    if (!created.ok) return { ok: false, message: created.message };
-
-    const { error } = await supabase.from("admin_users").insert({
-      user_id: created.userId,
-      email: email.value,
-      role: role.value,
-      note: note.value,
-      created_by: actorId,
-    });
-
-    if (error) {
-      // 補償：把剛建的 auth 帳號收回去，不要留下孤兒。
-      const undo = await deleteAuthUser(created.userId);
-      const suffix = undo.ok
-        ? ""
-        : "（⚠️ 而且剛建立的帳號沒有清乾淨，請聯絡開發者）";
-      return { ok: false, message: toChineseError(error) + suffix };
+    if (created.ok) {
+      userId = created.userId;
+    } else if (created.code === "EMAIL_EXISTS") {
+      const existing = await findAuthUserByEmail(email.value!);
+      if (!existing) return { ok: false, message: created.message };
+      userId = existing;
+      reusedExisting = true;
+    } else {
+      return { ok: false, message: created.message };
     }
-
-    refresh();
-    return { ok: true, message: `已建立 ${email.value}，請把密碼交給對方` };
-  } catch (error) {
-    const authState = toAuthErrorState(error);
-    if (authState) return authState;
-    throw error;
-  }
-}
-
-/**
- * 加入一個已經存在的 auth 帳號。
- *
- * 用得到的情境：對方曾經自己註冊過（這個 Supabase 專案的 email 註冊是開著的），
- * 或是被移除權限之後要加回來 —— 這兩種情況下 GoTrue 已經有那個帳號，再建一次
- * 會撞「已經註冊過」。
- */
-export async function addExistingUser(
-  _prev: ActionState,
-  form: FormData
-): Promise<ActionState> {
-  try {
-    const { supabase, userId: actorId } = await requireManager();
-
-    const userId = String(form.get("existing_user_id") ?? "").trim();
-    const email = parseEmail(form);
-    const role = oneOf(form, "role", "層級", ADMIN_ROLES, { required: true });
-    const note = text(form, "note", "備註", { max: 100 });
-
-    const fieldErrors = collect({
-      existing_user_id: userId ? undefined : "請填寫帳號編號（UUID）",
-      email: email.error,
-      role: role.error,
-      note: note.error,
-    });
-    if (fieldErrors) return { ok: false, message: "請修正下列欄位", fieldErrors };
 
     const { error } = await supabase.from("admin_users").insert({
       user_id: userId,
@@ -145,10 +117,26 @@ export async function addExistingUser(
       note: note.value,
       created_by: actorId,
     });
-    if (error) return { ok: false, message: toChineseError(error) };
+
+    if (error) {
+      // 補償：把剛建的 auth 帳號收回去，不要留下孤兒。
+      // ⚠️ 只在「這次真的建了帳號」時收 —— 沿用既有帳號的情況下刪掉它，
+      //    等於因為一次白名單寫入失敗就毀掉一個別人在用的帳號。
+      let suffix = "";
+      if (!reusedExisting) {
+        const undo = await deleteAuthUser(userId);
+        if (!undo.ok) suffix = "（⚠️ 而且剛建立的帳號沒有清乾淨，請聯絡開發者）";
+      }
+      return { ok: false, message: toChineseError(error) + suffix };
+    }
 
     refresh();
-    return { ok: true, message: `已把 ${email.value} 加入後台人員` };
+    return {
+      ok: true,
+      message: reusedExisting
+        ? `${email.value} 原本就有帳號，已直接加入後台人員。⚠️ 密碼維持他原本的那組，沒有被改掉；需要換請用列表上的「重設密碼」。`
+        : `已建立 ${email.value}，請把密碼交給對方`,
+    };
   } catch (error) {
     const authState = toAuthErrorState(error);
     if (authState) return authState;
@@ -215,8 +203,9 @@ export async function updateRole(form: FormData): Promise<void> {
 /**
  * 移除後台權限（只刪白名單那一列，auth 帳號留著）。
  *
- * 與「刪除帳號」分開是刻意的：這一個是可逆的（用「加入現有帳號」就能加回來，
- * 對方的密碼也還是原本那組），刪帳號不是。停權與離職是兩件事。
+ * 與「刪除帳號」分開是刻意的：這一個是可逆的 —— auth 帳號留著，之後在「新增
+ * 人員」填同一個信箱就會自動加回來（見 createUser 的 EMAIL_EXISTS 分支），
+ * 對方的密碼也還是原本那組。刪帳號不是。停權與離職是兩件事。
  */
 export async function revokeAccess(form: FormData): Promise<void> {
   try {

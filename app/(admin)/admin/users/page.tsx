@@ -3,7 +3,7 @@ import { requireManagerOrRedirect } from "@/lib/admin/auth";
 import { EmptyState, Table, TBody, TD, TH, THead, TR } from "@/components/admin/ui/Table";
 import { UserForm } from "./UserForm";
 import { RowActions } from "./RowActions";
-import { addExistingUser, createUser } from "./actions";
+import { createUser } from "./actions";
 import { ROLE_LABEL, toAdminRole } from "./constants";
 
 export const metadata: Metadata = { title: "人員管理" };
@@ -133,20 +133,10 @@ export default async function UsersPage() {
           新增人員
         </h2>
         <p className="mb-4 text-[13px]" style={{ color: "var(--muted)" }}>
-          建立一個全新的後台帳號。
+          建立一個全新的後台帳號。若這個信箱已經有帳號（例如先前被移除權限），
+          系統會直接把他加回後台人員，密碼維持原本的那組。
         </p>
         <UserForm action={createUser} />
-      </section>
-
-      <section className="max-w-xl">
-        <h2 className="mb-1 text-[16px] font-bold" style={{ color: "var(--brand-green)" }}>
-          加入現有帳號
-        </h2>
-        <p className="mb-4 text-[13px]" style={{ color: "var(--muted)" }}>
-          對方已經有帳號時用這個（例如曾經被移除權限、現在要加回來）。上面的
-          「新增人員」會因為信箱重複而失敗。
-        </p>
-        <UserForm action={addExistingUser} submitLabel="加入後台人員" existing />
       </section>
     </div>
   );
