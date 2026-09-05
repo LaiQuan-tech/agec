@@ -1182,3 +1182,68 @@
     margin-top: 14px;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   手機版的標題字級
+
+   site.css 的 ≤600px 斷點是照參考站抄過來的，那組字級等於把桌機比例直接縮一
+   階，在 390px 寬的手機上仍然過大。實測 iPhone 390px：
+
+     .hero h1                                       55px（3 行，吃掉半個首屏）
+     .interior-title-row h1                         54px
+     .donation-grid h2                              42px
+     .intro / .section-heading-row / .admissions /
+     .campus / .closing / .research-intro h2        39px
+     .inner-section-title h2                        37px
+
+   這裡把這組顯示級字體整體縮到約 0.81 倍，彼此的大小順序不變。只改 font-size：
+   line-height 仍然由 site.css 的 font 簡寫帶著（`.hero h1` 是 1.12、
+   `.inner-section-title h2` 是 1.25），所以行距會跟著字級一起收，不必重寫。
+
+   ⚠️ 一併縮的三個「不是標題」的東西，是為了版面比例不跑掉。`.stat-row strong`
+   （1928／4 那種統計數字）原本 40px，跟 39px 的標題幾乎同大；標題縮到 32px 而
+   它不動，整段最大的字就會變成統計數字。`.honor-grid strong` 與
+   `.section-number`（首頁 01 的裝飾數字，76px 是標題的兩倍）同理。
+
+   ⚠️ `.student-life .inner-section-title h2` 必須單獨列出。site.css 在基準層
+   給了它 `clamp(36px,4vw,60px)`，分數 (0,2,1) 高過 `.inner-section-title h2`
+   的 (0,1,1) —— 只寫後者的話，學生頁的區塊標題不會跟著縮。其餘每一條都與
+   site.css 同分，靠這個檔案載入在後面取勝（見檔首）。
+
+   沒有動的：`.post-head h1`（消息／活動內頁的標題）手機上本來就是 34px，正好
+   是 iOS 大標的尺寸，不在「太大」的那一組；卡片標題（≤26px）與 `.mission-quote`
+   （28px）同理。
+   --------------------------------------------------------------------------- */
+@media (max-width: 600px) {
+  .hero h1 {
+    /* 原 clamp(46px,14.2vw,64px)：390px 上是 55px，320px 上才會觸到 46px 的底。 */
+    font-size: clamp(38px, 11.6vw, 52px);
+  }
+  .interior-title-row h1 {
+    font-size: 44px;
+  }
+  .intro h2,
+  .section-heading-row h2,
+  .admissions h2,
+  .campus h2,
+  .closing h2,
+  .research-intro h2 {
+    font-size: 32px;
+  }
+  .inner-section-title h2,
+  .student-life .inner-section-title h2 {
+    font-size: 30px;
+  }
+  .donation-grid h2 {
+    font-size: 34px;
+  }
+  .section-number {
+    font-size: 56px;
+  }
+  .stat-row strong {
+    font-size: 34px;
+  }
+  .honor-grid strong {
+    font-size: 30px;
+  }
+}
