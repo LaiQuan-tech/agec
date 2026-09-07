@@ -30,10 +30,13 @@ export const COMMON = {
   },
 
   /**
-   * The two utility links, which jump to the footer's `#contact` / `#sitemap`
-   * anchors rather than navigating. Both are hidden below 600px
-   * (`.utility-links a:first-child, .utility-links a:nth-child(2)`), leaving
-   * the language toggle as the bar's only control on mobile.
+   * 機構列的兩條工具連結。`contact` 跳到頁尾的 `#contact`；`sitemap` 現在
+   * 是一整頁（/sitemap），不再是跳到頁尾那兩欄的錨點。
+   *
+   * 兩條在 860px 以下都會被藏起來（`.utility-links a:first-child,
+   * .utility-links a:nth-child(2)`），那個斷點下語言切換是這一列唯一的控制項
+   * —— 同一個斷點開始出現的選單覆蓋層會把這兩條再放一次（SiteHeader 的
+   * `.menu-utility`），否則窄螢幕就到不了網站導覽。
    */
   contact: { zh: "聯絡我們", en: "Contact" },
 

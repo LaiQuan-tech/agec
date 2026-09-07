@@ -1332,3 +1332,125 @@
   margin-top: 40px;
   padding-top: 18px;
 }
+
+/* ---------------------------------------------------------------------------
+ * 網站導覽 — /sitemap
+ *
+ * 版型參考臺大官網的 https://www.ntu.edu.tw/sitemap.html：編號的大區塊、
+ * 底下編號的細項、全部是連結。這裡是兩欄流排（`columns`）而不是格線
+ * (`grid`)：每一組的細項數量不一樣（首頁 6 條、課程 3 條），格線會讓同一列
+ * 的每一格都拉到最高那一格的高度，中間留下大片空白；`columns` 讓下一組直接
+ * 接著上一組排。
+ *
+ * ⚠️ `break-inside: avoid` 是這個做法唯一的成立條件 —— 少了它，一組的標題會
+ * 留在左欄、細項掉到右欄，讀者看到的是兩個殘缺的區塊。
+ *
+ * 這一頁刻意不用 `.post-body`：那是 760px 的閱讀寬度，給一篇文章用的。
+ * ------------------------------------------------------------------------ */
+
+.sitemap-body {
+  margin-top: clamp(36px, 4.5vw, 56px);
+}
+
+.sitemap-groups {
+  columns: 2;
+  column-gap: 64px;
+  margin: 0;
+  padding: 0;
+}
+
+.sitemap-group {
+  break-inside: avoid;
+  border-top: 1px solid var(--line);
+  /* padding 而不是 margin：`columns` 會在欄首吃掉 margin-top，第二欄的第一組
+     就會少掉那條上緣留白，跟左欄對不齊。 */
+  padding: 24px 0 32px;
+}
+
+.sitemap-group h2 {
+  /* Preflight 把 h2 重設成 inherit，所以字級要自己給。 */
+  align-items: baseline;
+  display: flex;
+  font: 600 21px / 1.45 var(--serif);
+  gap: 12px;
+  margin: 0;
+}
+.sitemap-group h2 a {
+  color: var(--ink);
+  transition: color 0.2s;
+}
+.sitemap-group h2 a:hover {
+  color: var(--green);
+}
+
+/* 編號。`aria-hidden` 在 markup 那邊 —— 清單是 <ol>，位置資訊讀屏本來就會念，
+   再念一次 "01" 只是重複。 */
+.sitemap-no {
+  color: var(--green-soft);
+  font: 700 13px / 1 var(--sans);
+  letter-spacing: 0.1em;
+}
+
+.sitemap-children {
+  margin: 16px 0 0;
+  padding: 0;
+}
+.sitemap-children li {
+  align-items: baseline;
+  display: flex;
+  gap: 12px;
+  padding: 5px 0;
+}
+.sitemap-sub-no {
+  color: var(--muted);
+  flex: none;
+  font: 400 12px / 1.8 var(--sans);
+  letter-spacing: 0.06em;
+  /* 固定寬度，讓 01-1 與 01-10 的標籤仍然左對齊成一直行。 */
+  min-width: 3.4em;
+  opacity: 0.75;
+}
+.sitemap-children a {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.8;
+  transition: color 0.2s;
+}
+.sitemap-children a:hover {
+  color: var(--green);
+}
+/* 讀者現在就站在這一頁上（「其他」底下的最後一條）。標出來，否則那條連結
+   看起來像一個他還沒去過的地方。 */
+.sitemap-children a[aria-current="page"] {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+@media (max-width: 860px) {
+  .sitemap-groups {
+    columns: 1;
+  }
+}
+
+/* 選單覆蓋層底部的兩條工具連結（聯絡我們 / 網站導覽）。
+ *
+ * site.css 在 860px 以下把機構列的這兩條藏起來，而 `.menu-button` 正好從同一個
+ * 斷點開始出現 —— 所以覆蓋層是它們在窄螢幕上的唯一入口。顏色跟著
+ * `.menu-grid span` 走（同一片深綠底上的次要文字），分隔線用的是
+ * `.menu-grid a` 的 `#fff3`，讓它讀起來像清單的最後一列而不是另一個區塊。 */
+.menu-utility {
+  border-top: 1px solid #fff3;
+  display: flex;
+  gap: 28px;
+  margin: 30px 0 0;
+  padding-top: 26px;
+}
+.menu-utility a {
+  color: #ffffffb3;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  transition: color 0.2s;
+}
+.menu-utility a:hover {
+  color: #fff;
+}

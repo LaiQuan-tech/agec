@@ -216,16 +216,7 @@ export function Faculty({
         lead={t.lead}
         imageAlt={t.heroImageAlt}
       />
-      <LocalNav
-        lang={lang}
-        label={t.title}
-        items={[
-          { href: "#section-1", label: t.nav.fullTime },
-          { href: "#section-2", label: t.nav.affiliated },
-          { href: "#section-3", label: t.nav.legacy },
-          { href: "#section-4", label: t.nav.administration },
-        ]}
-      />
+      <LocalNav lang={lang} label={t.title} items={[...t.nav.items]} />
       <div className="interior-content">
         <section className="inner-section" id="section-1">
           <div className="container">

@@ -22,12 +22,14 @@ type FacultyDict = {
   title: Msg;
   lead: Msg;
   heroImageAlt: Msg;
-  /** `.local-nav` jump links, one per `#section-N`. */
+  /**
+   * `.local-nav` jump links, one per `#section-N`.
+   *
+   * `{ href, label }` pairs rather than four bare labels — see the same note
+   * on ABOUT.nav. /sitemap lists these anchors too, via lib/sitemap-tree.ts.
+   */
   nav: {
-    fullTime: Msg;
-    affiliated: Msg;
-    legacy: Msg;
-    administration: Msg;
+    items: readonly { href: string; label: Msg }[];
   };
   fullTime: { heading: Msg; description: Msg };
   affiliated: { heading: Msg };
@@ -82,10 +84,15 @@ export const FACULTY = {
   },
 
   nav: {
-    fullTime: { zh: "專任師資", en: "Full-time" },
-    affiliated: { zh: "合聘與兼任", en: "Joint & adjunct" },
-    legacy: { zh: "客座、名譽與退休", en: "Visiting, emeritus & retired" },
-    administration: { zh: "行政同仁", en: "Administration" },
+    items: [
+      { href: "#section-1", label: { zh: "專任師資", en: "Full-time" } },
+      { href: "#section-2", label: { zh: "合聘與兼任", en: "Joint & adjunct" } },
+      {
+        href: "#section-3",
+        label: { zh: "客座、名譽與退休", en: "Visiting, emeritus & retired" },
+      },
+      { href: "#section-4", label: { zh: "行政同仁", en: "Administration" } },
+    ],
   },
 
   fullTime: {

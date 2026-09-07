@@ -83,7 +83,7 @@ VS15 強制走文字字體，是唯一在各家瀏覽器都可靠的做法（CSS
 | `SiteShell` | `.site-loader` + `<main>` + skip link + header + `{children}` + footer。`variant="home" \| "interior"` 決定 `<main>` 的 class |
 | `SiteLoader`（client） | 開場遮罩。等 `window.load`，6 秒硬超時 |
 | `SiteHeader`（client） | `.institution-bar` + `header.site-header` + `.menu-overlay`。含 `.scrolled` 與選單開合＋body 捲動鎖 |
-| `SiteFooter` | `footer#contact`，`#sitemap` 是導覽錨點目標 |
+| `SiteFooter` | `footer#contact`。`#sitemap` 這個 id 還在（外部連結可能已經在用），但站內已經沒有東西指向它 —— 網站導覽現在是 `/sitemap` 一整頁 |
 
 ### 內頁 primitives（你要用的）
 
@@ -98,6 +98,7 @@ VS15 強制走文字字體，是唯一在各家瀏覽器都可靠的做法（CSS
 ### 其他
 
 - `nav.ts` — 由 `lib/nav.ts` 導出 `DESKTOP_NAV`(7) / `MENU_ITEMS`(8) / `FOOTER_COLUMNS`(4+3) / `routeNumber()` / `padNo()` / `ROUTE_TOTAL`
+- `sitemap-tree.ts` + `SitemapPage.tsx` — 網站導覽 `/sitemap`（機構列那條「網站導覽」的去處）。整棵樹從 `lib/nav.ts` 與各頁字典的 `nav.items` 推導，**不要在那裡另外抄一份標籤**：改了某一頁的區塊名，網站導覽會自己跟著改
 - `format.ts` — `formatNewsDate()`，純字串切片避免時區 hydration 不一致
 - `Home.tsx` / `HomeHero.tsx` — 首頁（已完成，可當範例）
 

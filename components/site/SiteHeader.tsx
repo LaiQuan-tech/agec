@@ -75,10 +75,12 @@ export function SiteHeader({ lang }: { lang: Lang }) {
           <span>{t.university}</span>
           <span className="institution-en">{t.college}</span>
           <div className="utility-links">
-            {/* Same-page anchors, not routes: the footer they target is
-                rendered on every page, so these need no /en prefix. */}
+            {/* 聯絡我們仍然是同頁錨點 —— 頁尾在每一頁都在，所以不需要
+                /en 前綴。網站導覽以前也是（跳到頁尾那兩欄），現在是一整頁：
+                按下「網站導覽」的人想知道的是這個站有什麼，不是被送到他剛剛
+                捲過的那一頁的最底下。見 components/site/SitemapPage.tsx。 */}
             <a href="#contact">{t.contact}</a>
-            <a href="#sitemap">{t.sitemap}</a>
+            <Link href={localizePath("/sitemap", lang)}>{t.sitemap}</Link>
             {/* The language toggle. It used to be an outbound link to
                 www.ntu.edu.tw/english/ — a placeholder from the design comp
                 that never switched anything — and is now the real thing.
@@ -250,6 +252,34 @@ export function SiteHeader({ lang }: { lang: Lang }) {
               );
             })}
           </div>
+
+          {/*
+            機構列的兩條工具連結，在這裡再出現一次。
+
+            🔴 不是重複：site.css 在 860px 以下把 `.utility-links a:first-child`
+            與 `:nth-child(2)` 藏起來（那一列只留語言切換），而 `.menu-button`
+            正好從同一個斷點開始出現 —— 所以這個覆蓋層就是它們在窄螢幕上的
+            唯一入口。
+
+            「網站導覽」尤其不能漏。「聯絡我們」只是跳到頁尾，捲下去也找得到；
+            網站導覽是一整頁，沒有這一條的話手機使用者根本到不了。
+
+            放在 `.menu-grid` 之後而不是變成第九張卡：那格線的每一張卡都印著
+            「NN」，多一張就等於宣稱站上有九條路線（頁尾少一條 /blog 也是同一個
+            理由，見 SiteFooter.tsx）。
+          */}
+          <p className="menu-utility">
+            <a href="#contact" onClick={closeOnNavigate} tabIndex={menuOpen ? undefined : -1}>
+              {t.contact}
+            </a>
+            <Link
+              href={localizePath("/sitemap", lang)}
+              onClick={closeOnNavigate}
+              tabIndex={menuOpen ? undefined : -1}
+            >
+              {t.sitemap}
+            </Link>
+          </p>
         </nav>
       </div>
     </>

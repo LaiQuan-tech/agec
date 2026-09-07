@@ -21,6 +21,9 @@ const ROUTES = [
   // The filtered views of /news. Their own pages 2..n stay out for the same
   // reason /news/page/N does — see the note below.
   ...NEWS_CATEGORIES.map((c) => `/news/category/${c.slug}`),
+  // 網站導覽（給人看的那一頁，不是這一支產生的 XML）。它不在 lib/nav.ts 的
+  // 八條路線裡，所以要自己列一條，否則爬蟲只能從機構列的那個連結找到它。
+  "/sitemap",
 ];
 
 /**

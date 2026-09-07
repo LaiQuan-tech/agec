@@ -47,12 +47,18 @@ type AboutDict = {
   title: Msg;
   lead: Msg;
   heroImageAlt: Msg;
-  /** `.local-nav` jump links, one per `#section-N`. */
+  /**
+   * `.local-nav` jump links, one per `#section-N`.
+   *
+   * An array of `{ href, label }` rather than four bare labels, matching
+   * ADMISSIONS / COURSES / STUDENTS / ALUMNI. The four labels used to be
+   * named keys and About.tsx paired each one with its `#section-N` by hand;
+   * /sitemap now lists the same four anchors, and a shape whose hrefs live at
+   * the call site is a shape two callers spell two ways. lib/sitemap-tree.ts
+   * reads this list directly.
+   */
   nav: {
-    history: Msg;
-    mission: Msg;
-    honors: Msg;
-    environment: Msg;
+    items: readonly { href: string; label: Msg }[];
   };
   history: {
     heading: Msg;
@@ -88,10 +94,12 @@ export const ABOUT = {
   },
 
   nav: {
-    history: { zh: "系史沿革", en: "History" },
-    mission: { zh: "目標與使命", en: "Mission & Vision" },
-    honors: { zh: "系所榮譽", en: "Honors" },
-    environment: { zh: "環境與設備", en: "Environment" },
+    items: [
+      { href: "#section-1", label: { zh: "系史沿革", en: "History" } },
+      { href: "#section-2", label: { zh: "目標與使命", en: "Mission & Vision" } },
+      { href: "#section-3", label: { zh: "系所榮譽", en: "Honors" } },
+      { href: "#section-4", label: { zh: "環境與設備", en: "Environment" } },
+    ],
   },
 
   history: {

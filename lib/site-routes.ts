@@ -65,6 +65,18 @@ const ROUTES = {
     title: { zh: "系友專區", en: "Alumni" },
     description: DEFAULT_DESCRIPTION,
   },
+  /**
+   * 網站導覽。不在 lib/nav.ts 的八條路線裡（加第九條會讓每個內頁 hero 上的
+   * 「NN / 08」全部重編號），但它是一個有內容、該被索引的公開頁面 ——
+   * 所以它有 metadata，只是沒有導覽列上的位置。
+   */
+  "/sitemap": {
+    title: { zh: "網站導覽", en: "Sitemap" },
+    description: {
+      zh: "國立臺灣大學農業經濟學系網站的完整結構：八個主要區塊與其下的所有細項。",
+      en: "The full structure of the NTU Department of Agricultural Economics website — its eight main sections and everything inside them.",
+    },
+  },
 } satisfies Record<string, RouteMeta>;
 
 export type SiteRoute = keyof typeof ROUTES;

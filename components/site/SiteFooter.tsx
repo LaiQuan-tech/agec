@@ -6,8 +6,14 @@ import { COMMON } from "@/lib/i18n/common";
 import { MaybeLink } from "./MaybeLink";
 
 /**
- * Site footer. `#contact` and `#sitemap` are the anchor targets the institution
- * bar's utility links jump to, so both ids have to stay put.
+ * Site footer. `#contact` is the anchor target the institution bar's「聯絡我們」
+ * jumps to, so that id has to stay put.
+ *
+ * `#sitemap` below no longer has anything pointing at it from this site:
+ * 「網站導覽」is now a page of its own (/sitemap), not a jump to these two
+ * columns — see components/site/SitemapPage.tsx. The id stays because it is a
+ * public anchor that external links may already use, and because these really
+ * are the footer's sitemap columns.
  *
  * The two sitemap columns are bare <div>s on purpose: site.css addresses them as
  * `.footer-links div`, so wrapping them or swapping the tag drops the whole

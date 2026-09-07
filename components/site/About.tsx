@@ -49,16 +49,7 @@ export function About({ lang }: { lang: Lang }) {
         imageAlt={t.heroImageAlt}
       />
 
-      <LocalNav
-        lang={lang}
-        label={t.title}
-        items={[
-          { href: "#section-1", label: t.nav.history },
-          { href: "#section-2", label: t.nav.mission },
-          { href: "#section-3", label: t.nav.honors },
-          { href: "#section-4", label: t.nav.environment },
-        ]}
-      />
+      <LocalNav lang={lang} label={t.title} items={[...t.nav.items]} />
 
       <div className="interior-content">
         <section className="inner-section" id="section-1">
