@@ -120,6 +120,14 @@ export type Faculty = {
   fields: string | null;
   /** Public mailbox. Present for all but the visiting professor (36 of 37). */
   email: string | null;
+  /**
+   * 系辦分機。與 `email` 一樣是語言無關的識別字串，所以沒有 `_en` 版本，也
+   * 不經過 `pick()` —— 見 20260908100000_faculty_extension.sql 的說明。
+   *
+   * text 不是 number：實際寫法有「5501」「5501、5502」「#12345」。
+   * null = 沒有分機或還沒填；四種卡片版型都是「有值才印那一行」。
+   */
+  extension: string | null;
   /** Long-form career summary, 名譽教授 and 退休師資 only (11 of 37). */
   experience: string | null;
   photo_url: string | null;
@@ -200,6 +208,20 @@ export type LinkItem = {
   sort_order: number;
 };
 
+/**
+ * /admissions §3 的核心能力膠囊。
+ *
+ * 原本硬編在 lib/i18n/admissions.ts，2026-09 搬進資料庫讓系辦自己增刪改。
+ * 那份 i18n 陣列**沒有刪**，它現在是「資料表是空的時候」的備援 —— 與 links
+ * 的 .resource-row 同一個模式。也因為有備援，這張表還不存在時前台照樣正常，
+ * 不像 faculty 加欄位那樣有硬性的部署順序。
+ */
+export type CapabilityItem = {
+  id: number;
+  label: string;
+  sort_order: number;
+};
+
 /* ------------------------------------------------------------------ *
  * Raw row shapes. These mirror the tables (both language columns) and *
  * exist only so the mapping functions below are type-checked.         *
@@ -241,6 +263,7 @@ type ProgramRow = {
 };
 
 type LinkRow = LinkItem & { label_en: string | null };
+type CapabilityRow = CapabilityItem & { label_en: string | null };
 
 /**
  * The `news.category` value that routes a row to the talks block on /news
@@ -264,8 +287,11 @@ const NEWS_COLUMNS =
  */
 const PUBLISHED = "published";
 
+// ⚠️ 逐一列欄位，不是 select("*")。加欄位時這裡與 Faculty 型別要一起改，而且
+//    **必須先在資料庫加好欄位再推程式**：欄位不存在時 PostgREST 會回錯誤，
+//    getFaculty() 依慣例回空陣列，於是 /faculty 變成一片空白而且沒有錯誤畫面。
 const FACULTY_COLUMNS =
-  "id, name, name_en, title, category, fields, email, experience, photo_url, sort_order, title_en, fields_en, experience_en";
+  "id, name, name_en, title, category, fields, email, extension, experience, photo_url, sort_order, title_en, fields_en, experience_en";
 
 const COURSE_COLUMNS = "id, code, name, credit, ctype, program, name_en, ctype_en";
 
@@ -273,6 +299,8 @@ const PROGRAM_COLUMNS =
   "id, name, name_en, description, description_en, sort_order";
 
 const LINK_COLUMNS = "id, section, label, url, sort_order, label_en";
+
+const CAPABILITY_COLUMNS = "id, label, sort_order, label_en";
 
 function toNews(row: NewsRow, lang: Lang): NewsItem {
   return {
@@ -310,6 +338,8 @@ function toFaculty(row: FacultyRow, lang: Lang): Faculty {
     category: row.category,
     fields: pickNullable(row.fields, row.fields_en, lang),
     email: row.email,
+    // 與 email 同列：語言無關，不經 pick()。
+    extension: row.extension,
     experience: pickNullable(row.experience, row.experience_en, lang),
     photo_url: row.photo_url,
     sort_order: row.sort_order,
@@ -336,6 +366,14 @@ function toLink(row: LinkRow, lang: Lang): LinkItem {
     section: row.section,
     label: pick(row.label, row.label_en, lang),
     url: row.url,
+    sort_order: row.sort_order,
+  };
+}
+
+function toCapability(row: CapabilityRow, lang: Lang): CapabilityItem {
+  return {
+    id: row.id,
+    label: pick(row.label, row.label_en, lang),
     sort_order: row.sort_order,
   };
 }
@@ -455,6 +493,30 @@ export async function getLinks(
     return [];
   }
   return (data ?? []).map((row) => toLink(row, lang));
+}
+
+/**
+ * 核心能力標籤。
+ *
+ * ⚠️ 回空陣列有兩種意思，而且呼叫端都當作「用備援」處理：資料表還沒建（程式
+ * 先上線的那段時間），或系辦把標籤全刪了。兩種情況下 /admissions 都會顯示
+ * lib/i18n/admissions.ts 裡原本那 8 顆，不會出現一塊空白。
+ */
+export async function getCapabilities(lang: Lang): Promise<CapabilityItem[]> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("capabilities")
+    .select(CAPABILITY_COLUMNS)
+    // 第二鍵 id：sort_order 打平時 Postgres 的回傳順序不保證穩定。
+    .order("sort_order", { ascending: true })
+    .order("id", { ascending: true })
+    .returns<CapabilityRow[]>();
+
+  if (error) {
+    console.error("[lib/data] getCapabilities failed:", error.message);
+    return [];
+  }
+  return (data ?? []).map((row) => toCapability(row, lang));
 }
 
 /**

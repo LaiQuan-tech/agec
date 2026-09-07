@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { LinkItem, Program } from "@/lib/data";
+import type { CapabilityItem, LinkItem, Program } from "@/lib/data";
 import { translate, type Lang } from "@/lib/i18n";
 import { ADMISSIONS } from "@/lib/i18n/admissions";
 import { EYEBROWS } from "@/lib/i18n/eyebrows";
@@ -26,7 +26,7 @@ import { padNo } from "./nav";
  *                                  right/bottom border, so a 5th entry breaks
  *                                  the 1180px row without looking wrong at
  *                                  1440px. Adding a table is out of scope here.
- *   #section-3 `.capability-cloud` A, static tag cloud.
+ *   #section-3 `.capability-cloud` B → getCapabilities()，空表時退回字典。
  *   #section-4 `.resource-row`     B → getLinks(). See the fallback below.
  *
  * All A-class copy lives in lib/i18n/admissions.ts.
@@ -49,12 +49,18 @@ export function Admissions({
   lang,
   programs,
   links,
+  capabilities,
 }: {
   lang: Lang;
   /** getPrograms() — 4 學制, in sort_order. */
   programs: Program[];
   /** getLinks('admissions') — 4 resource cards. Empty until the rows exist. */
   links: LinkItem[];
+  /**
+   * getCapabilities() —— §3 的膠囊。空陣列時退回字典裡那 8 顆，所以資料表
+   * 還沒建（程式先上線）或系辦把標籤全刪了，都不會留下一塊空白。
+   */
+  capabilities: CapabilityItem[];
 }) {
   const t = translate(ADMISSIONS, lang);
   const eb = translate(EYEBROWS, lang);
@@ -66,6 +72,13 @@ export function Admissions({
   // DB rows arrive from lib/data.ts already resolved to the page's language;
   // the fallback comes from the dictionary. Either way `label` is ready to
   // print and must not be translated again here.
+  // 與 resources 同一個模式：DB 的 label 在 lib/data.ts 就已經解析成當前語言，
+  // 這裡不能再翻一次。key 用 id 而不是文字 —— 兩個標籤同名是合法的，用文字當
+  // key 會讓 React 在其中一個被刪掉時更新錯的節點。
+  const tags: { key: string; label: string }[] = capabilities.length
+    ? capabilities.map((c) => ({ key: `db-${c.id}`, label: c.label }))
+    : t.section3.capabilities.map((label, i) => ({ key: `fallback-${i}`, label }));
+
   const resources: { label: string; url: string | null }[] = links.length
     ? links.map((link) => ({ label: link.label, url: link.url }))
     // The fallback rows exist so the four-column grid never renders empty when
@@ -175,8 +188,8 @@ export function Admissions({
               heading={t.section3.heading}
             />
             <div className="capability-cloud">
-              {t.section3.capabilities.map((item) => (
-                <span key={item}>{item}</span>
+              {tags.map((tag) => (
+                <span key={tag.key}>{tag.label}</span>
               ))}
             </div>
           </div>

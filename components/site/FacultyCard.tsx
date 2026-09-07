@@ -98,6 +98,23 @@ export function FacultyCard({
       {member.fields ? (
         <span className="faculty-field">{member.fields}</span>
       ) : null}
+      {/*
+        分機。是一個平行的 <span>，不是把 email 跟它包成一個 <div> —— 上面
+        第 19-27 行那份合約說得很清楚：`.faculty-grid` 底下的元素被 site.css
+        按位置定址，任何一個被包一層 wrapper 都會掉樣式。多一個兄弟元素沒有
+        違反那條，多一層包裝才有。
+
+        位置在 email 之前但**顯示在它上面**：`.faculty-grid a` 是
+        position:absolute 釘在卡片底部的（卡片的 padding-bottom:70px 就是為它
+        留的），所以這個 span 留在正常流裡，不會撞到。
+
+        沒填分機就整行不印，不留空位。
+      */}
+      {member.extension ? (
+        <span className="faculty-ext">
+          {t.extensionLabel} {member.extension}
+        </span>
+      ) : null}
       {member.email ? (
         <a href={`mailto:${member.email}`}>{member.email} ↗︎</a>
       ) : null}

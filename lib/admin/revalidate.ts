@@ -31,6 +31,8 @@ const AFFECTED_ROUTES = {
   links: ["/students", "/courses", "/admissions", "/alumni"],
   // 系友活動：列表在 /alumni，詳情頁在下面用動態路徑一併處理。
   events: ["/alumni"],
+  // 核心能力膠囊只出現在 /admissions §3。
+  capabilities: ["/admissions"],
 } as const;
 
 export type RevalidateEntity = keyof typeof AFFECTED_ROUTES;

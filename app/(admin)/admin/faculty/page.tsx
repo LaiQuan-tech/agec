@@ -20,6 +20,8 @@ type Row = {
   category: string;
   fields: string | null;
   fields_en: string | null;
+  email: string | null;
+  extension: string | null;
   experience: string | null;
   experience_en: string | null;
   sort_order: number;
@@ -34,7 +36,7 @@ export default async function FacultyListPage() {
   const { data, error } = await supabase
     .from("faculty")
     .select(
-      "id, name, name_en, title, title_en, category, fields, fields_en, experience, experience_en, sort_order"
+      "id, name, name_en, title, title_en, category, fields, fields_en, email, extension, experience, experience_en, sort_order"
     )
     .order("sort_order", { ascending: true })
     .order("id", { ascending: true })
@@ -86,6 +88,9 @@ export default async function FacultyListPage() {
             <TH className="w-[110px]">職稱</TH>
             <TH className="w-[110px]">分類</TH>
             <TH>研究領域</TH>
+            {/* 分機是這一版新加的欄位，37 個人要一筆一筆填 —— 列表上看得到
+                誰還沒填，才不用一個一個點進去確認。 */}
+            <TH className="w-[90px]">分機</TH>
             <TH className="w-[80px]">英文</TH>
             <TH className="w-[130px]">操作</TH>
           </THead>
@@ -131,6 +136,17 @@ export default async function FacultyListPage() {
                     >
                       {row.fields ?? ""}
                     </span>
+                  </TD>
+                  <TD>
+                    {row.extension ? (
+                      <span className="tabular-nums">{row.extension}</span>
+                    ) : (
+                      // 「未填」而不是留白：留白讀起來像「這個人沒有分機」，
+                      // 但實際上是 37 個人都還沒填。
+                      <span className="text-[12px]" style={{ color: "var(--muted)" }}>
+                        未填
+                      </span>
+                    )}
                   </TD>
                   <TD>
                     <EnBadge filled={en.filled} total={en.total} />

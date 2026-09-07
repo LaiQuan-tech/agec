@@ -27,8 +27,10 @@
 | 6 | `checks/verify_rls.sql` | 驗收（唯讀），逐段對照 FAIL 判準 | ✅ 2026-08-09 全數 PASS |
 | 7 | `migrations/20260814090400_faculty_extend.sql` | `faculty` 加 `name_en`、`experience` 兩欄（另有一行防禦性的 `email` if not exists）；註解記錄 7 種 category 對應的卡片版型 | ✅ 2026-08-14 |
 | 8 | `migrations/20260814090500_faculty_seed_2026.sql` | 師資頁 37 筆人員資料（22 主卡 + 客座 1 + 名譽 5 + 退休 6 + 行政 3）。以姓名為自然鍵 upsert，不刪任何資料 | ✅ 2026-08-14 |
-| 10 | `migrations/20260901120000_alumni_events.sql` | 建 `alumni_events` / `alumni_event_registrations` 兩張表、RLS、`register_for_alumni_event()` 與 `cancel_alumni_registration()` 兩支函式 | ⬜ 待執行 |
-| 11 | `migrations/20260902100000_admin_user_management.sql` | 後台兩層權限（`admin_users.role`、`admin_role()`、`is_manager()`）、`created_by`、保底 trigger、操作日誌 `admin_audit_log` 與通用稽核 trigger | ⬜ 待執行 |
+| 10 | `migrations/20260901120000_alumni_events.sql` | 建 `alumni_events` / `alumni_event_registrations` 兩張表、RLS、`register_for_alumni_event()` 與 `cancel_alumni_registration()` 兩支函式 | ✅ 2026-09-01 |
+| 11 | `migrations/20260902100000_admin_user_management.sql` | 後台兩層權限（`admin_users.role`、`admin_role()`、`is_manager()`）、`created_by`、保底 trigger、操作日誌 `admin_audit_log` 與通用稽核 trigger | ✅ 2026-09-02 |
+| 12 | `migrations/20260908100000_faculty_extension.sql` | `faculty` 加 `extension`（分機）一欄。🔴 **必須在推程式碼之前跑** —— `FACULTY_COLUMNS` 是逐一列欄位的，欄位不存在會讓 /faculty 整頁空白 | ✅ 2026-09-08 |
+| 13 | `migrations/20260908110000_capabilities.sql` | 建 `capabilities` 表（/admissions §3 的核心能力膠囊）、RLS、明寫 grant/revoke、稽核 trigger，並種入原本硬編的 8 筆。沒有部署順序限制：表不存在時前台會退回 `lib/i18n/admissions.ts` 的備援 | ✅ 2026-09-08 |
 | 9 | **人工步驟** | 清掉 `faculty` 原本的 8 筆佔位假資料。語句在第 8 支檔案末尾的註解區塊，**先跑 select 版本確認清單再改成 delete** | ✅ 2026-08-14 |
 
 第 7、8 支必須照順序跑（seed 依賴 extend 新增的兩個欄位）。兩支都在本機
@@ -40,6 +42,32 @@ PostgreSQL 18 上連跑兩次驗證過：第二次不會產生重複列，欄位
 對得上的佔位資料，對不上的會留在表上（實測 8 筆裡有 7 筆會留下），讓師資頁
 多出幾張沒照片、分類也對不上篩選標籤的卡片。刪除不可逆，且系辦若已自行在
 後台新增過真的師資也會被同一條 `where` 掃到，所以交給人工確認。
+
+## 2026-09-08 執行紀錄（第 12–13 步）
+
+兩支都經 Supabase Management API（`/v1/projects/{ref}/database/query`）執行。
+第 11 支的稽核 trigger 掛載迴圈同時被改成「跳過還不存在的表」
+（`continue when to_regclass(...) is null`）—— 沒有這一行的話，把
+`capabilities` 加進表名陣列會讓第 11 支反過來相依於第 13 支，在還沒跑第 13 支
+的資料庫上重跑它會整支失敗，而那一支的賣點就是可以重複執行。
+
+兩支在本機 PostgreSQL 18 上以拋棄式資料庫逐角色驗過（`auth.uid()` 替身 +
+anon / authenticated / 白名單三種身分）：
+
+- `anon` 讀得到 `capabilities`、三種寫入**都在表層權限就被擋**
+  （`permission denied for table`，不是靠 RLS）—— 明寫 `revoke` 有意義
+- 非白名單的登入者被 RLS 擋（`new row violates row-level security policy`）
+- 白名單使用者 insert / update / delete 都成功，且三筆都寫進 `admin_audit_log`，
+  `label` 欄不是 null（欄名取 `label` 就是為了讓稽核 trigger 的
+  `coalesce(title, name, label, slug, code, email)` 找得到）
+- 整支重跑：`capabilities` 仍是 8 筆，沒有重複列
+
+跑完在正式站驗過：`faculty.extension` 存在且 37 人全為 null、`capabilities`
+匿名讀得到 8 筆、匿名 insert 回 401 / 42501。
+
+⚠️ 驗證期間曾暫時給 5 個人（每種卡片版型各一個）填測試分機、並新增第 9 筆
+測試標籤，確認四種版型與中英兩個語系都印得出來之後**已全部清除**。
+清除後複查：`capabilities` 8 筆、有分機者 0 人、有信箱者 36 人（未受影響）。
 
 ## 2026-08-14 執行紀錄（第 7–9 步）
 

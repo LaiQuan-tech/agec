@@ -362,8 +362,14 @@ do $$
 declare t text;
 begin
   foreach t in array array[
-    'news', 'faculty', 'courses', 'programs', 'links', 'alumni_events', 'admin_users'
+    'news', 'faculty', 'courses', 'programs', 'links', 'alumni_events', 'admin_users',
+    'capabilities'
   ] loop
+    -- ⚠️ 跳過還不存在的表。capabilities 是 20260908110000 才建的，沒有這個
+    --    判斷的話，在還沒跑那一支的資料庫上重跑這一支會整支失敗 —— 而這支
+    --    的賣點就是可以重複執行。有了它，兩支的先後順序不再重要。
+    continue when to_regclass(format('public.%I', t)) is null;
+
     execute format('drop trigger if exists log_admin_change on public.%I', t);
     execute format(
       'create trigger log_admin_change after insert or update or delete on public.%I

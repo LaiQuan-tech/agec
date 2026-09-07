@@ -56,6 +56,13 @@ type FacultyDict = {
    */
   cardPortraitAlt: Msg;
   visitingPortraitAlt: Msg;
+  /**
+   * 分機前面的那個詞。四種卡片版型共用。
+   *
+   * 分機號碼本身沒有 `_en` 欄位（跨語言相同的識別字串，與 email 同理，見
+   * lib/data.ts 的 Faculty.extension），需要翻譯的只有這個標籤。
+   */
+  extensionLabel: Msg;
 };
 
 export const FACULTY = {
@@ -127,6 +134,7 @@ export const FACULTY = {
     zh: "{name}{category}形象照",
     en: "Portrait of {name}, {category}",
   },
+  extensionLabel: { zh: "分機", en: "Ext." },
 } satisfies FacultyDict;
 
 /**

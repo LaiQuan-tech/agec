@@ -17,6 +17,8 @@ type Row = {
   category: string;
   fields: string | null;
   fields_en: string | null;
+  email: string | null;
+  extension: string | null;
   /** Read-only on the form; selected so the English box has something to show. */
   experience: string | null;
   experience_en: string | null;
@@ -41,8 +43,12 @@ export default async function EditFacultyPage({
 
   const { data, error } = await supabase
     .from("faculty")
+    // 🔴 email 與 extension **必須**在這裡被選出來。updateFaculty 是
+    //    `.update(values)` 全欄覆寫，表單送出什麼就寫什麼 —— 少選一欄，
+    //    initial 就是空字串，parse() 把空字串轉成 null，於是「打開來看一下
+    //    再按儲存」會把那個人的信箱清掉，而且沒有任何錯誤訊息。
     .select(
-      "id, name, name_en, title, title_en, category, fields, fields_en, experience, experience_en, photo_url, sort_order"
+      "id, name, name_en, title, title_en, category, fields, fields_en, email, extension, experience, experience_en, photo_url, sort_order"
     )
     .eq("id", numericId)
     .maybeSingle<Row>();
@@ -84,6 +90,8 @@ export default async function EditFacultyPage({
           category: data.category,
           fields: data.fields ?? "",
           fields_en: data.fields_en ?? "",
+          email: data.email ?? "",
+          extension: data.extension ?? "",
           experience: data.experience ?? "",
           experience_en: data.experience_en ?? "",
           photo_url: data.photo_url ?? "",

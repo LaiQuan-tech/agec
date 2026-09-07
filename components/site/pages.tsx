@@ -1,20 +1,21 @@
 import { notFound } from "next/navigation";
 import {
+  countTalks,
+  getAlumniEventBySlug,
+  getAlumniEvents,
+  getCapabilities,
   getCourses,
   getFaculty,
   getLinks,
   getNewsById,
   getNewsHome,
   getNewsIds,
-  getAlumniEventBySlug,
-  getAlumniEvents,
   getNewsPage,
   getNewsYears,
+  getPrograms,
   getTalks,
   getTalksPage,
-  countTalks,
   TALKS_PREVIEW_SIZE,
-  getPrograms,
 } from "@/lib/data";
 import type { Lang } from "@/lib/i18n";
 import { Home } from "./Home";
@@ -195,16 +196,24 @@ export async function FacultyRoute({ lang }: { lang: Lang }) {
 }
 
 /**
- * `.program-grid` reads getPrograms(); the 重要時程 and 核心能力 blocks are
- * static copy (no table exists for either).
+ * `.program-grid` reads getPrograms()，`.capability-cloud` 讀 getCapabilities()。
+ * 只剩重要時程還是硬編的 static copy（沒有對應的資料表）。
  */
 export async function AdmissionsRoute({ lang }: { lang: Lang }) {
-  const [programs, links] = await Promise.all([
+  const [programs, links, capabilities] = await Promise.all([
     getPrograms(lang),
     getLinks("admissions", lang),
+    getCapabilities(lang),
   ]);
 
-  return <Admissions lang={lang} programs={programs} links={links} />;
+  return (
+    <Admissions
+      lang={lang}
+      programs={programs}
+      links={links}
+      capabilities={capabilities}
+    />
+  );
 }
 
 export async function CoursesRoute({ lang }: { lang: Lang }) {
