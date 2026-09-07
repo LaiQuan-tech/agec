@@ -19,6 +19,15 @@ import { uploadFile, type UploadBucket } from "./upload";
  * needs no knowledge of this component. It is written through writeField() —
  * assigning `.value` directly would leave FormShell's unsaved-changes guard
  * thinking nothing had been touched.
+ *
+ * 兩個選用的延伸，都是 /admin/forms（系上表單）加的，預設行為不變：
+ *
+ *   `nameField`   除了網址，再把上傳時的原始檔名寫進一個同名的 hidden input。
+ *                 Storage 的 key 是 uuid（見 api/upload/route.ts），原始檔名
+ *                 只有這一刻拿得到 —— 沒存下來就永遠沒有了。手動改網址時會
+ *                 一併清掉：那個檔名已經不屬於新的網址。
+ *   `preview`     縮圖。附件是 PDF/DOCX，<img> 一定載不起來，關掉比留一個
+ *                 靠 onError 自己藏起來的空元素誠實。
  */
 export function UploadField({
   id,
@@ -28,6 +37,9 @@ export function UploadField({
   placeholder,
   invalid,
   accept = "image/*",
+  nameField,
+  defaultFileName,
+  preview: showPreview = true,
 }: {
   id: string;
   name: string;
@@ -36,8 +48,15 @@ export function UploadField({
   placeholder?: string;
   invalid?: boolean;
   accept?: string;
+  /** `name` of a hidden input that receives the uploaded file's original name. */
+  nameField?: string;
+  /** Seed for that hidden input when editing an existing row. */
+  defaultFileName?: string;
+  /** Render the thumbnail. Off for non-image buckets. */
+  preview?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState(defaultValue ?? "");
   const [busy, setBusy] = useState(false);
@@ -50,6 +69,7 @@ export function UploadField({
     try {
       const uploaded = await uploadFile(file, bucket);
       writeField(inputRef.current, uploaded.url);
+      writeField(nameRef.current, uploaded.name);
       setPreview(uploaded.url);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "上傳失敗。");
@@ -73,8 +93,21 @@ export function UploadField({
           placeholder={placeholder}
           aria-invalid={invalid || undefined}
           aria-describedby={error ? errorId : undefined}
-          onChange={(e) => setPreview(e.currentTarget.value)}
+          onChange={(e) => {
+            setPreview(e.currentTarget.value);
+            // 手動改網址 → 舊檔名不再屬於它。留著會讓前台的副檔名徽章繼續印
+            // 上一個檔案的格式。
+            writeField(nameRef.current, "");
+          }}
         />
+        {nameField && (
+          <input
+            ref={nameRef}
+            type="hidden"
+            name={nameField}
+            defaultValue={defaultFileName ?? ""}
+          />
+        )}
         {/* The real control is the hidden file input; the button is what gets
             styled and labelled. A bare <input type="file"> cannot be restyled
             consistently across browsers. */}
@@ -105,7 +138,7 @@ export function UploadField({
         </p>
       )}
 
-      {preview && (
+      {showPreview && preview && (
         // eslint-disable-next-line @next/next/no-img-element -- an arbitrary
         // remote URL the user just typed; next/image would need it configured
         // as a remote pattern first, and this is a 96px admin thumbnail.

@@ -1,4 +1,4 @@
-import type { Course, LinkItem, Program } from "@/lib/data";
+import type { Course, CourseForm, LinkItem, Program } from "@/lib/data";
 import { translate, type Lang } from "@/lib/i18n";
 import { COURSES } from "@/lib/i18n/courses";
 import { EYEBROWS } from "@/lib/i18n/eyebrows";
@@ -7,6 +7,7 @@ import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
 import { SectionTitle } from "./SectionTitle";
 import { NextRoute } from "./NextRoute";
+import { CourseForms } from "./CourseForms";
 import { CourseTable } from "./CourseTable";
 import { MaybeLink } from "./MaybeLink";
 
@@ -33,11 +34,19 @@ export function Courses({
   courses,
   programs,
   links,
+  courseForms,
 }: {
   lang: Lang;
   courses: Course[];
   programs: Program[];
   links: LinkItem[];
+  /**
+   * 系上專屬表單。空陣列時 CourseForms 整區不印。
+   *
+   * ⚠️ 叫 courseForms 而不是 forms：下面那個 `const forms` 已經佔走這個名字，
+   * 而且是完全不同的東西 —— 它是 `.resource-row` 那排校方表格的連結。
+   */
+  courseForms: CourseForm[];
 }) {
   const t = translate(COURSES, lang);
   const eb = translate(EYEBROWS, lang);
@@ -171,6 +180,11 @@ export function Courses({
         <section className="inner-section" id="section-3">
           <div className="container">
             <SectionTitle no="03" eyebrow={eb.forms} heading={t.section3.heading} />
+
+            {/* 系上自己的表單，先出現 —— 這一頁的讀者要找的多半是這些。
+                空的時候整區（含小標）不印，§3 就維持原本的樣子。 */}
+            <CourseForms lang={lang} forms={courseForms} />
+
             {/* `.resource-row a` carries the cell borders and the 120px min
                 height, so every cell stays an <a> — MaybeLink only removes the
                 href when the row has no url, which is most of them until the

@@ -33,6 +33,8 @@ const AFFECTED_ROUTES = {
   events: ["/alumni"],
   // 核心能力膠囊只出現在 /admissions §3。
   capabilities: ["/admissions"],
+  // 系上專屬表單只出現在 /courses §3。
+  course_forms: ["/courses"],
 } as const;
 
 export type RevalidateEntity = keyof typeof AFFECTED_ROUTES;

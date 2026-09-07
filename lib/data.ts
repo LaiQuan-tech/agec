@@ -222,6 +222,24 @@ export type CapabilityItem = {
   sort_order: number;
 };
 
+/**
+ * 系上專屬表單（/courses §3 的下載卡）。
+ *
+ * `file_url` 可以是 null —— 系辦常常先把表單名稱列出來、檔案晚一點才補。
+ * 前台用 MaybeLink 印，沒有網址的卡片就沒有 href、也沒有箭頭。
+ *
+ * `file_name` 是上傳時的原始檔名，用來推導卡片左上角的副檔名徽章，
+ * 並讓下載存檔時是看得懂的名字而不是 uuid。
+ */
+export type CourseForm = {
+  id: number;
+  label: string;
+  description: string | null;
+  file_url: string | null;
+  file_name: string | null;
+  sort_order: number;
+};
+
 /* ------------------------------------------------------------------ *
  * Raw row shapes. These mirror the tables (both language columns) and *
  * exist only so the mapping functions below are type-checked.         *
@@ -264,6 +282,10 @@ type ProgramRow = {
 
 type LinkRow = LinkItem & { label_en: string | null };
 type CapabilityRow = CapabilityItem & { label_en: string | null };
+type CourseFormRow = CourseForm & {
+  label_en: string | null;
+  description_en: string | null;
+};
 
 /**
  * The `news.category` value that routes a row to the talks block on /news
@@ -301,6 +323,9 @@ const PROGRAM_COLUMNS =
 const LINK_COLUMNS = "id, section, label, url, sort_order, label_en";
 
 const CAPABILITY_COLUMNS = "id, label, sort_order, label_en";
+
+const COURSE_FORM_COLUMNS =
+  "id, label, description, file_url, file_name, sort_order, label_en, description_en";
 
 function toNews(row: NewsRow, lang: Lang): NewsItem {
   return {
@@ -374,6 +399,21 @@ function toCapability(row: CapabilityRow, lang: Lang): CapabilityItem {
   return {
     id: row.id,
     label: pick(row.label, row.label_en, lang),
+    sort_order: row.sort_order,
+  };
+}
+
+function toCourseForm(row: CourseFormRow, lang: Lang): CourseForm {
+  return {
+    id: row.id,
+    label: pick(row.label, row.label_en, lang),
+    // pickNullable，不是 pick：說明是選填的，沒填就該是 null 讓卡片少一段，
+    // 而不是一個空字串把 <p> 印出來占掉 70px。
+    description: pickNullable(row.description, row.description_en, lang),
+    // 檔案本身不分語言 —— 一份表單就是一份檔案。系辦如果之後需要中英兩版，
+    // 那是兩列，不是一列兩個欄位。
+    file_url: row.file_url,
+    file_name: row.file_name,
     sort_order: row.sort_order,
   };
 }
@@ -517,6 +557,30 @@ export async function getCapabilities(lang: Lang): Promise<CapabilityItem[]> {
     return [];
   }
   return (data ?? []).map((row) => toCapability(row, lang));
+}
+
+/**
+ * 系上專屬表單，/courses §3 用。
+ *
+ * 表不存在時（migration 20260908120000 還沒跑）會走 error 那一條回空陣列，
+ * 前台就什麼都不印 —— §3 維持今天的樣子。所以程式碼與 migration 誰先上線
+ * 都可以，中間沒有一刻會壞掉。
+ */
+export async function getCourseForms(lang: Lang): Promise<CourseForm[]> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("course_forms")
+    .select(COURSE_FORM_COLUMNS)
+    // 第二鍵 id：sort_order 打平時 Postgres 的回傳順序不保證穩定。
+    .order("sort_order", { ascending: true })
+    .order("id", { ascending: true })
+    .returns<CourseFormRow[]>();
+
+  if (error) {
+    console.error("[lib/data] getCourseForms failed:", error.message);
+    return [];
+  }
+  return (data ?? []).map((row) => toCourseForm(row, lang));
 }
 
 /**

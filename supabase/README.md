@@ -31,6 +31,7 @@
 | 11 | `migrations/20260902100000_admin_user_management.sql` | 後台兩層權限（`admin_users.role`、`admin_role()`、`is_manager()`）、`created_by`、保底 trigger、操作日誌 `admin_audit_log` 與通用稽核 trigger | ✅ 2026-09-02 |
 | 12 | `migrations/20260908100000_faculty_extension.sql` | `faculty` 加 `extension`（分機）一欄。🔴 **必須在推程式碼之前跑** —— `FACULTY_COLUMNS` 是逐一列欄位的，欄位不存在會讓 /faculty 整頁空白 | ✅ 2026-09-08 |
 | 13 | `migrations/20260908110000_capabilities.sql` | 建 `capabilities` 表（/admissions §3 的核心能力膠囊）、RLS、明寫 grant/revoke、稽核 trigger，並種入原本硬編的 8 筆。沒有部署順序限制：表不存在時前台會退回 `lib/i18n/admissions.ts` 的備援 | ✅ 2026-09-08 |
+| 14 | `migrations/20260908120000_course_forms.sql` | 建 `course_forms` 表（/courses §3 的系上專屬表單下載卡）、RLS、明寫 grant/revoke、稽核 trigger。沒有種子資料，也沒有部署順序限制：表不存在時 `getCourseForms()` 回空陣列，前台整區不印，§3 維持原樣 | ⬜ 未執行 |
 | 9 | **人工步驟** | 清掉 `faculty` 原本的 8 筆佔位假資料。語句在第 8 支檔案末尾的註解區塊，**先跑 select 版本確認清單再改成 delete** | ✅ 2026-08-14 |
 
 第 7、8 支必須照順序跑（seed 依賴 extend 新增的兩個欄位）。兩支都在本機

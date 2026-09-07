@@ -1548,3 +1548,32 @@
   margin-top: 10px;
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------------------------------------------------------------------------
+ * 區塊裡的小標 — `.forms-subhead`
+ *
+ * /courses §3 底下現在有兩組東西：系上自己的表單（`.document-grid` 下載卡，
+ * 檔案存在我們的 Storage 裡）與校方的表格（`.resource-row`，三條指向臺大
+ * 教務處）。沒有小標的話讀者分不出哪些點下去會離開這個站。
+ *
+ * site.css 只有 `.inner-section-title` 一種標題，那是整個區塊的大標（28% 左欄
+ * ＋ clamp 到 57px 的大字），拿來當區塊內的分隔太重。這是它下面一階：與
+ * `.document-grid h3` 同級的 21px 襯線字，加一行灰色說明。
+ *
+ * 只在有內容時才會出現 —— CourseForms 在陣列為空時整區不印，包含這個小標。
+ * ------------------------------------------------------------------------ */
+.forms-subhead {
+  margin: clamp(28px, 3vw, 40px) 0 20px;
+}
+.forms-subhead h3 {
+  /* Preflight 把 h3 重設成 inherit，所以字級要自己給。 */
+  color: var(--green-deep);
+  font: 600 21px / 1.45 var(--serif);
+  margin: 0;
+}
+.forms-subhead p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.9;
+  margin: 6px 0 0;
+}

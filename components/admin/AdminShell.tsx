@@ -22,6 +22,7 @@ export const ADMIN_SECTIONS = [
   { href: "/admin/links", label: "連結卡片", managerOnly: false },
   { href: "/admin/events", label: "系友活動", managerOnly: false },
   { href: "/admin/capabilities", label: "核心能力", managerOnly: false },
+  { href: "/admin/forms", label: "系上表單", managerOnly: false },
   { href: "/admin/users", label: "人員管理", managerOnly: true },
   { href: "/admin/logs", label: "操作日誌", managerOnly: true },
 ] as const;

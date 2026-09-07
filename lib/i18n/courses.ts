@@ -132,6 +132,26 @@ export const COURSES = {
   download: { zh: "下載", en: "Download" },
   section3: {
     heading: { zh: "常用表格", en: "Forms" },
+
+    /**
+     * 系上專屬表單那一區的小標（components/site/CourseForms.tsx）。
+     *
+     * 它與底下那排 `.resource-row` 是兩件事：這一區是系上自己的表單，檔案
+     * 存在我們的 Storage 裡、由系辦在 /admin/forms 維護；那一排是校方的表格，
+     * 三條指向臺大教務處。沒有小標的話讀者分不出來。
+     *
+     * ⚠️ 資料表是空的時候整區（連同這兩行小標）都不會印出來，所以這些字串
+     * 平常看不到 —— 不是死字串，是「有內容才出現」。
+     */
+    forms: {
+      heading: { zh: "系上表單", en: "Departmental forms" },
+      description: {
+        zh: "由系辦維護，點卡片即可下載。",
+        en: "Maintained by the department office — select a card to download.",
+      },
+      /** 推不出副檔名時，徽章印這個。 */
+      fileBadge: { zh: "檔案", en: "FILE" },
+    },
   },
   /**
    * `.resource-row` fallback labels, used only while `links.section='courses'`

@@ -4,6 +4,7 @@ import {
   getAlumniEventBySlug,
   getAlumniEvents,
   getCapabilities,
+  getCourseForms,
   getCourses,
   getFaculty,
   getLinks,
@@ -219,14 +220,22 @@ export async function AdmissionsRoute({ lang }: { lang: Lang }) {
 export async function CoursesRoute({ lang }: { lang: Lang }) {
   // getPrograms supplies both the `.filter-tabs` labels and the display order
   // the course table is re-sorted into — see components/site/Courses.tsx.
-  const [courses, programs, links] = await Promise.all([
+  // getCourseForms 是 §3 的系上表單；表還沒建時它回空陣列，那一區就不印。
+  const [courses, programs, links, courseForms] = await Promise.all([
     getCourses(lang),
     getPrograms(lang),
     getLinks("courses", lang),
+    getCourseForms(lang),
   ]);
 
   return (
-    <Courses lang={lang} courses={courses} programs={programs} links={links} />
+    <Courses
+      lang={lang}
+      courses={courses}
+      programs={programs}
+      links={links}
+      courseForms={courseForms}
+    />
   );
 }
 
