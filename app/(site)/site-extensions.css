@@ -1182,3 +1182,153 @@
     margin-top: 14px;
   }
 }
+
+/* ===========================================================================
+ * 全站搜尋
+ *
+ * site.css 沒有這些 class —— 參考站沒有搜尋。
+ * ========================================================================= */
+
+/* --- header 上的放大鏡 --------------------------------------------------- */
+
+/*
+ * ⚠️ 這一顆在兩種尺寸下都要在。
+ *
+ * site.css 在窄螢幕把 `.desktop-nav` 設成 display:none、把 `.menu-button` 從
+ * none 打開，所以那兩顆各自只在一種尺寸出現。搜尋不該是「手機上只能從漢堡選單
+ * 進去」，所以它兩邊都不隱藏。
+ *
+ * `margin-left:auto` 只在窄螢幕給：桌機時 `.desktop-nav` 自己有 auto margin
+ * 把整組推到右邊，這一顆只要接在它後面；窄螢幕時 nav 消失，需要自己把
+ * 「放大鏡 + 漢堡」這一組推到右邊。
+ */
+.search-link {
+  align-items: center;
+  align-self: center;
+  color: inherit;
+  display: flex;
+  height: 44px;
+  justify-content: center;
+  /* 44px 是觸控目標的下限；圖示本身只有 20px，其餘是點擊區。 */
+  width: 44px;
+}
+.search-link svg {
+  fill: none;
+  height: 19px;
+  stroke: currentColor;
+  /* 1.6 而不是 2：header 的文字是 13px/600，太粗的線會比字重還重。 */
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  transition: stroke 0.2s;
+  width: 19px;
+}
+.search-link:hover svg {
+  stroke: var(--gold);
+}
+/* 捲動後 header 變白底，此時 hover 用綠色 —— 與 .desktop-nav a.active 在
+   `.scrolled` 下改用綠色是同一個處理。 */
+.scrolled .search-link:hover svg {
+  stroke: var(--green);
+}
+.search-link:focus-visible {
+  border-radius: 50%;
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1180px) {
+  .search-link {
+    margin-left: auto;
+  }
+  /* `.menu-button` 在這個斷點自己有 margin-left:auto，會把它與放大鏡之間撐開
+     一整段空白。改成固定間距，兩顆才是一組。 */
+  .menu-button {
+    margin-left: 6px;
+  }
+}
+
+/* --- 搜尋頁 -------------------------------------------------------------- */
+
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 28px 0 0;
+}
+.search-form input {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  color: var(--ink);
+  flex: 1 1 260px;
+  /* 16px 不是排版偏好：iOS Safari 會在 font-size 小於 16px 的欄位獲得焦點時
+     自動放大整個頁面，而且不會縮回去。 */
+  font-size: 16px;
+  padding: 12px 14px;
+}
+.search-form input:focus {
+  border-color: var(--green);
+  outline: 2px solid var(--green);
+  outline-offset: 1px;
+}
+
+.search-status {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.9;
+  margin: 18px 0 0;
+}
+
+.search-results {
+  border-top: 1px solid var(--line);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.search-results li {
+  border-bottom: 1px solid var(--line);
+}
+.search-results a {
+  display: block;
+  padding: 22px 0;
+  transition: background 0.2s;
+}
+.search-results a:hover {
+  /* 整列可點，所以整列要有回饋。負邊距讓底色蓋過左右的留白，
+     否則反白只到文字邊緣，看起來像沒對齊。 */
+  background: var(--cream);
+  box-shadow: -14px 0 0 var(--cream), 14px 0 0 var(--cream);
+}
+.search-kind {
+  color: var(--green-soft);
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+.search-results h2 {
+  color: var(--ink);
+  font: 600 20px / 1.5 var(--serif);
+  margin: 0;
+}
+.search-results a:hover h2 {
+  color: var(--green);
+}
+.search-results p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.8;
+  margin: 6px 0 0;
+}
+
+/* 範圍說明。永遠顯示 —— 搜不到「本系簡介」裡的一句話時，讀者需要知道那是
+   範圍問題而不是站上沒有這件事。 */
+.search-scope {
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.9;
+  margin-top: 40px;
+  padding-top: 18px;
+}

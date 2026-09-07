@@ -14,6 +14,7 @@ import {
 } from "@/lib/i18n";
 import { COMMON } from "@/lib/i18n/common";
 import { SHARED } from "@/lib/i18n/shared";
+import { SEARCH } from "@/lib/i18n/search";
 
 /**
  * Institution bar + masthead + full-screen menu overlay, i.e. everything above
@@ -26,6 +27,7 @@ export function SiteHeader({ lang }: { lang: Lang }) {
   const [scrolled, setScrolled] = useState(false);
   const t = translate(COMMON, lang);
   const shared = translate(SHARED, lang);
+  const searchCopy = translate(SEARCH, lang);
 
   // `pathname` keeps the /en prefix on English pages while every nav href is
   // language-neutral, so both have to be reduced to the same form before they
@@ -149,6 +151,35 @@ export function SiteHeader({ lang }: { lang: Lang }) {
               );
             })}
           </nav>
+
+          {/*
+            全站搜尋。
+
+            ⚠️ 是一個 <Link> 到 /search，不是一個會展開輸入框的按鈕。
+            展開式搜尋要多一組狀態、要處理點外面關閉與 Esc、還要在 site.css
+            凍結的前提下另外寫一套定位 —— 而它換來的只是省一次頁面載入。
+            連結沒有 JavaScript 也能用，而且 /search 的輸入框會自動聚焦，
+            實際操作是「點圖示 → 直接打字」，跟展開式一樣快。
+
+            ⚠️ 放在 .desktop-nav 之後、.menu-button 之前，所以它在**兩種尺寸下
+            都在**：.desktop-nav 在窄螢幕是 display:none，而 .menu-button 只在
+            窄螢幕出現。這一顆兩邊都不隱藏，搜尋在手機上才不會只能從選單進去。
+
+            圖示是內嵌 SVG 而不是字型圖示或圖片：這個站沒有引入任何圖示庫，
+            而一個放大鏡是兩個圖形，內嵌比多一個網路請求划算。
+            aria-hidden + 另外給 aria-label：圖示本身對讀屏沒有意義。
+          */}
+          <Link
+            className="search-link"
+            href={localizePath("/search", lang)}
+            aria-label={searchCopy.openLabel}
+            title={searchCopy.openLabel}
+          >
+            <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+              <circle cx="9" cy="9" r="6" />
+              <line x1="13.5" y1="13.5" x2="18" y2="18" />
+            </svg>
+          </Link>
 
           <button
             className="menu-button"
