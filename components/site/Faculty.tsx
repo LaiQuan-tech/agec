@@ -8,8 +8,6 @@ import { LocalNav } from "./LocalNav";
 import { SectionTitle } from "./SectionTitle";
 import { NextRoute } from "./NextRoute";
 import { FacultyCard } from "./FacultyCard";
-import { FacultyFilterGrid } from "./FacultyFilterGrid";
-import type { FilterTab } from "./FilterTabs";
 
 /**
  * 系所成員 (/faculty) — route 04 / 08. The most layout-heavy of the eight
@@ -17,15 +15,27 @@ import type { FilterTab } from "./FilterTabs";
  *
  * | 區塊       | 容器                          | 版型                                   |
  * |------------|-------------------------------|----------------------------------------|
- * | #section-1 | `.faculty-grid`               | 標準卡（含 `.faculty-category`）22 人   |
- * | #section-2 | `.faculty-grid-secondary`     | 標準卡（去掉分類）— 同 10 人再印一次    |
+ * | #section-1 | `.faculty-grid`               | 標準卡，專任 12 人                      |
+ * | #section-2 | `.faculty-grid-secondary`     | 標準卡，合聘與兼任 10 人                |
  * | #section-3 | `.visiting-profile-list`      | `figure` + `<dl>`，1 人                 |
  * | #section-3 | `.legacy-resume-list` × 2     | 無照片履歷列（英文名 + 經歷），5 + 6 人 |
  * | #section-4 | `.admin-grid`                 | 深底行政卡，3 人                        |
  *
- * ⚠️ `#section-2` is a *re-render of the same ten people* as the tail of
- * `#section-1`, not ten more members. The reference HTML does exactly this and
- * the seed SQL counts them once. Do not "fix" it into a distinct list.
+ * §1 和 §2 現在是互斥的兩份名單，這是 2026-09 依客戶要求改的。
+ *
+ * 在那之前 §1 印全部 22 人（上面一排 `.filter-tabs` 可以篩），§2 再把其中的
+ * 合聘＋兼任 10 人原封不動印第二次 —— 參考站的 HTML 就是這樣，移植時照做。
+ * 結果是同一頁上有兩排長得很像、字又重疊的控制項（頁內導覽的「合聘與兼任」
+ * 與篩選籤的「合聘師資」「兼任師資」），而底下是同一批人；而且 §1 的標題
+ * 寫著「專任師資」，裡面卻有 10 張合聘與兼任的卡。
+ *
+ * 現在 §1 只放專任、§2 只放合聘與兼任，篩選籤整排移除（`.local-nav` 就是
+ * 這一頁的篩選）。四個區塊剛好把 37 個人分完，每個標題都成立。
+ *
+ * ⚠️ 因此 `fullTime` 是「standard 扣掉 affiliated」而不是
+ * `category === "專任師資"`。差別在沒被認得的分類：前者仍然會落到 §1，
+ * 後者會讓它從兩個區塊裡同時消失 —— 那正是下面 `standard` 那段註解
+ * （migration 20260814090400 的約定）要防的事。
  *
  * ⚠️ Photo filenames are numbered out of step with the display order (楊子霆
  * is 13th but uses `23-…jpg`, and `13-…jpg` belongs to the visiting professor,
@@ -44,6 +54,12 @@ import type { FilterTab } from "./FilterTabs";
  * on the live DB, in which case `getFaculty()` degrades to an empty array.
  */
 
+/**
+ * §1 的主體。用於決定要不要印分類籤 —— 見下面 `showCategory` 那一行：
+ * 一整區都是專任師資時，每張卡再印一次「專任師資」只是雜訊。
+ */
+const FULL_TIME = "專任師資";
+
 /** Categories whose members get their own, non-card layout. */
 const VISITING = "客座教師";
 const EMERITUS = "名譽教授";
@@ -51,9 +67,8 @@ const RETIRED = "退休師資";
 const ADMINISTRATION = "行政同仁";
 
 /**
- * `#section-2` shows the 合聘 + 兼任 subset of the standard cards. Selecting by
- * category (rather than slicing the last ten) keeps the section honest if the
- * department ever hires a thirteenth 專任 member.
+ * `#section-2` 的兩個分類。用分類選而不是切末尾十筆，系上多聘一位專任時
+ * 這一區才不會跟著跑掉。
  */
 const AFFILIATED = ["合聘師資", "兼任師資"];
 
@@ -167,6 +182,11 @@ export function Faculty({
       m.category !== ADMINISTRATION
   );
   const affiliated = standard.filter((m) => AFFILIATED.includes(m.category));
+  /**
+   * §1。刻意是「扣掉 §2」而不是「等於專任師資」—— 見檔頭的說明：認不得的
+   * 分類必須有地方落，否則它會從兩個區塊裡同時消失。
+   */
+  const fullTime = standard.filter((m) => !AFFILIATED.includes(m.category));
 
   /**
    * The chair's card spans the whole grid row, so it only reads as a feature
@@ -175,33 +195,15 @@ export function Faculty({
    * by construction instead of by luck, and takes only the first match so a
    * transitional period with two 系主任 titles cannot produce two banners.
    */
-  const chairIndex = standard.findIndex((m) => m.is_chair);
+  const chairIndex = fullTime.findIndex((m) => m.is_chair);
   const ordered =
     chairIndex > 0
       ? [
-          standard[chairIndex],
-          ...standard.filter((_, i) => i !== chairIndex),
+          fullTime[chairIndex],
+          ...fullTime.filter((_, i) => i !== chairIndex),
         ]
-      : standard;
+      : fullTime;
 
-  /**
-   * The reference site hard-codes 全部/專任師資/合聘師資/兼任師資. Deriving the
-   * same four tabs from the data in source order reproduces them exactly while
-   * keeping the tabs in sync with `category` — a hard-coded list would silently
-   * match nothing the day a category is edited.
-   *
-   * ⚠️ `value` is the raw Chinese `category` in both languages, because that is
-   * what FacultyFilterGrid compares each member against; only `label` is
-   * translated. Putting the English label in `value` would match nobody and
-   * leave the grid blank without raising anything.
-   */
-  const tabs: FilterTab[] = [
-    "全部",
-    ...standard.reduce<string[]>(
-      (acc, m) => (acc.includes(m.category) ? acc : [...acc, m.category]),
-      []
-    ),
-  ].map((value) => ({ value, label: categoryLabel(value, lang) }));
 
   return (
     <SiteShell lang={lang} variant="interior">
@@ -229,7 +231,23 @@ export function Faculty({
               heading={t.fullTime.heading}
               description={t.fullTime.description}
             />
-            <FacultyFilterGrid lang={lang} members={ordered} tabs={tabs} />
+            {/* 這裡以前是 `FacultyFilterGrid`（篩選籤＋筆數＋格線的 client
+                元件）。整區現在都是專任師資，篩選沒有東西可以篩，所以格線
+                直接由 server 元件印出來 —— 這一頁不再需要任何 client JS。 */}
+            <div className="faculty-grid">
+              {ordered.map((member) => (
+                <FacultyCard
+                  key={member.id}
+                  lang={lang}
+                  member={member}
+                  /* 只有認不得的分類才印籤。整區都是專任師資，每張卡再寫一次
+                     區塊標題已經說過的話是雜訊；但萬一有筆資料的分類不在
+                     預期內（見上面 `fullTime` 的註解），籤是它唯一會被看見的
+                     地方。 */
+                  showCategory={member.category !== FULL_TIME}
+                />
+              ))}
+            </div>
           </div>
         </section>
 

@@ -5,8 +5,7 @@ import type { Lang, Msg } from "@/lib/i18n";
  *
  * The people themselves come from the database and are already resolved into
  * one language by `lib/data.ts` — this file holds only what the page says
- * *around* them: section headings, the accordion titles, field labels, the
- * filter's accessible name and its result count.
+ * *around* them: section headings, the accordion titles and field labels.
  *
  * The `eyebrow`s (FULL-TIME FACULTY, VISITING FACULTY, …) stay literal props
  * in the component: they are Latin-caps typographic devices that already read
@@ -46,19 +45,6 @@ type FacultyDict = {
     experienceLabel: Msg;
   };
   administration: { heading: Msg };
-  filter: {
-    ariaLabel: Msg;
-    /**
-     * `.faculty-result-count`. `{n}` is replaced with the number of visible
-     * cards — see `fill()`. Chinese has no plural, so both zh values are the
-     * same sentence and only the English pair differs; keeping two keys makes
-     * "Showing 1 members" impossible rather than merely unlikely.
-     */
-    resultCount: Msg;
-    resultCountOne: Msg;
-    /** `.faculty-empty`, the row that replaces an empty grid. */
-    empty: Msg;
-  };
   /**
    * Portrait alt text. `{name}` / `{title}` / `{category}` are filled in per
    * card by `fill()`.
@@ -127,13 +113,6 @@ export const FACULTY = {
     heading: { zh: "行政同仁", en: "Administrative staff" },
   },
 
-  filter: {
-    ariaLabel: { zh: "依師資類別篩選", en: "Filter by faculty category" },
-    resultCount: { zh: "顯示 {n} 位成員", en: "Showing {n} members" },
-    resultCountOne: { zh: "顯示 {n} 位成員", en: "Showing {n} member" },
-    empty: { zh: "此分類目前沒有成員。", en: "No members in this category yet." },
-  },
-
   cardPortraitAlt: {
     zh: "{name}{title}形象照",
     en: "Portrait of {name}, {title}",
@@ -149,14 +128,15 @@ export const FACULTY = {
  * the database.
  *
  * `category` is never translated in `lib/data.ts` — it selects the card layout,
- * and both the four renderers and the filter compare it against these Chinese
- * literals — so this map is the *only* place a visitor's language reaches it.
- * The keys must therefore stay byte-identical to FACULTY_CATEGORIES in
- * app/(admin)/admin/faculty/constants.ts, plus the "全部" pseudo-category the
- * filter uses to mean "no filter".
+ * and the four renderers compare it against these Chinese literals — so this
+ * map is the *only* place a visitor's language reaches it. The keys must
+ * therefore stay byte-identical to FACULTY_CATEGORIES in
+ * app/(admin)/admin/faculty/constants.ts.
+ *
+ * 以前這裡還有一個「全部」的假分類，那是 §1 篩選籤的「不篩選」值。篩選籤在
+ * 2026-09 移除了（見 components/site/Faculty.tsx 的檔頭），它跟著一起走。
  */
 const CATEGORY_LABELS = {
-  全部: { zh: "全部", en: "All" },
   專任師資: { zh: "專任師資", en: "Full-time faculty" },
   合聘師資: { zh: "合聘師資", en: "Jointly appointed faculty" },
   兼任師資: { zh: "兼任師資", en: "Adjunct faculty" },

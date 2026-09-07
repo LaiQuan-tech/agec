@@ -93,7 +93,7 @@ VS15 強制走文字字體，是唯一在各家瀏覽器都可靠的做法（CSS
 | `LocalNav` | `nav.local-nav` 頁內 sticky 導覽（4 個 `#section-N` 錨點） |
 | `SectionTitle` | `header.inner-section-title`，**7 頁共 27 次，最高頻** |
 | `NextRoute` | `section.next-route`，7 個內頁完全相同 |
-| `FilterTabs`（client） | `.filter-tabs`。**預設只切 active 態、不篩選**（這是原站行為）；只有 faculty 傳 `onChange` |
+| `FilterTabs`（client） | `.filter-tabs`。**只切 active 態、不篩選**（這是原站行為），目前只有 /courses 在用。/faculty 那組會真的篩選的籤已於 2026-09 移除 —— 見 `Faculty.tsx` 檔頭 |
 
 ### 其他
 

@@ -9,13 +9,15 @@ import {
 } from "@/lib/i18n/faculty";
 
 /**
- * `.faculty-grid article` — the standard portrait card, used by both
- * `#section-1` (22 cards, with `.faculty-category`) and `#section-2`
- * (the same 10 合聘/兼任 people again, without it).
+ * `.faculty-grid article` — the standard portrait card, used by `#section-1`
+ * (12 專任) and `#section-2` (10 合聘與兼任).
  *
- * Deliberately NOT a client component so the server-rendered `#section-2`
- * grid can reuse it without pulling the card into the client bundle;
- * `FacultyFilterGrid` imports the very same module for `#section-1`.
+ * 兩區都不印 `.faculty-category`：每一區的標題已經說了那是什麼分類，而合聘與
+ * 兼任的 `title` 本來就寫著「兼任師資 · 國立臺灣師範大學」。唯一會印籤的是
+ * 分類認不得的資料 —— 見 Faculty.tsx 的 `showCategory`。
+ *
+ * A plain server component: this page has no client JavaScript at all since the
+ * filter came out (see Faculty.tsx's header).
  *
  * Every element here is addressed positionally by site.css and none of them
  * may gain a wrapper:
@@ -30,19 +32,11 @@ export function FacultyCard({
   lang,
   member,
   showCategory,
-  visible = true,
 }: {
   lang: Lang;
   member: Faculty;
-  /** `#section-1` renders `.faculty-category`; `#section-2` omits it. */
+  /** 印不印 `.faculty-category` 籤。兩區都是 false，除非分類認不得。 */
   showCategory: boolean;
-  /**
-   * Filter state. site.js hides cards with an inline `display:none` rather
-   * than unmounting them, and the count line reads the same array, so the
-   * card stays in the DOM either way — matching the reference exactly and
-   * keeping the grid's border cells stable.
-   */
-  visible?: boolean;
 }) {
   const t = translate(FACULTY, lang);
 
@@ -61,10 +55,7 @@ export function FacultyCard({
   const shownName = names ? names.heading : displayName(member, lang);
 
   return (
-    <article
-      className={member.is_chair ? "faculty-chair" : undefined}
-      style={visible ? undefined : { display: "none" }}
-    >
+    <article className={member.is_chair ? "faculty-chair" : undefined}>
       {/* `has-photo` clears the green fill; `no-photo` keeps it and lets the
           42px serif initial show through. The reference site has a photo for
           all 22 cards, but photo_url is nullable, so the fallback is real. */}
@@ -96,10 +87,10 @@ export function FacultyCard({
       ) : null}
       {showCategory ? (
         // `category` itself is never translated — it selects the card layout —
-        // so the chip goes through the dictionary. Unlike the reference site,
-        // nothing reads this text back: site.js matched the filter against the
-        // chip's textContent, while FacultyFilterGrid compares the data, so the
-        // visible label is free to change language.
+        // so the chip goes through the dictionary. Nothing reads this text
+        // back any more (site.js matched its filter against the chip's
+        // textContent; that filter is gone), so the label is free to change
+        // language.
         <span className="faculty-category">
           {categoryLabel(member.category, lang)}
         </span>
