@@ -55,6 +55,13 @@ export const ALUMNI = {
         href: "#section-4",
         label: { zh: "李登輝系友專區", en: "Lee Teng-hui Archive" },
       },
+      /* 校友服務。id 用 `#section-services` 而不是 `#section-5`，理由與
+         `#section-events` 相同：參考站的四個區塊佔掉 1–4，用語意化的 id 才不會
+         讓人以為它是原設計的第五段。 */
+      {
+        href: "#section-services",
+        label: { zh: "校友服務", en: "Alumni services" },
+      },
     ],
   },
   section1: {
@@ -190,6 +197,50 @@ export const ALUMNI = {
           zh: "珍貴照片與重要紀念活動紀錄",
           en: "Rare photographs and records of major commemorative events",
         },
+      },
+    ],
+  },
+
+  /**
+   * `#section-services` —— 臺大校友中心與校級的校友服務。
+   *
+   * 系友專區原本只講系上的事（傑出系友、系友動態、回娘家、捐贈、李登輝專區），
+   * 但系友真正常用的幾件事 —— 校友證、尋找校友、成績單與學位證明 —— 都在
+   * **校級**單位手上。少了這一段，系友得先猜到要去臺大首頁再往下找。
+   *
+   * ⚠️ 四條，剛好填滿 `.resource-row` 的四欄。site.css 是
+   * `repeat(4,1fr)` → `repeat(2,1fr)` → `1fr`，第五條會掉到第二列只佔一格，
+   * 右邊三格空著 —— 要加請一次加到八條，或改成別的版型。
+   *
+   * ⚠️ 硬編而不是走 `getLinks("alumni")`，與 /courses §3 的臺大課程資源同一個
+   * 判斷：這些是校級單位維護的固定入口，不是系辦會逐季調整的內容。真的要交給
+   * 後台維護的話，`links` 表已經有 section='alumni'，但那裡目前躺著兩列沒有
+   * 網址的殘留資料（系友捐贈、系友動態），要先清掉，否則會多印兩張點不下去的卡。
+   *
+   * 網址 2026-09-08 全部實測 200。
+   */
+  section5: {
+    heading: { zh: "臺大校友中心", en: "The NTU Alumni Center" },
+    description: {
+      zh: "校友證、尋找校友、成績單與學位證明申請等校級服務，由臺大校友中心提供。",
+      en: "Alumni cards, the alumni directory, transcripts and degree certificates — university-level services run by the NTU Alumni Center.",
+    },
+    links: [
+      {
+        label: { zh: "臺大校友中心", en: "NTU Alumni Center" },
+        url: "https://www.alumni.ntu.edu.tw/",
+      },
+      {
+        label: { zh: "電子校友證", en: "Digital alumni card" },
+        url: "https://www.alumni.ntu.edu.tw/AlumniServe/AlumniCardInfo",
+      },
+      {
+        label: { zh: "尋找校友", en: "Find an alum" },
+        url: "https://www.alumni.ntu.edu.tw/AlumniServe/FindAlumni",
+      },
+      {
+        label: { zh: "成績單與學位證明", en: "Transcripts and certificates" },
+        url: "https://www.aca.ntu.edu.tw/w/aca/FolksonomyAlumni",
       },
     ],
   },

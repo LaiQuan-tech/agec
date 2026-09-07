@@ -75,6 +75,8 @@ export const EYEBROWS = {
   alumniEvents: { zh: "系友回娘家", en: "HOMECOMING" },
   supportAgec: { zh: "支持農經", en: "SUPPORT AGEC" },
   leeArchive: { zh: "李登輝系友專區", en: "LEE TENG-HUI ARCHIVE" },
+  /** 值＝導覽標籤，見檔頭的規則。 */
+  alumniServices: { zh: "校友服務", en: "ALUMNI SERVICES" },
 
   /* --- /courses --------------------------------------------------------- */
   curriculum: { zh: "各學制課程表", en: "COURSE LISTINGS" },

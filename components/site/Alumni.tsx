@@ -236,6 +236,40 @@ export function Alumni({
             </div>
           </div>
         </section>
+
+        {/* 校友服務。
+            排在最後，與 /students §4、/admissions §4、/courses §3 一樣 ——
+            `.resource-row` 那排外部入口在每一頁都是收尾。
+
+            `tint` 是為了接續 §4（無底色）的交錯；整頁的節奏是
+            素 → tint → 素 → 深色捐贈 → 素 → tint。
+
+            no="05"：§3 支持農經刻意沒有 SectionTitle，所以目前用掉的號碼是
+            01、02、03（回娘家）、04，接 05 不會動到任何既有區塊。 */}
+        <section className="inner-section tint" id="section-services">
+          <div className="container">
+            <SectionTitle
+              no="05"
+              eyebrow={eb.alumniServices}
+              heading={t.section5.heading}
+              description={t.section5.description}
+            />
+            {/* `.resource-row a` 自己扛儲存格的框線與 120px 最小高度，所以
+                每一格都必須是 <a>。這四條都有網址，MaybeLink 會補上
+                target="_blank" 與 rel —— 它們全部是站外。 */}
+            <div className="resource-row">
+              {t.section5.links.map((link) => (
+                <MaybeLink
+                  href={link.url}
+                  key={link.url}
+                  arrow={<span> ↗︎</span>}
+                >
+                  {link.label}
+                </MaybeLink>
+              ))}
+            </div>
+          </div>
+        </section>
       </div>
 
       <NextRoute lang={lang} />
