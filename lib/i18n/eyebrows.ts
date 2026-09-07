@@ -3,6 +3,9 @@ import type { Dict } from "./index";
 /**
  * 各頁區塊的小標（`SectionTitle` 的 `eyebrow`、`LegacyGroup` 的 `eyebrow`）。
  *
+ * ⚠️ 英文小標維持全大寫，但字**跟著英文導覽標籤走**（HISTORY、FULL-TIME、
+ * COURSE LISTINGS…），不再是另一套自己的說法。
+ *
  * ## 為什麼從硬編碼改成字典
  *
  * 移植時這些一律寫死成英文大寫，元件註解也寫著「這是參考站的拉丁大寫裝置，
@@ -14,46 +17,37 @@ import type { Dict } from "./index";
  * 這是一整個家族的標籤，而且是**客戶的文案**。集中放讓系辦能一次看完、一次
  * 改完；散在八個檔案裡，要調整語氣就得跨檔比對。
  *
- * ## 🔴 八個「不直譯」的判斷，逐條說明
+ * ## 🔴 小標一律等於頁內導覽上的那個詞
  *
- * 小標與大標在 `.inner-section-title` 的同一行上（28% 左欄放編號與小標、
- * 1fr 右欄放大標），中間隔約 400px。所以小標若直譯成與大標相同的字，畫面上
- * 就是同一行出現兩次一樣的詞 —— 英文時看不出來，因為它與中文大標是不同字集。
+ * `.local-nav` 的標籤、`SectionTitle` 的小標，兩者必須是同一個字串。讀者按下
+ * 「系所榮譽」，落點區塊的小標就要寫著「系所榮譽」。
  *
- * 以下八個的直譯正好等於它右邊的大標，改用同義但不同層次的說法：
+ * ### 這一條推翻了先前的做法，理由記在這裡
  *
- *   KEY DATES            大標「重要時程」    → 招生日程
- *   DEGREE REQUIREMENTS  大標「修業規定」    → 畢業條件
- *   FORMS                大標「常用表格」    → 表單下載
- *   FULL-TIME FACULTY    大標「專任師資」    → 師資陣容
- *   AFFILIATED FACULTY   大標「合聘與兼任師資」→ 跨域師資
- *   ADMINISTRATION       大標「行政同仁」    → 行政團隊
- *   TALKS & SEMINARS     大標「演講與研討會」→ 學術活動
- *   LEE TENG-HUI ARCHIVE 大標「李登輝系友專區」→ 典藏專區
+ * 小標與大標在 `.inner-section-title` 的同一行上（左欄 28% 放編號與小標、
+ * 右欄 1fr 放大標），中間隔約 400px。所以原本有八個小標刻意**不**直譯，改用
+ * 同義但不同層次的說法，避開同一行出現兩次一樣的詞：
  *
- * ⚠️ 這八條是我擬的，不是客戶給的字。要改回直譯（接受重複）或換別的說法，
- * 改這一個檔就好，元件不必動。
+ *   師資陣容／跨域師資／行政團隊／招生日程／畢業條件／表單下載／
+ *   學術活動／典藏專區
  *
- * ## 🔴 一條必須守住的規則：頁內導覽點下去，落點要看得到同一個詞
+ * 代價是同一個區塊出現了**三種**說法 —— 導覽一種、小標一種、大標一種。
+ * 2026-09 客戶連續兩次回報「上方摘要與下方各部分主題文字不一致」，並在
+ * 「小標重複大標」與「三個詞」之間選了前者。所以現在：
  *
- * `.local-nav` 的每一個標籤，都必須**原字**出現在它指向的那個區塊最上面 ——
- * 當那一段的小標，或當那一段的大標。二選一即可，但不能兩個都不是。
+ *   導覽「專任師資」 → 小標「專任師資」 → 大標「專任師資」
  *
- * 讀者按下「系所榮譽」，落點的區塊如果寫著「榮譽紀錄」加上一句
- * 「研究與人才，在世界舞臺持續被看見」，他會以為自己跳錯地方了 —— 三個詞
- * 講同一件事，而畫面上沒有任何一個字告訴他這裡就是他要的。
+ * ⚠️ 十三個區塊的小標因此會與同一行右側的大標重複，那是**已知且被接受的**
+ *    取捨，不是漏改。要換回「換句話說」的版本，改這一個檔就好，元件不必動 ——
+ *    但那會讓上面那條規則失效，請連同 components/site/LocalNav.tsx 的檔頭
+ *    一起改。
  *
- * 分工是這樣的：大標是長句子的區塊（/about 四段全部、/students §2 §3、
- * /alumni §1 §2⋯），導覽標籤配**小標**；大標本身就是短名詞的區塊
- * （/courses 三段、/faculty、/admissions §2⋯），導覽標籤配**大標**，小標
- * 就維持上面那種不直譯的說法。
+ * ### 唯一的例外
  *
- * 2026-09 對照過全部七頁，修掉七處對不上的：/about 四段、/admissions §1 §4、
- * /news §1。改哪一邊的原則是「保留英文那一組已經一致的講法」——
- * 例如 §3 英文本來就是 Honors／HONORS，所以動的是中文小標而不是導覽標籤。
- *
- * 縮寫算數：「合聘與兼任」對「合聘與兼任師資」、「演講」對「演講與研討會」
- * 是同一個詞的短寫，讀者不會誤會。
+ * `/faculty` §3 手風琴裡的三個小標（visitingFaculty / emeritusFaculty /
+ * retiredFaculty）沒有對應的導覽項目 —— 它們是區塊**裡面**的分組。規則管不到
+ * 它們，所以維持原本「換句話說」的寫法（國際交流／終身榮譽／退休傳承），
+ * 而且它們與各自的大標距離比區塊標題近得多，重複會更明顯。
  *
  * ## 排版
  *
@@ -64,41 +58,34 @@ import type { Dict } from "./index";
  */
 export const EYEBROWS = {
   /* --- /about ----------------------------------------------------------- */
-  ourHistory: { zh: "系史沿革", en: "OUR HISTORY" },
+  ourHistory: { zh: "系史沿革", en: "HISTORY" },
   missionVision: { zh: "使命與願景", en: "MISSION & VISION" },
   honors: { zh: "系所榮譽", en: "HONORS" },
   environment: { zh: "環境與設備", en: "ENVIRONMENT" },
 
   /* --- /admissions ------------------------------------------------------ */
   programs: { zh: "學制與班別", en: "PROGRAMS" },
-  /** 大標是「重要時程」，直譯會重複。 */
-  keyDates: { zh: "招生日程", en: "KEY DATES" },
-  whatYouWillBuild: { zh: "能力養成", en: "WHAT YOU WILL BUILD" },
+  keyDates: { zh: "重要時程", en: "KEY DATES" },
+  whatYouWillBuild: { zh: "核心能力", en: "CORE COMPETENCIES" },
   needHelp: { zh: "申請協助", en: "NEED HELP?" },
 
   /* --- /alumni ---------------------------------------------------------- */
   distinguishedAlumni: { zh: "傑出系友", en: "DISTINGUISHED ALUMNI" },
   alumniNews: { zh: "系友動態", en: "ALUMNI NEWS" },
-  alumniEvents: { zh: "活動報名", en: "ALUMNI EVENTS" },
+  alumniEvents: { zh: "系友回娘家", en: "HOMECOMING" },
   supportAgec: { zh: "支持農經", en: "SUPPORT AGEC" },
-  /** 大標是「李登輝系友專區」，直譯會重複。 */
-  leeArchive: { zh: "典藏專區", en: "LEE TENG-HUI ARCHIVE" },
+  leeArchive: { zh: "李登輝系友專區", en: "LEE TENG-HUI ARCHIVE" },
 
   /* --- /courses --------------------------------------------------------- */
-  curriculum: { zh: "課程規劃", en: "CURRICULUM" },
-  /** 大標是「修業規定」，直譯會重複。 */
-  degreeRequirements: { zh: "畢業條件", en: "DEGREE REQUIREMENTS" },
-  /** 大標是「常用表格」，直譯會重複。 */
-  forms: { zh: "表單下載", en: "FORMS" },
+  curriculum: { zh: "各學制課程表", en: "COURSE LISTINGS" },
+  degreeRequirements: { zh: "修業規定", en: "REQUIREMENTS" },
+  forms: { zh: "常用表格", en: "FORMS" },
 
   /* --- /faculty --------------------------------------------------------- */
-  /** 大標是「專任師資」，直譯會重複。 */
-  fullTimeFaculty: { zh: "師資陣容", en: "FULL-TIME FACULTY" },
-  /** 大標是「合聘與兼任師資」，直譯會重複。 */
-  affiliatedFaculty: { zh: "跨域師資", en: "AFFILIATED FACULTY" },
-  legacyVisiting: { zh: "傳承與客座", en: "LEGACY & VISITING" },
-  /** 大標是「行政同仁」，直譯會重複。 */
-  administration: { zh: "行政團隊", en: "ADMINISTRATION" },
+  fullTimeFaculty: { zh: "專任師資", en: "FULL-TIME" },
+  affiliatedFaculty: { zh: "合聘與兼任", en: "JOINTLY APPOINTED & ADJUNCT" },
+  legacyVisiting: { zh: "客座、名譽與退休", en: "VISITING, EMERITUS & RETIRED" },
+  administration: { zh: "行政同仁", en: "ADMINISTRATION" },
 
   /*
    * 手風琴的三個小標。這三個的「大標」就在同一列的右端（客座教師／名譽教授／
@@ -110,12 +97,11 @@ export const EYEBROWS = {
 
   /* --- /news ------------------------------------------------------------ */
   latestUpdates: { zh: "全部消息", en: "ALL NEWS" },
-  /** 大標是「演講與研討會」，直譯會重複。 */
-  talksSeminars: { zh: "學術活動", en: "TALKS & SEMINARS" },
+  talksSeminars: { zh: "演講與研討會", en: "TALKS AND SEMINARS" },
 
   /* --- /students -------------------------------------------------------- */
-  startHere: { zh: "從這裡開始", en: "START HERE" },
+  startHere: { zh: "新生攻略", en: "NEW STUDENTS" },
   campusLife: { zh: "校園生活", en: "CAMPUS LIFE" },
   studentAssociation: { zh: "系學會", en: "STUDENT ASSOCIATION" },
-  quickAccess: { zh: "快速連結", en: "QUICK ACCESS" },
+  quickAccess: { zh: "常用資源", en: "RESOURCES" },
 } satisfies Dict;
