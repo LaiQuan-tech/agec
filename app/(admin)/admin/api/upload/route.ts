@@ -30,6 +30,34 @@ import { NotAdminError, NotAuthenticatedError } from "@/lib/admin/errors";
  * The client's `file.type` is never trusted. Content-Type is derived from the
  * extension we allowed, so a .exe renamed to .pdf is rejected at step 2, and if
  * it somehow were not, Storage would reject the mismatch at step 3.
+ *
+ * ## 🔴 為什麼檔案不經過這個路由
+ *
+ * 這一支**只發放上傳許可，不接收檔案**。瀏覽器拿到簽章網址之後直接 PUT 到
+ * Supabase Storage。
+ *
+ * 原因是 Vercel 的 serverless function 請求主體上限是 **4.5MB**，而且那是平台
+ * 層的限制 —— 函式根本不會被執行。實測（2026-09-08，正式站）：
+ *
+ *   100KB → 307（正常走到 proxy 的登入導向）
+ *   6MB   → 413，body 是純文字 `Request Entity Too Large FUNCTION_PAYLOAD_TOO_LARGE`
+ *
+ * 舊版直接把檔案 POST 進來，所以 BUCKETS 裡宣告的 50MB 從來沒有成立過，而且
+ * 失敗時回的不是 JSON —— upload.ts 的「非 JSON 就當作登入過期」那道防護會把它
+ * 誤報成「登入狀態已過期，請重新登入」。系辦傳一份 6MB 的簡章，看到的是叫他
+ * 重新登入，重登再傳還是一樣。
+ *
+ * 三道防線一道都沒少：
+ *   1. requireAdmin() 仍在這裡，簽章網址只發給管理員
+ *   2. 副檔名白名單仍在這裡，而且**物件的 key 由伺服器決定**（uuid + 我們認可
+ *      的副檔名），瀏覽器無法指定要寫到哪個路徑
+ *   3. 真正的位元組仍然由 Supabase Storage 依 bucket 的 allowed_mime_types 與
+ *      file_size_limit 把關，且 createSignedUploadUrl 走的是**呼叫者自己的
+ *      session client**，所以 storage.objects 的 is_admin() RLS 一樣要過
+ *
+ * 唯一的差別是 size：以前伺服器拿得到位元組所以 file.size 可信，現在是瀏覽器
+ * 宣告的。這裡照樣擋（早點給出好訊息），但真正不可繞過的那道是 bucket 的
+ * file_size_limit —— 兩者的數字刻意相同，所以謊報大小換不到任何東西。
  */
 
 /** Uploads are per-request and must never be cached or statically evaluated. */
@@ -123,6 +151,9 @@ function fail(status: number, message: string) {
   return NextResponse.json({ error: message }, { status });
 }
 
+/** 瀏覽器送來的中繼資料。檔案本身不經過這裡。 */
+type SignRequest = { bucket?: unknown; name?: unknown; size?: unknown };
+
 export async function POST(request: Request) {
   let supabase;
   try {
@@ -136,44 +167,54 @@ export async function POST(request: Request) {
     throw error;
   }
 
-  const form = await request.formData();
-  const bucket = String(form.get("bucket") ?? "");
-  const file = form.get("file");
+  let body: SignRequest;
+  try {
+    body = (await request.json()) as SignRequest;
+  } catch {
+    return fail(400, "請求格式不正確。");
+  }
+
+  const bucket = String(body.bucket ?? "");
+  const name = String(body.name ?? "");
+  const size = Number(body.size);
 
   if (!isBucket(bucket)) return fail(400, "未知的儲存位置。");
-  if (!(file instanceof File) || file.size === 0) return fail(400, "沒有收到檔案。");
+  if (!name) return fail(400, "沒有收到檔名。");
+  if (!Number.isFinite(size) || size <= 0) return fail(400, "沒有收到檔案大小。");
 
   const { types, limit } = BUCKETS[bucket];
-  const ext = extensionOf(file.name);
+  const ext = extensionOf(name);
   const contentType = types[ext];
 
   if (!contentType) {
     const allowed = Object.keys(types).join("、");
     return fail(415, `不支援的檔案格式 .${ext || "（無副檔名）"}。可用：${allowed}`);
   }
-  if (file.size > limit) {
-    return fail(413, `檔案 ${(file.size / 1048576).toFixed(1)}MB，超過上限 ${limit / 1048576}MB。`);
+  if (size > limit) {
+    return fail(413, `檔案 ${(size / 1048576).toFixed(1)}MB，超過上限 ${limit / 1048576}MB。`);
   }
 
+  // ⚠️ key 一定要在這裡產生，不能讓瀏覽器指定。簽章網址是綁定單一路徑的，
+  //    路徑由客戶端決定就等於讓它挑要覆寫哪個物件。
   const key = objectKey(ext);
-  const { error } = await supabase.storage
-    .from(bucket)
-    .upload(key, file, { contentType, upsert: false });
 
-  if (error) {
-    console.error(`[admin/upload] ${bucket}/${key} failed:`, error.message);
-    return fail(502, "上傳失敗，請再試一次。");
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUploadUrl(key);
+
+  if (error || !data) {
+    console.error(`[admin/upload] sign ${bucket}/${key} failed:`, error?.message);
+    return fail(502, "無法取得上傳許可，請再試一次。");
   }
 
-  const { data } = supabase.storage.from(bucket).getPublicUrl(key);
+  const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(key);
 
   return NextResponse.json({
-    url: data.publicUrl,
-    // Echoed back so the caller can store it verbatim — this is the label a
-    // reader sees on the download link, and it is the only place the original
-    // filename survives.
-    name: file.name,
-    size: file.size,
+    /** 瀏覽器要 PUT 過去的絕對網址，token 已含在裡面。單一路徑、會過期。 */
+    signedUrl: data.signedUrl,
+    /** 上傳成功之後這個檔案的公開網址。 */
+    url: publicData.publicUrl,
+    /** 由副檔名推導，不是瀏覽器宣告的 —— PUT 的時候要原樣帶上。 */
     mime: contentType,
   });
 }
