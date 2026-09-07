@@ -1678,3 +1678,15 @@
   font-size: 16px;
   font-variant-numeric: tabular-nums;
 }
+
+/* /admissions §4 篩到一個沒有專屬資訊的學制時，接在 `.resource-row` 後面。
+ * 與 `.course-empty` 同一個處理：那一排卡片是用邊框畫出來的格線，把訊息當成
+ * 第五張卡塞進去會多畫一格框。實務上很難走到 —— 共通的卡片（program 為 null）
+ * 在每個學制底下都在。 */
+.resource-empty {
+  color: var(--muted);
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.9;
+  margin: 24px 0 0;
+}

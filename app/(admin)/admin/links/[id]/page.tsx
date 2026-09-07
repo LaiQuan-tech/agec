@@ -15,6 +15,7 @@ type Row = {
   label: string;
   label_en: string | null;
   url: string | null;
+  program: string | null;
   sort_order: number;
 };
 
@@ -35,12 +36,26 @@ export default async function EditLinkPage({
 
   const { data, error } = await supabase
     .from("links")
-    .select("id, section, label, label_en, url, sort_order")
+    .select("id, section, label, label_en, url, program, sort_order")
     .eq("id", numericId)
     .maybeSingle<Row>();
 
   if (error) console.error("[admin/links] load failed:", error.message);
   if (!data) notFound();
+
+  // 「學制」下拉的選項。與 /admissions 的學制卡讀同一張表，所以系辦改了學制
+  // 名稱，這裡的選項會跟著改 —— 但已經存進 links.program 的舊字串不會自動
+  // 跟著改（那是純文字、沒有 FK），所以表單保留了「已不在學制清單中」那一項。
+  const { data: programRows, error: programError } = await supabase
+    .from("programs")
+    .select("name")
+    .order("sort_order", { ascending: true })
+    .returns<{ name: string }[]>();
+  if (programError) {
+    console.error("[admin/links] program list failed:", programError.message);
+  }
+  const programs = (programRows ?? []).map((p) => p.name);
+
 
   // A row from a retired section has no matching option in the dropdown, so the
   // select starts empty and the staff have to make a deliberate choice.
@@ -81,12 +96,15 @@ export default async function EditLinkPage({
       <LinkForm
         action={updateLink}
         submitLabel="儲存變更"
+        programs={programs}
         initial={{
           id: data.id,
           section: editable ? data.section : "",
           label: data.label,
           label_en: data.label_en ?? "",
           url: data.url ?? "",
+          // null 轉空字串（＝共通），讓下拉維持 uncontrolled。
+          program: data.program ?? "",
           sort_order: data.sort_order,
         }}
       />

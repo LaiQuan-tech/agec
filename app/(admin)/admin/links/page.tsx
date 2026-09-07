@@ -17,6 +17,7 @@ type Row = {
   label: string;
   label_en: string | null;
   url: string | null;
+  program: string | null;
   sort_order: number;
 };
 
@@ -31,7 +32,7 @@ export default async function LinksListPage() {
   // they can see them here.
   const { data, error } = await supabase
     .from("links")
-    .select("id, section, label, label_en, url, sort_order")
+    .select("id, section, label, label_en, url, program, sort_order")
     .order("section", { ascending: true })
     .order("sort_order", { ascending: true })
     .returns<Row[]>();
@@ -81,6 +82,7 @@ export default async function LinksListPage() {
             <TH className="w-[70px]">排序</TH>
             <TH>卡片文字</TH>
             <TH>連結</TH>
+            <TH className="w-[110px]">學制</TH>
             <TH className="w-[80px]">英文</TH>
             <TH className="w-[200px]">操作</TH>
           </THead>
@@ -120,6 +122,17 @@ export default async function LinksListPage() {
                     ) : (
                       <span className="block max-w-[280px] truncate text-[13px]" title={row.url!}>
                         {row.url}
+                      </span>
+                    )}
+                  </TD>
+                  <TD className="text-[13px]">
+                    {/* 只有招生資訊的卡片會用到這一欄；其他區塊留空是正確的，
+                        所以不標記成缺漏。 */}
+                    {row.program ? (
+                      row.program
+                    ) : (
+                      <span style={{ color: "var(--muted)" }}>
+                        {row.section === "admissions" ? "共通" : "—"}
                       </span>
                     )}
                   </TD>

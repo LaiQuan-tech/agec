@@ -213,6 +213,14 @@ export type LinkItem = {
   section: "students" | "alumni" | "courses" | "admissions" | "journal";
   label: string;
   url: string | null;
+  /**
+   * /admissions §4 的學制標記，值同 `Program.name_zh`（中文）。
+   *
+   * null = 共通，每一個學制的篩選底下都看得到。其他三個 section 的卡片不分
+   * 學制，這一欄一律是 null。認不得的值不會消失，只會在「全部」底下出現 ——
+   * 打錯字看得見，比靜靜不見好。
+   */
+  program: string | null;
   sort_order: number;
 };
 
@@ -335,7 +343,9 @@ const COURSE_COLUMNS = "id, code, name, credit, ctype, program, name_en, ctype_e
 const PROGRAM_COLUMNS =
   "id, name, name_en, description, description_en, admission_url, sort_order";
 
-const LINK_COLUMNS = "id, section, label, url, sort_order, label_en";
+/** 🔴 逐一列欄位，與資料庫 schema 綁死 —— 見 PROGRAM_COLUMNS 上面的說明。 */
+const LINK_COLUMNS =
+  "id, section, label, url, program, sort_order, label_en";
 
 const CAPABILITY_COLUMNS = "id, label, sort_order, label_en";
 
@@ -407,6 +417,7 @@ function toLink(row: LinkRow, lang: Lang): LinkItem {
     section: row.section,
     label: pick(row.label, row.label_en, lang),
     url: row.url,
+    program: row.program,
     sort_order: row.sort_order,
   };
 }

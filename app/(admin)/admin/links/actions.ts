@@ -16,6 +16,7 @@ type LinkInput = {
   label: string;
   label_en: string | null;
   url: string | null;
+  program: string | null;
   sort_order: number;
 };
 
@@ -35,6 +36,10 @@ function parse(form: FormData): { values?: LinkInput; fieldErrors?: Record<strin
   const label = text(form, "label", "卡片文字", { required: true, max: 100 });
   const labelEn = text(form, "label_en", "英文卡片文字", { max: 200 });
   const url = text(form, "url", "連結網址", { max: 500 });
+  // 自由文字，不是 oneOf：值要比對 programs.name，而那是系辦可以改的顯示文字
+  // （見 migration 20260908140000 為什麼不加 FK）。用封閉列舉的話，學制改名
+  // 之後舊的值會變成「不合法」而擋住整張表單，那比讓它對不到籤更糟。
+  const program = text(form, "program", "學制", { max: 50 });
   const sortOrder = number(form, "sort_order", "排序", { min: 0, max: 9999 });
 
   const fieldErrors = collect({
@@ -42,6 +47,7 @@ function parse(form: FormData): { values?: LinkInput; fieldErrors?: Record<strin
     label: label.error,
     label_en: labelEn.error,
     url: url.error,
+    program: program.error,
     sort_order: sortOrder.error,
   });
   if (fieldErrors) return { fieldErrors };
@@ -54,6 +60,9 @@ function parse(form: FormData): { values?: LinkInput; fieldErrors?: Record<strin
       // Empty stays null; '#' is kept as-is because the seed data uses it and
       // the public card treats both the same way.
       url: url.value,
+      // 空字串收成 null，也就是「共通」—— 前台看到 null 才會在每個學制底下
+      // 都印出這張卡。存成 "" 的話它會變成一個對不到任何學制的標記。
+      program: program.value,
       sort_order: sortOrder.value ?? 0,
     },
   };

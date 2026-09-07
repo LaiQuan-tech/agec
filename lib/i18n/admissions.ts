@@ -192,6 +192,18 @@ export const ADMISSIONS = {
     ],
   },
   section4: {
+    /**
+     * §4 的學制篩選籤。只有在 `links` 真的有一筆標了學制時才會印出來 ——
+     * 見 components/site/AdmissionResources.tsx 的檔頭。所以這三條字串平常
+     * 看不到，不是死字串。
+     */
+    filterLabel: { zh: "依學制篩選申請資訊", en: "Filter application resources by program" },
+    /** 不篩選的那一籤。它的 **value** 在兩種語言都是中文的「全部」（哨兵值）。 */
+    filterAll: { zh: "全部", en: "All" },
+    filterEmpty: {
+      zh: "這個學制目前沒有專屬的申請資訊。",
+      en: "No program-specific application resources yet.",
+    },
     heading: {
       zh: "開始申請前，先找到你需要的資訊",
       en: "Find what you need before you apply",

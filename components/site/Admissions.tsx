@@ -8,6 +8,7 @@ import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
 import { SectionTitle } from "./SectionTitle";
 import { NextRoute } from "./NextRoute";
+import { AdmissionResources } from "./AdmissionResources";
 import { MaybeLink } from "./MaybeLink";
 import { padNo } from "./nav";
 
@@ -78,15 +79,30 @@ export function Admissions({
     ? capabilities.map((c) => ({ key: `db-${c.id}`, label: c.label }))
     : t.section3.capabilities.map((label, i) => ({ key: `fallback-${i}`, label }));
 
-  const resources: { label: string; url: string | null }[] = links.length
-    ? links.map((link) => ({ label: link.label, url: link.url }))
+  const resources: {
+    key: string;
+    label: string;
+    url: string | null;
+    program: string | null;
+  }[] = links.length
+    ? links.map((link) => ({
+        // key 用 id：兩張卡同名是合法的，用文字當 key 會讓 React 在其中一張
+        // 被刪掉時更新錯的節點。
+        key: `db-${link.id}`,
+        label: link.label,
+        url: link.url,
+        program: link.program,
+      }))
     // The fallback rows exist so the four-column grid never renders empty when
     // the `links` table has nothing for this section. Three of the four carry
     // a literal "#" and MaybeLink treats that as no destination; the fourth is
     // the real in-page anchor to the footer's contact block.
-    : t.section4.resourcesFallback.map((row) => ({
+    : t.section4.resourcesFallback.map((row, i) => ({
+        key: `fallback-${i}`,
         label: row.label,
         url: row.url,
+        // 備援清單是硬編的四條共通連結，沒有學制之分 —— 所以籤也不會出現。
+        program: null,
       }));
 
   return (
@@ -211,19 +227,21 @@ export function Admissions({
               eyebrow={eb.needHelp}
               heading={t.section4.heading}
             />
-            {/* Anchors, never <div>s — `.resource-row a` owns the cell border,
-                the 120px min-height and the flex alignment. */}
-            <div className="resource-row">
-              {resources.map((resource) => (
-                <MaybeLink
-                  href={resource.url}
-                  key={resource.label}
-                  arrow={<span> ↗︎</span>}
-                >
-                  {resource.label}
-                </MaybeLink>
-              ))}
-            </div>
+            {/*
+              籤與卡片一起交給 client 元件。
+
+              籤只有在 `links` 真的有一筆標了學制時才會出現 —— 沒有東西可以分
+              的時候印一排按了沒反應的按鈕，正是 /courses 那組籤被回報的問題。
+              系辦在 /admin/links 把招生簡章拆成四筆、各標一個學制之後，這一區
+              才會長出篩選。
+            */}
+            <AdmissionResources
+              lang={lang}
+              resources={resources}
+              // 籤的 value 是中文的學制名（links.program 比對的對象），
+              // label 才跟著語言走 —— 與 /courses 的學制籤同一個約定。
+              programs={cards.map((p) => ({ value: p.name_zh, label: p.name }))}
+            />
           </div>
         </section>
       </div>

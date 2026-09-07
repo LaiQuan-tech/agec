@@ -34,6 +34,7 @@
 | 14 | `migrations/20260908120000_drop_posts_and_blog.sql` | 刪除部落格殘留的 `public.posts` 資料表。🔴 blog 儲存桶**不能用 SQL 刪**（Supabase 擋住直接 delete storage.buckets，而 Management API 是單一交易，會把同一批的 drop table 一起回滾）—— 桶子另走 Storage API | ✅ 2026-09-08 |
 | 14 | `migrations/20260908120000_course_forms.sql` | 建 `course_forms` 表（/courses §3 的系上專屬表單下載卡）、RLS、明寫 grant/revoke、稽核 trigger。沒有種子資料，也沒有部署順序限制：表不存在時 `getCourseForms()` 回空陣列，前台整區不印，§3 維持原樣 | ✅ 2026-09-08 |
 | 15 | `migrations/20260908130000_programs_admission_url.sql` | `programs` 加 `admission_url` 一欄（/admissions §1 學制卡「查看招生資訊」各自的去處）。🔴 **必須在推程式碼之前跑** —— `PROGRAM_COLUMNS` 是逐一列欄位的，欄位不存在會讓學制卡、首頁招生卡與 /courses 的學制籤同時空掉 | ✅ 2026-09-08 |
+| 16 | `migrations/20260908140000_links_program.sql` | `links` 加 `program` 一欄（/admissions §4 的學制標記，null = 共通）。🔴 **必須在推程式碼之前跑** —— `LINK_COLUMNS` 是逐一列欄位的，欄位不存在會讓 /students、/courses、/admissions 三頁的 `.resource-row` 同時退回硬編備援 | ✅ 2026-09-08 |
 | 9 | **人工步驟** | 清掉 `faculty` 原本的 8 筆佔位假資料。語句在第 8 支檔案末尾的註解區塊，**先跑 select 版本確認清單再改成 delete** | ✅ 2026-08-14 |
 
 第 7、8 支必須照順序跑（seed 依賴 extend 新增的兩個欄位）。兩支都在本機
@@ -45,6 +46,16 @@ PostgreSQL 18 上連跑兩次驗證過：第二次不會產生重複列，欄位
 對得上的佔位資料，對不上的會留在表上（實測 8 筆裡有 7 筆會留下），讓師資頁
 多出幾張沒照片、分類也對不上篩選標籤的卡片。刪除不可逆，且系辦若已自行在
 後台新增過真的師資也會被同一條 `where` 掃到，所以交給人工確認。
+
+## 2026-09-08 執行紀錄（第 16 步）
+
+`20260908140000_links_program.sql` 經 Management API 執行，**在推程式碼之前**。
+驗收：欄位 `program | YES | text`；現有 18 列（admissions 4、alumni 2、
+courses 4、journal 4、students 4）的 `program` 全部是 null。
+
+全部 null 表示前台維持原本的行為：/admissions §4 的學制篩選籤**不會出現**，
+四張卡照舊。系辦在 /admin/links 把招生簡章拆成四筆、各標一個學制之後，那一排
+籤才會長出來。
 
 ## 2026-09-08 執行紀錄（第 15 步）
 
