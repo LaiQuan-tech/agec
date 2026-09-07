@@ -62,7 +62,10 @@ export default async function NewsListPage() {
             最新消息
           </h1>
           <p className="mt-1 text-[13px]" style={{ color: "var(--muted)" }}>
-            短公告用這裡。有內文的長文章請改用「部落格」。
+            {/* 這裡原本寫「有內文的長文章請改用『部落格』」——部落格已於
+                197a953 全站移除，最新消息現在就是唯一的發布管道，內文編輯器、
+                封面圖與附件都在這一頁。 */}
+            公告、演講、招生、徵才都發在這裡。可以放內文、封面圖與可下載的附件。
           </p>
         </div>
         <Link href="/admin/news/new">
