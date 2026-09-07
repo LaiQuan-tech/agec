@@ -54,6 +54,17 @@ export const ADMISSIONS = {
     },
     /** `.program-grid article>a` — placeholder link, as on the reference site. */
     cta: { zh: "查看招生資訊 →", en: "View admission details →" },
+    /**
+     * 同一顆按鈕，但目的地在站外時用的版本。
+     *
+     * 箭頭是寫死在字串裡的，不是另外一個節點 —— 這個檔開頭那條規則：拆成兩個
+     * text node 之後瀏覽器會分兩段排版，實測會讓字符位移。所以「內部用 →、
+     * 外部用 ↗︎」只能是兩條字串，不能在元件裡拼。
+     *
+     * ↗︎ 在這個站是「會離開這一頁」的承諾（見 MaybeLink），系辦把學制卡指到
+     * 教務處或在職專班自己的網站時，讀者要先知道。
+     */
+    ctaExternal: { zh: "查看招生資訊 ↗︎", en: "View admission details ↗︎" },
   },
   /**
    * Per-program copy the `programs` table cannot supply, matched on the

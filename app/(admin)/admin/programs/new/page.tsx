@@ -34,6 +34,7 @@ export default async function NewProgramPage() {
           name_en: "",
           description: "",
           description_en: "",
+          admission_url: "",
           sort_order: nextSortOrder,
         }}
       />

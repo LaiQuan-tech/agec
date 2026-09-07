@@ -16,6 +16,7 @@ type Row = {
   name_en: string | null;
   description: string | null;
   description_en: string | null;
+  admission_url: string | null;
   sort_order: number;
 };
 
@@ -32,7 +33,7 @@ export default async function ProgramsListPage() {
   // the public pages.
   const { data, error } = await supabase
     .from("programs")
-    .select("id, name, name_en, description, description_en, sort_order")
+    .select("id, name, name_en, description, description_en, admission_url, sort_order")
     .order("sort_order", { ascending: true })
     .returns<Row[]>();
 
@@ -81,6 +82,7 @@ export default async function ProgramsListPage() {
             <TH className="w-[160px]">學制名稱</TH>
             <TH className="w-[200px]">英文名稱</TH>
             <TH>簡介</TH>
+            <TH className="w-[150px]">招生連結</TH>
             <TH className="w-[80px]">英文</TH>
             <TH className="w-[130px]">操作</TH>
           </THead>
@@ -103,6 +105,23 @@ export default async function ProgramsListPage() {
                   </TD>
                   <TD style={{ color: "var(--muted)" }}>{row.name_en ?? ""}</TD>
                   <TD style={{ color: "var(--muted)" }}>{summarize(row.description)}</TD>
+                  <TD className="text-[13px]">
+                    {row.admission_url ? (
+                      // 點得到，系辦才能確認貼進來的網址是不是想要的那一頁。
+                      <a
+                        href={row.admission_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline underline-offset-2"
+                        title={row.admission_url}
+                      >
+                        已指定 ↗︎
+                      </a>
+                    ) : (
+                      // 不是錯誤：空的時候前台連到站內的招生消息，也就是今天的行為。
+                      <span style={{ color: "var(--muted)" }}>站內招生消息</span>
+                    )}
+                  </TD>
                   <TD>
                     <EnBadge filled={en.filled} total={en.total} />
                   </TD>

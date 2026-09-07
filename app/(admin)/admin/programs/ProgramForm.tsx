@@ -13,6 +13,7 @@ export type ProgramFormValues = {
   name_en: string;
   description: string;
   description_en: string;
+  admission_url: string;
   sort_order: number;
 };
 
@@ -127,6 +128,24 @@ export function ProgramForm({
               maxLength={1000}
               lang="en"
               aria-invalid={Boolean(state.fieldErrors?.description_en)}
+            />
+          </Field>
+
+          <Field
+            htmlFor="admission_url"
+            label="招生資訊連結"
+            error={state.fieldErrors?.admission_url}
+            hint="「招生資訊」頁上這張學制卡的「查看招生資訊」要連到哪裡，例如教務處這個學制的招生頁。留空的話會連到站內的招生消息清單（四個學制都一樣），跟現在的行為相同。"
+          >
+            <Input
+              id="admission_url"
+              name="admission_url"
+              type="url"
+              inputMode="url"
+              placeholder="https://…"
+              defaultValue={initial.admission_url}
+              maxLength={500}
+              aria-invalid={Boolean(state.fieldErrors?.admission_url)}
             />
           </Field>
         </>

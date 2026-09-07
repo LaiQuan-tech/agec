@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { CapabilityItem, LinkItem, Program } from "@/lib/data";
 import { translate, type Lang } from "@/lib/i18n";
 import { ADMISSIONS } from "@/lib/i18n/admissions";
@@ -137,22 +136,32 @@ export function Admissions({
                     <h4>{copy?.tagline ?? program.description}</h4>
                     <p>{copy?.methods ?? program.description}</p>
                     {/*
-                      原本是 `href="#section-2"`，也就是同一頁的「重要時程」。
-                      那在站上還沒有招生內容時是唯一能指的地方；現在 /news 有
-                      157 則招生公告（簡章、口試時間、報名系統、正備取名單），
-                      「查看招生資訊」該指的就是那裡。
+                      去處的優先序：學制自己的 `admission_url`，沒填才退回
+                      /news/category/admissions。
 
-                      四張卡指向同一個網址是刻意的：招生消息沒有「這則屬於哪個
-                      學制」的欄位，學制只寫在標題裡。與其用關鍵字猜著篩、篩錯
-                      還沒人會發現，不如四張都進同一份完整清單 —— 讀者在那一頁
-                      還有年份可以縮小範圍。
+                      四張卡本來全部指向後者。那在「站內的招生消息」這個範圍
+                      內是對的 —— 消息沒有「屬於哪個學制」的欄位，學制只寫在
+                      標題裡，用關鍵字猜著篩、篩錯還沒人會發現。但讀者要的是
+                      各自對應的招生頁（教務處的大學部招生、註冊組的碩博士班
+                      招生、在職專班自己的網站），那不是站內消息能給的答案，
+                      所以改成由系辦在 /admin/programs 逐一指定。
+
+                      退路刻意保留：欄位是空的時候行為與今天完全一樣，所以這一
+                      版上線當下畫面不會有任何改變，系辦填一個就換一個。
 
                       走 newsPath() 而不是自己拼字串：消息的網址只能有一個產生
                       處，否則哪天路由改了，這裡會變成一個沒人記得要改的死連結。
+
+                      用 MaybeLink 而不是 <Link>：系辦填進來的多半是站外網址，
+                      它會自動補上 target="_blank" 與 rel="noopener noreferrer"。
+                      箭頭跟著目的地換（站內 →、站外 ↗︎），而且兩者都是完整的
+                      字串而不是拼出來的節點 —— 見 lib/i18n/admissions.ts。
                     */}
-                    <Link href={newsPath(1, lang, "admissions")}>
-                      {t.section1.cta}
-                    </Link>
+                    <MaybeLink href={program.admission_url ?? newsPath(1, lang, "admissions")}>
+                      {program.admission_url && /^https?:\/\//.test(program.admission_url)
+                        ? t.section1.ctaExternal
+                        : t.section1.cta}
+                    </MaybeLink>
                   </article>
                 );
               })}

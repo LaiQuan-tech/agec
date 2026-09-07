@@ -187,6 +187,14 @@ export type Program = {
    */
   name_en: string | null;
   description: string | null;
+  /**
+   * /admissions §1 學制卡「查看招生資訊」的去處。
+   *
+   * null = 系辦還沒指定，前台退回 /news/category/admissions（四張卡的舊行為）。
+   * 只有一份網址、沒有 _en 版：與 links 表同一個約定 —— 標籤有中英兩份，網址
+   * 只有一份，招生頁本身通常自己就有語言切換。
+   */
+  admission_url: string | null;
   sort_order: number;
 };
 
@@ -277,6 +285,7 @@ type ProgramRow = {
   name_en: string | null;
   description: string | null;
   description_en: string | null;
+  admission_url: string | null;
   sort_order: number;
 };
 
@@ -317,8 +326,14 @@ const FACULTY_COLUMNS =
 
 const COURSE_COLUMNS = "id, code, name, credit, ctype, program, name_en, ctype_en";
 
+/**
+ * 🔴 逐一列欄位，所以它與資料庫的 schema 是綁死的：這裡有、資料庫沒有的欄位，
+ * PostgREST 會直接回錯誤，getPrograms() 回空陣列 —— 受影響的不只 /admissions
+ * 的學制卡，還有首頁的招生卡與 /courses 的學制篩選籤（籤與排序都靠它）。
+ * 所以動這個字串的 migration 一律要在推程式碼之前跑完。
+ */
 const PROGRAM_COLUMNS =
-  "id, name, name_en, description, description_en, sort_order";
+  "id, name, name_en, description, description_en, admission_url, sort_order";
 
 const LINK_COLUMNS = "id, section, label, url, sort_order, label_en";
 
@@ -381,6 +396,7 @@ function toProgram(row: ProgramRow, lang: Lang): Program {
     name_zh: row.name,
     name_en: row.name_en,
     description: pickNullable(row.description, row.description_en, lang),
+    admission_url: row.admission_url,
     sort_order: row.sort_order,
   };
 }

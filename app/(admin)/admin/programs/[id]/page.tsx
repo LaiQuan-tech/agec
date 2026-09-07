@@ -14,6 +14,7 @@ type Row = {
   name_en: string | null;
   description: string | null;
   description_en: string | null;
+  admission_url: string | null;
   sort_order: number;
 };
 
@@ -34,7 +35,7 @@ export default async function EditProgramPage({
 
   const { data, error } = await supabase
     .from("programs")
-    .select("id, name, name_en, description, description_en, sort_order")
+    .select("id, name, name_en, description, description_en, admission_url, sort_order")
     .eq("id", numericId)
     .maybeSingle<Row>();
 
@@ -72,6 +73,8 @@ export default async function EditProgramPage({
           name_en: data.name_en ?? "",
           description: data.description ?? "",
           description_en: data.description_en ?? "",
+          // null 轉空字串，讓 input 維持 uncontrolled。
+          admission_url: data.admission_url ?? "",
           sort_order: data.sort_order,
         }}
       />

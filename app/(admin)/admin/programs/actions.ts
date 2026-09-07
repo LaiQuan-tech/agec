@@ -15,6 +15,7 @@ type ProgramInput = {
   name_en: string | null;
   description: string | null;
   description_en: string | null;
+  admission_url: string | null;
   sort_order: number;
 };
 
@@ -36,6 +37,7 @@ function parse(form: FormData): { values?: ProgramInput; fieldErrors?: Record<st
   const nameEn = text(form, "name_en", "英文學制名稱", { max: 120 });
   const description = text(form, "description", "簡介", { max: 500 });
   const descriptionEn = text(form, "description_en", "英文簡介", { max: 1000 });
+  const admissionUrl = text(form, "admission_url", "招生資訊連結", { max: 500 });
   const sortOrder = number(form, "sort_order", "顯示順序", { min: 0, max: 999 });
 
   const fieldErrors = collect({
@@ -43,6 +45,7 @@ function parse(form: FormData): { values?: ProgramInput; fieldErrors?: Record<st
     name_en: nameEn.error,
     description: description.error,
     description_en: descriptionEn.error,
+    admission_url: admissionUrl.error,
     sort_order: sortOrder.error,
   });
   if (fieldErrors) return { fieldErrors };
@@ -53,6 +56,9 @@ function parse(form: FormData): { values?: ProgramInput; fieldErrors?: Record<st
       name_en: nameEn.value,
       description: description.value,
       description_en: descriptionEn.value,
+      // 空字串會被 text() 收成 null，也就是「沒指定」—— 前台看到 null 才會
+      // 退回 /news/category/admissions。存成 "" 的話那個判斷會失效。
+      admission_url: admissionUrl.value,
       // The column defaults to 0; a blank field means "no preference", not an error.
       sort_order: sortOrder.value ?? 0,
     },
