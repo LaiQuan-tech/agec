@@ -185,7 +185,14 @@ export const NEWS = {
  */
 export const NEWS_LOCAL_NAV = [
   { href: "#section-1", label: { zh: "全部消息", en: "All news" } },
-  { href: "#section-2", label: { zh: "演講", en: "Talks" } },
+  /*
+   * 「演講與研討會」而不是「演講」—— 與 §2 的大標一字不差。
+   *
+   * 兩個字的灰色連結，擺在四個字的「全部消息」旁邊，在整條 bar 上幾乎看不見
+   * （2026-09 客戶回報「容易忽略」）。字級已經從 13px 提到 15px，但兩個字就是
+   * 兩個字：這一排只有兩項，橫向空間多得是，沒有理由把它縮寫。
+   */
+  { href: "#section-2", label: { zh: "演講與研討會", en: "Talks and seminars" } },
   // #section-3…#section-5 (活動花絮 / 招生 / 徵才) used to sit here, inherited
   // from the reference site, which named three blocks it never built. LocalNav
   // dropped them at runtime because their targets do not exist, so they were
