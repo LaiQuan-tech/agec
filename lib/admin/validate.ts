@@ -135,6 +135,35 @@ export function datetimeLocal(
   return { value };
 }
 
+/**
+ * 電子信箱。空值一律視為「沒填」而不是錯誤 —— 呼叫端要不要必填自己決定。
+ *
+ * 正則刻意與 supabase/migrations/20260901120000_alumni_events.sql:204 的
+ * `alumni_registrations_email_shape` 逐字相同（把 POSIX 的 [:space:] 換成 \s）：
+ *
+ *   ^[^@\s]+@[^@\s]+\.[^@\s]+$
+ *
+ * 不做更嚴格的 RFC 比對。信箱唯一可靠的驗證方式是寄一封信過去，而這裡的目的
+ * 只是擋住「少打了 @」這種當場看得出來的錯字。
+ *
+ * ⚠️ faculty.email 這一欄**沒有**資料庫層的 CHECK（那張表是當初直接在 Dashboard
+ *    開的），所以在師資表單上這是唯一一道把關。
+ */
+export function email(
+  form: FormData,
+  key: string,
+  label: string,
+  opts: { required?: boolean; max?: number } = {}
+): { value: string | null; error?: string } {
+  const base = text(form, key, label, opts);
+  if (base.error || !base.value) return base;
+
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(base.value)) {
+    return { value: base.value, error: `${label}的格式看起來不對，請確認有 @ 與網域` };
+  }
+  return base;
+}
+
 /** Collects non-empty errors; returns undefined when everything passed. */
 export function collect(entries: Record<string, string | undefined>): FieldErrors | undefined {
   const errors: FieldErrors = {};

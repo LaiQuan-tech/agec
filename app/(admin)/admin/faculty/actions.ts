@@ -8,7 +8,7 @@ import {
   type ActionState,
 } from "@/lib/admin/action-result";
 import { revalidateFor } from "@/lib/admin/revalidate";
-import { collect, number, requireId, text } from "@/lib/admin/validate";
+import { collect, email, number, requireId, text } from "@/lib/admin/validate";
 
 type FacultyInput = {
   name: string;
@@ -18,16 +18,23 @@ type FacultyInput = {
   category: string;
   fields: string | null;
   fields_en: string | null;
+  email: string | null;
+  extension: string | null;
   experience_en: string | null;
   photo_url: string | null;
   sort_order: number;
 };
 
 /**
- * `email` exists on the table but is deliberately absent from the form:
- * getFaculty() in lib/data.ts doesn't even select it and no public component
- * renders it, so offering the field would let staff type an address that never
- * shows up anywhere — and leave them wondering why.
+ * 🔴 `email` 與 `extension` 都在表單上，而 update 是 `.update(values)` 全欄
+ * 覆寫 —— 所以 `[id]/page.tsx` 的 select 與 initial **必須**帶上這兩欄。漏掉
+ * 的話，系辦只要打開任何一位老師按下儲存，那個人的信箱就會被寫成 null，而且
+ * 畫面上不會有任何錯誤。37 個信箱會一個一個消失。
+ *
+ * （email 以前不在表單上，那時 values 裡沒有這個 key，所以 Supabase 根本不會
+ * 碰那一欄 —— 舊版的安全是這樣來的，不是因為有防護。而它造成的問題是行政同仁
+ * 的卡片只有姓名、職稱、email 三樣，從後台新增出來的必定缺一行信箱，看起來
+ * 就像「新增不了」。2026-09 補上。）
  *
  * `experience` is absent for a different reason: it is rendered (the 名譽教授
  * and 退休師資 cards use it) but has only ever been written by the 2026 seed,
@@ -51,6 +58,9 @@ function parse(form: FormData): { values?: FacultyInput; fieldErrors?: Record<st
   const category = text(form, "category", "分類", { required: true, max: 20 });
   const fields = text(form, "fields", "研究領域", { max: 200 });
   const fieldsEn = text(form, "fields_en", "英文研究領域", { max: 400 });
+  const emailValue = email(form, "email", "電子信箱", { max: 200 });
+  // 分機是 text 不是 number：實際寫法有「5501」「5501、5502」「#12345」。
+  const extension = text(form, "extension", "分機", { max: 30 });
   const experienceEn = text(form, "experience_en", "英文經歷", { max: 500 });
   const photoUrl = text(form, "photo_url", "照片網址", { max: 500 });
   const sortOrder = number(form, "sort_order", "顯示順序", { min: 0, max: 9999 });
@@ -63,6 +73,8 @@ function parse(form: FormData): { values?: FacultyInput; fieldErrors?: Record<st
     category: category.error,
     fields: fields.error,
     fields_en: fieldsEn.error,
+    email: emailValue.error,
+    extension: extension.error,
     experience_en: experienceEn.error,
     photo_url: photoUrl.error,
     sort_order: sortOrder.error,
@@ -78,6 +90,8 @@ function parse(form: FormData): { values?: FacultyInput; fieldErrors?: Record<st
       category: category.value!,
       fields: fields.value,
       fields_en: fieldsEn.value,
+      email: emailValue.value,
+      extension: extension.value,
       experience_en: experienceEn.value,
       photo_url: photoUrl.value,
       // The column defaults to 0; an empty box means "no preference", not an

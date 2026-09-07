@@ -27,6 +27,10 @@ export type FacultyFormValues = {
    */
   experience: string;
   experience_en: string;
+  /** 公開信箱。四種卡片版型裡有三種會印它（客座那一種不印）。 */
+  email: string;
+  /** 系辦分機。沒有英文版 —— 跨語言相同的識別字串，與 email 同理。 */
+  extension: string;
   photo_url: string;
   sort_order: number;
 };
@@ -243,6 +247,43 @@ export function FacultyForm({
             // database. Carrying the current value keeps saving a no-op.
             <input type="hidden" name="experience_en" value={initial.experience_en} />
           )}
+
+          {/* 聯絡方式一列兩欄。放在照片網址之前 —— 卡片上這兩樣印在一起，
+              表單的順序跟著前台走。 */}
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field
+              htmlFor="email"
+              label="電子信箱"
+              error={state.fieldErrors?.email}
+              hint="會顯示在卡片上並做成 mailto 連結。行政同仁的卡片只有姓名、職稱、信箱三樣，這一欄留空前台就只剩兩行。"
+            >
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                defaultValue={initial.email}
+                maxLength={200}
+                aria-invalid={Boolean(state.fieldErrors?.email)}
+              />
+            </Field>
+
+            <Field
+              htmlFor="extension"
+              label="分機"
+              error={state.fieldErrors?.extension}
+              hint="卡片上會顯示成「分機 5501」，英文版是「Ext. 5501」。可以填多個（例如 5501、5502），留空就整行不顯示。"
+            >
+              <Input
+                id="extension"
+                name="extension"
+                defaultValue={initial.extension}
+                maxLength={30}
+                /* inputMode 不是 type="number"：分機可能含頓號或 #。 */
+                inputMode="text"
+                aria-invalid={Boolean(state.fieldErrors?.extension)}
+              />
+            </Field>
+          </div>
 
           <Field
             htmlFor="photo_url"

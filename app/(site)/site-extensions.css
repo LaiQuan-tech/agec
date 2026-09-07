@@ -52,7 +52,7 @@
   display: grid;
   /* portrait | text | field beside the chip, then filler */
   grid-template-columns: auto auto minmax(0, 1fr);
-  grid-template-rows: repeat(5, auto); /* see the warning above */
+  grid-template-rows: repeat(6, auto); /* see the warning above */
   align-content: center;
   justify-items: start;
   text-align: left; /* the portrait card centres; the banner does not */
@@ -98,8 +98,16 @@
    (It was briefly parked against the banner's right edge to fill the row; the
    client asked for it back under the details, so the whole right-hand column
    is now just breathing room.) */
-.faculty-grid article.faculty-chair > a {
+/* 第 5 列是分機，第 6 列才是 email。2026-09 加分機時把 email 從第 5 列往下推
+   一列，上面的 `repeat(6, auto)` 就是為此從 5 改成 6 的 —— 兩者必須一起改。
+   系主任沒填分機時這一列沒有內容，auto 軌道會收成 0（只留 2px 的 row-gap）。 */
+.faculty-grid article.faculty-chair > .faculty-ext {
   grid-area: 5 / 2 / 6 / 4;
+  justify-self: start;
+  margin-top: 14px;
+}
+.faculty-grid article.faculty-chair > a {
+  grid-area: 6 / 2 / 7 / 4;
   justify-self: start;
   position: static;
   inset: auto;
@@ -618,6 +626,7 @@
 .desktop-nav span,
 .eyebrow,
 .faculty-field,
+.faculty-grid .faculty-ext,
 .faculty-grid article.faculty-resume-card>p.faculty-english-name,
 .faculty-no,
 .filter-tabs a,
@@ -1477,4 +1486,42 @@
   line-height: 1.9;
   margin: 0;
   padding: 40px 0;
+}
+
+/* ==========================================================================
+   分機（2026-09）
+   --------------------------------------------------------------------------
+   `faculty.extension` 顯示在 /faculty 的四種卡片版型上。四種的落點與難度都
+   不同，理由寫在各自的 JSX 註解裡；這裡只負責樣式。
+
+   ⚠️ 這個 class 刻意不寫全域規則，一律用祖先選擇器限定。`.admin-grid` 是深底
+   區塊、`.legacy-career` 已有自己的 11px 灰字、客座那個版型走 <dl> 完全不需要
+   新樣式 —— 一條共用的顏色會在深底那一區變成看不見的深灰。
+
+   ⚠️ 不要改 `.admin-grid p` / `.admin-grid a` 那幾條 site.css 的規則：它們與
+   `.name-list` 共用選擇器群組，/alumni 會被連帶影響。
+   ========================================================================== */
+
+/* 標準卡（專任／合聘／兼任）。`.faculty-field` 的同類，排在它下面一行。
+   字級由上面的易讀性表統一給 14px。 */
+.faculty-grid .faculty-ext {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 名譽／退休。父層 `.legacy-career p` 已經給了顏色與字級，這裡只要把它跟上面
+   的經歷段落隔開。沒有經歷的人（experience 為 null）它就是這一格唯一的內容，
+   margin-top 也不會造成問題。 */
+.legacy-career .faculty-ext {
+  margin-top: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 行政同仁（深底）。顏色沿用 `.admin-grid p` 的 #ffffff8c，這裡只給間距 ——
+   `.admin-grid a` 自己有 margin-top:35px，所以下方的 email 不會貼上來。 */
+.admin-grid .faculty-ext {
+  margin-top: 10px;
+  font-variant-numeric: tabular-nums;
 }

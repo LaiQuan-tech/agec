@@ -25,7 +25,15 @@ import { ADMIN_ROLES, ROLE_LABEL, type AdminRoleValue } from "./constants";
 function Pending({ label, busy }: { label: string; busy: string }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="ghost" size="sm" disabled={pending}>
+    // whitespace-nowrap：這幾顆按鈕都在窄格子裡，沒有它「更新」會斷成直排的
+    // 兩個字（Button 的 inline-flex 不會阻止換行）。
+    <Button
+      type="submit"
+      variant="ghost"
+      size="sm"
+      disabled={pending}
+      className="whitespace-nowrap"
+    >
       {pending ? busy : label}
     </Button>
   );
@@ -56,7 +64,13 @@ export function RowActions({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center gap-1">
+      {/* 改層級自成一列，三個破壞性動作另成一列。
+          ⚠️ 不要把四個動作放回同一個 flex-wrap 列：共用的 Select 內建 w-full
+          （components/admin/ui/Input.tsx 的 CONTROL），在一列裡會撐開到吃掉
+          整格寬度，把「更新」擠成直排的兩個字、再把後面三顆按鈕推出表格外。
+          cn() 只是字串串接、沒有 tailwind-merge，所以再加一個 w-auto 蓋不掉
+          w-full（兩條都會輸出，誰贏看樣式表順序）—— 寬度只能用 inline style。 */}
+      <div className="flex items-center gap-1">
         {/* 改層級：select + 更新，而不是選了就送出 —— 誤觸一個下拉選單就改掉
             別人的權限太容易了。 */}
         <form action={updateRole} className="flex items-center gap-1">
@@ -65,7 +79,13 @@ export function RowActions({
             name="role"
             defaultValue={role}
             aria-label={`${email} 的層級`}
-            className="h-8 py-0 text-[13px]"
+            className="text-[13px]"
+            /* ⚠️ 尺寸只能用 inline style：cn() 是純字串串接，className 上再寫
+               一次 w-* 或 py-* 蓋不掉 CONTROL 的 w-full / py-2。
+               108px 放得下最長的「操作人員」四個字加下拉箭頭的 pr-8；
+               padding 5px 讓高度對齊旁邊 size="sm" 的按鈕（32px）。
+               不用 h-8 + py-0：固定高度配 CJK 字符會把字的下緣切掉。 */
+            style={{ width: "108px", paddingTop: "5px", paddingBottom: "5px" }}
           >
             {ADMIN_ROLES.map((r) => (
               <option key={r} value={r}>
@@ -75,7 +95,9 @@ export function RowActions({
           </Select>
           <Pending label="更新" busy="…" />
         </form>
+      </div>
 
+      <div className="flex flex-wrap items-center gap-1">
         <Button
           type="button"
           variant="ghost"
@@ -128,7 +150,11 @@ export function RowActions({
       </div>
 
       {open && (
-        <form id={`${uid}-pw`} action={pwAction} className="flex items-center gap-1">
+        <form
+          id={`${uid}-pw`}
+          action={pwAction}
+          className="flex flex-wrap items-center gap-1"
+        >
           <input type="hidden" name="user_id" value={userId} />
           <Input
             name="password"
@@ -136,7 +162,10 @@ export function RowActions({
             required
             placeholder="新密碼"
             aria-label={`${email} 的新密碼`}
-            className="h-8 py-0 text-[13px]"
+            className="text-[13px]"
+            /* 與上面的 Select 同一個理由：Input 也內建 w-full，不給寬度會撐開
+               整格、把「送出」推掉。 */
+            style={{ width: "150px", paddingTop: "5px", paddingBottom: "5px" }}
             /* type="text"：管理員是在幫別人設定，看不到自己打了什麼就沒辦法
                正確轉達。 */
             autoComplete="off"

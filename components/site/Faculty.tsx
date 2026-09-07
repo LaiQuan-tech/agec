@@ -115,10 +115,12 @@ function LegacyResumeList({
   lang,
   members,
   experienceLabel,
+  extensionLabel,
 }: {
   lang: Lang;
   members: FacultyMember[];
   experienceLabel: string;
+  extensionLabel: string;
 }) {
   return (
     <div className="legacy-resume-list">
@@ -135,12 +137,24 @@ function LegacyResumeList({
             ) : null}
             <h4>{namePair(member, lang).heading}</h4>
           </div>
+          {/*
+            ⚠️ 分機放在 .legacy-career **裡面**，不是當第四個直接子元素。
+            `.legacy-resume-list article` 是三欄 grid（姓名塊／經歷塊／mailto），
+            多一個直接子元素會掉到第二列第一欄，看起來像壞掉。
+            這個 <div> 就算 experience 是 null 也一定渲染（見上面第 89-92 行的
+            說明），所以它是這個版型裡唯一安全的落點。
+          */}
           <div className="legacy-career">
             {member.experience ? (
               <>
                 <span>{experienceLabel}</span>
                 <p>{member.experience}</p>
               </>
+            ) : null}
+            {member.extension ? (
+              <p className="faculty-ext">
+                {extensionLabel} {member.extension}
+              </p>
             ) : null}
           </div>
           {member.email ? (
@@ -321,10 +335,24 @@ export function Faculty({
                         ) : null}
                         <h4>{namePair(member, lang).heading}</h4>
                         <small>{member.title}</small>
-                        {member.fields ? (
+                        {/* 一個 <dl> 裝兩組，而不是各自一個 —— 定義清單本來
+                            就是為「標籤 + 值」設計的，而這個版型已經有一個。
+                            條件是「兩者任一有值」，不是只看 fields：只有分機
+                            沒有領域時仍然要印得出來。 */}
+                        {member.fields || member.extension ? (
                           <dl>
-                            <dt>{t.legacy.fieldsLabel}</dt>
-                            <dd>{member.fields}</dd>
+                            {member.fields ? (
+                              <>
+                                <dt>{t.legacy.fieldsLabel}</dt>
+                                <dd>{member.fields}</dd>
+                              </>
+                            ) : null}
+                            {member.extension ? (
+                              <>
+                                <dt>{t.extensionLabel}</dt>
+                                <dd>{member.extension}</dd>
+                              </>
+                            ) : null}
                           </dl>
                         ) : null}
                       </div>
@@ -339,6 +367,7 @@ export function Faculty({
                   lang={lang}
                   members={emeritus}
                   experienceLabel={t.legacy.experienceLabel}
+                  extensionLabel={t.extensionLabel}
                 />
               </LegacyGroup>
             ) : null}
@@ -348,6 +377,7 @@ export function Faculty({
                   lang={lang}
                   members={retired}
                   experienceLabel={t.legacy.experienceLabel}
+                  extensionLabel={t.extensionLabel}
                 />
               </LegacyGroup>
             ) : null}
@@ -370,6 +400,14 @@ export function Faculty({
                   {/* One name slot, same rule as the portrait card. */}
                   <h3>{displayName(member, lang)}</h3>
                   <p>{member.title}</p>
+                  {/* `.admin-grid article` 是單純的 flow 排版（沒有 grid
+                      placement、也沒有絕對定位），所以在 <p> 與 <a> 之間插一個
+                      元素是這一頁最安全的落點。 */}
+                  {member.extension ? (
+                    <p className="faculty-ext">
+                      {t.extensionLabel} {member.extension}
+                    </p>
+                  ) : null}
                   {member.email ? (
                     <a href={`mailto:${member.email}`}>{member.email}</a>
                   ) : null}
