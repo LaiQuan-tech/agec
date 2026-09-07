@@ -12,6 +12,14 @@
  * separate stylesheets on purpose (see app/layout.tsx).
  */
 
+/* The port's 14.2vw mobile hero title feels oversized on current phones.
+   Keep the same fluid scaling, with a quieter range for narrow screens. */
+@media (max-width: 600px) {
+  .hero h1 {
+    font-size: clamp(40px, 12vw, 54px);
+  }
+}
+
 /* ---------------------------------------------------------------------------
  * 系主任特寫橫幅 — the first cell of `.faculty-grid`, spanning the full row.
  *
@@ -1452,4 +1460,21 @@
 }
 .menu-utility a:hover {
   color: #fff;
+}
+
+/* 學制籤篩到一個沒有課程的學制時，取代整張 `.course-table`。
+ *
+ * 不是把訊息塞進表格裡當一列：`.course-table` 是 `role="table"`，子元素都是
+ * `role="row"`，多一個 <p> 進去對讀屏就是結構不合法的表格。
+ *
+ * 上緣那條線接住籤與內容之間的關係 —— `.course-table` 自己也只有
+ * `border-top`，所以換掉它的時候版面不會少一條線。 */
+.course-empty {
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.9;
+  margin: 0;
+  padding: 40px 0;
 }

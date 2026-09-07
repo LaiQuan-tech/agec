@@ -61,6 +61,17 @@ export const COURSES = {
      * translated.
      */
     all: { zh: "全部", en: "All" },
+    /**
+     * `.course-empty` —— 選到的學制一門課都沒有時取代整張表。
+     *
+     * 這不是防禦性的補丁：`courses` 目前只有 6 列，碩士在職專班一列都沒有，
+     * 所以這句話是預設就會被看見的。措辭刻意說「尚未列出」而不是「沒有課程」
+     * —— 系上當然有課，是這張表還沒補齊。
+     */
+    empty: {
+      zh: "這個學制的課程尚未列出。",
+      en: "Courses for this program have not been listed yet.",
+    },
   },
   /** `.course-head` — five cells, matching the five <span>s in every row. */
   table: {

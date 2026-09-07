@@ -7,7 +7,7 @@ import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
 import { SectionTitle } from "./SectionTitle";
 import { NextRoute } from "./NextRoute";
-import { FilterTabs } from "./FilterTabs";
+import { CourseTable } from "./CourseTable";
 import { MaybeLink } from "./MaybeLink";
 
 /**
@@ -59,8 +59,12 @@ export function Courses({
    * which reads 在職專班. The DB now stores 碩士在職專班 and the 國際專班 row
    * was dropped in the 2026 IA revision, so the labels are derived from
    * `programs` instead of copied — a hard-coded list would drift the moment the
-   * client edits a program name, and these tabs are cosmetic anyway (see
-   * FilterTabs: site.js never filtered the table).
+   * client edits a program name.
+   *
+   * ⚠️ 四個學制**全部列出**，即使某一個目前一門課都沒有（`courses` 現在
+   * 只有 6 列，碩士在職專班是 0）。藏起來會讓讀者以為系上沒有那個學制 ——
+   * 而 /admissions 那一頁正列著四個。空的學制由 CourseTable 印一句
+   * 「這個學制目前沒有課程」，那是資料還沒補齊，不是結構上不存在。
    *
    * `value` is the Chinese name and `label` the translated one, per FilterTab:
    * the value is a match key against `courses.program`, which is always
@@ -117,39 +121,9 @@ export function Courses({
               heading={t.section1.heading}
               description={t.section1.description}
             />
-            {/* No `onChange`: on the reference site these tabs only light up. */}
-            <FilterTabs tabs={tabs} ariaLabel={t.tabs.ariaLabel} />
-            {/* `.course-table` is a 6-column grid declared on `.course-head`
-                and on `.course-table>a` directly — every row must be an <a>
-                holding exactly five <span>s plus the trailing <i>, or the
-                columns stop lining up. */}
-            <div className="course-table" role="table">
-              <div className="course-head" role="row">
-                <span>{t.table.code}</span>
-                <span>{t.table.name}</span>
-                <span>{t.table.credit}</span>
-                <span>{t.table.program}</span>
-                <span>{t.table.ctype}</span>
-              </div>
-              {rows.map((course) => (
-                // Not clickable: there is no per-course page on either site and
-                // `courses` has no url column, so the reference site's
-                // `href="#"` was a row that looked like a link and scrolled to
-                // the top. MaybeLink keeps the <a> the grid needs and drops the
-                // behaviour. Give the table a destination by adding
-                // `courses.url` and passing it here.
-                <MaybeLink href={null} role="row" key={course.id}>
-                  <span>{course.code}</span>
-                  <span>{course.name}</span>
-                  <span>{course.credit}</span>
-                  {/* `program_label`, not `program`: the latter is the Chinese
-                      match key the sort above needs and would print Chinese
-                      into an otherwise English table. */}
-                  <span>{course.program_label}</span>
-                  <span>{course.ctype}</span>
-                </MaybeLink>
-              ))}
-            </div>
+            {/* 籤與表格一起交給 client 元件：這排籤現在真的會篩。
+                以前只會亮不會篩（參考站行為），見 CourseTable 的檔頭。 */}
+            <CourseTable lang={lang} rows={rows} tabs={tabs} />
           </div>
         </section>
 
