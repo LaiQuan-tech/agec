@@ -39,6 +39,7 @@ export default async function NewFacultyPage() {
           fields_en: "",
           email: "",
           extension: "",
+          homepage_url: "",
           // No Chinese 經歷 input exists, so a brand-new person never has one to
           // translate — FacultyForm hides the English box on an empty value.
           experience: "",

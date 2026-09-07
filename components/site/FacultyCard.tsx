@@ -115,6 +115,30 @@ export function FacultyCard({
           {t.extensionLabel} {member.extension}
         </span>
       ) : null}
+      {/*
+        個人網頁。
+
+        ⚠️ `.faculty-grid a` 是 `position:absolute` 釘在卡片底部的（卡片的
+        padding-bottom:70px 就是為那一條 mailto 留的），所以這一條**必須**
+        用 `.faculty-home` 把定位改回 static，否則兩條連結會疊在同一個位置。
+        規則在 site-extensions.css。
+
+        平行的 <a>，不包 wrapper —— 與分機同一份合約（見上面第 19-27 行）：
+        多一個兄弟元素沒問題，多一層包裝才會掉樣式。
+
+        站外連結，target/rel 自己給：這裡不用 MaybeLink，因為它會把沒有網址
+        的情況渲染成一個沒有 href 的 <a>，而這張卡的規則是「沒填就不印」。
+      */}
+      {member.homepage_url ? (
+        <a
+          className="faculty-home"
+          href={member.homepage_url}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {t.homepageLabel} ↗︎
+        </a>
+      ) : null}
       {member.email ? (
         <a href={`mailto:${member.email}`}>{member.email} ↗︎</a>
       ) : null}

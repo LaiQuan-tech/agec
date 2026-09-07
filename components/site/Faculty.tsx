@@ -116,11 +116,13 @@ function LegacyResumeList({
   members,
   experienceLabel,
   extensionLabel,
+  homepageLabel,
 }: {
   lang: Lang;
   members: FacultyMember[];
   experienceLabel: string;
   extensionLabel: string;
+  homepageLabel: string;
 }) {
   return (
     <div className="legacy-resume-list">
@@ -154,6 +156,21 @@ function LegacyResumeList({
             {member.extension ? (
               <p className="faculty-ext">
                 {extensionLabel} {member.extension}
+              </p>
+            ) : null}
+            {/* 個人網頁也放在 .legacy-career 裡面，理由與分機同一條：
+                `.legacy-resume-list article` 是三欄 grid，多一個直接子元素
+                會掉到第二列第一欄。 */}
+            {member.homepage_url ? (
+              <p className="faculty-home-row">
+                <a
+                  className="faculty-home"
+                  href={member.homepage_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {homepageLabel} ↗︎
+                </a>
               </p>
             ) : null}
           </div>
@@ -339,7 +356,7 @@ export function Faculty({
                             就是為「標籤 + 值」設計的，而這個版型已經有一個。
                             條件是「兩者任一有值」，不是只看 fields：只有分機
                             沒有領域時仍然要印得出來。 */}
-                        {member.fields || member.extension ? (
+                        {member.fields || member.extension || member.homepage_url ? (
                           <dl>
                             {member.fields ? (
                               <>
@@ -351,6 +368,21 @@ export function Faculty({
                               <>
                                 <dt>{t.extensionLabel}</dt>
                                 <dd>{member.extension}</dd>
+                              </>
+                            ) : null}
+                            {member.homepage_url ? (
+                              <>
+                                <dt>{t.homepageLabel}</dt>
+                                <dd>
+                                  <a
+                                    className="faculty-home"
+                                    href={member.homepage_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    {t.homepageLabel} ↗︎
+                                  </a>
+                                </dd>
                               </>
                             ) : null}
                           </dl>
@@ -368,6 +400,7 @@ export function Faculty({
                   members={emeritus}
                   experienceLabel={t.legacy.experienceLabel}
                   extensionLabel={t.extensionLabel}
+                  homepageLabel={t.homepageLabel}
                 />
               </LegacyGroup>
             ) : null}
@@ -378,6 +411,7 @@ export function Faculty({
                   members={retired}
                   experienceLabel={t.legacy.experienceLabel}
                   extensionLabel={t.extensionLabel}
+                  homepageLabel={t.homepageLabel}
                 />
               </LegacyGroup>
             ) : null}
@@ -406,6 +440,20 @@ export function Faculty({
                   {member.extension ? (
                     <p className="faculty-ext">
                       {t.extensionLabel} {member.extension}
+                    </p>
+                  ) : null}
+                  {/* 行政同仁通常沒有個人網頁，但欄位是整張表共用的 ——
+                      系辦真的填了就要看得到，靜靜吞掉才是壞的那種。 */}
+                  {member.homepage_url ? (
+                    <p className="faculty-home-row">
+                      <a
+                        className="faculty-home"
+                        href={member.homepage_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {t.homepageLabel} ↗︎
+                      </a>
                     </p>
                   ) : null}
                   {member.email ? (

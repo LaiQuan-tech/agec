@@ -36,6 +36,7 @@
 | 15 | `migrations/20260908130000_programs_admission_url.sql` | `programs` 加 `admission_url` 一欄（/admissions §1 學制卡「查看招生資訊」各自的去處）。🔴 **必須在推程式碼之前跑** —— `PROGRAM_COLUMNS` 是逐一列欄位的，欄位不存在會讓學制卡、首頁招生卡與 /courses 的學制籤同時空掉 | ✅ 2026-09-08 |
 | 16 | `migrations/20260908140000_links_program.sql` | `links` 加 `program` 一欄（/admissions §4 的學制標記，null = 共通）。🔴 **必須在推程式碼之前跑** —— `LINK_COLUMNS` 是逐一列欄位的，欄位不存在會讓 /students、/courses、/admissions 三頁的 `.resource-row` 同時退回硬編備援 | ✅ 2026-09-08 |
 | 17 | `migrations/20260908150000_documents.sql` | `course_forms` 改名為 `documents` 並加 `section` 欄（courses / admissions），讓檔案下載從課程資訊放大到全站。🔴 **必須在推程式碼之前跑** —— 表名與 `DOCUMENT_COLUMNS` 都變了 | ✅ 2026-09-08 |
+| 18 | `migrations/20260908160000_faculty_homepage.sql` | `faculty` 加 `homepage_url` 一欄（老師的個人／實驗室網頁，四種卡片版型都會印）。🔴 **必須在推程式碼之前跑** —— `FACULTY_COLUMNS` 是逐一列欄位的，欄位不存在會讓 /faculty 整頁空白 | ✅ 2026-09-08 |
 | 9 | **人工步驟** | 清掉 `faculty` 原本的 8 筆佔位假資料。語句在第 8 支檔案末尾的註解區塊，**先跑 select 版本確認清單再改成 delete** | ✅ 2026-08-14 |
 
 第 7、8 支必須照順序跑（seed 依賴 extend 新增的兩個欄位）。兩支都在本機
@@ -47,6 +48,13 @@ PostgreSQL 18 上連跑兩次驗證過：第二次不會產生重複列，欄位
 對得上的佔位資料，對不上的會留在表上（實測 8 筆裡有 7 筆會留下），讓師資頁
 多出幾張沒照片、分類也對不上篩選標籤的卡片。刪除不可逆，且系辦若已自行在
 後台新增過真的師資也會被同一條 `where` 掃到，所以交給人工確認。
+
+## 2026-09-08 執行紀錄（第 18 步）
+
+`20260908160000_faculty_homepage.sql` 經 Management API 執行，**在推程式碼之前**
+（FACULTY_COLUMNS 逐一列欄位，欄位不存在 /faculty 會整頁空白 —— 第 12 步當時
+實測過那個症狀）。驗收：`homepage_url | YES | text`；37 列全部是 null，
+所以前台維持原本的樣子，系辦在 /admin/faculty 填一個就多一行。
 
 ## 2026-09-08 執行紀錄（第 17 步）
 

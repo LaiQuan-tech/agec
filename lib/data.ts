@@ -128,6 +128,14 @@ export type Faculty = {
    * null = 沒有分機或還沒填；四種卡片版型都是「有值才印那一行」。
    */
   extension: string | null;
+  /**
+   * 老師的個人／實驗室網頁。與 `email`、`extension` 一樣是語言無關的識別
+   * 字串，所以沒有 `_en` 版本、也不經過 `pick()` —— 一個人就一個網頁，
+   * 真的有中英兩版時那一頁自己會有語言切換。
+   *
+   * null = 沒有或還沒填；四種卡片版型都是「有值才印那一行」。
+   */
+  homepage_url: string | null;
   /** Long-form career summary, 名譽教授 and 退休師資 only (11 of 37). */
   experience: string | null;
   photo_url: string | null;
@@ -332,7 +340,7 @@ const PUBLISHED = "published";
 //    **必須先在資料庫加好欄位再推程式**：欄位不存在時 PostgREST 會回錯誤，
 //    getFaculty() 依慣例回空陣列，於是 /faculty 變成一片空白而且沒有錯誤畫面。
 const FACULTY_COLUMNS =
-  "id, name, name_en, title, category, fields, email, extension, experience, photo_url, sort_order, title_en, fields_en, experience_en";
+  "id, name, name_en, title, category, fields, email, extension, homepage_url, experience, photo_url, sort_order, title_en, fields_en, experience_en";
 
 const COURSE_COLUMNS = "id, code, name, credit, ctype, program, name_en, ctype_en";
 
@@ -393,6 +401,7 @@ function toFaculty(row: FacultyRow, lang: Lang): Faculty {
     email: row.email,
     // 與 email 同列：語言無關，不經 pick()。
     extension: row.extension,
+    homepage_url: row.homepage_url,
     experience: pickNullable(row.experience, row.experience_en, lang),
     photo_url: row.photo_url,
     sort_order: row.sort_order,

@@ -63,6 +63,13 @@ type FacultyDict = {
    * lib/data.ts 的 Faculty.extension），需要翻譯的只有這個標籤。
    */
   extensionLabel: Msg;
+  /**
+   * 個人網頁那一行的字。四種卡片版型共用，所以只有一條。
+   *
+   * 是「個人網頁」而不是印出網址本身：email 印出來是因為它同時是可複製的
+   * 資訊，網址不是 —— 一長串 https:// 在 9px 的卡片底部只會換行三次。
+   */
+  homepageLabel: Msg;
 };
 
 export const FACULTY = {
@@ -135,6 +142,7 @@ export const FACULTY = {
     en: "Portrait of {name}, {category}",
   },
   extensionLabel: { zh: "分機", en: "Ext." },
+  homepageLabel: { zh: "個人網頁", en: "Personal page" },
 } satisfies FacultyDict;
 
 /**

@@ -31,6 +31,7 @@ export type FacultyFormValues = {
   email: string;
   /** 系辦分機。沒有英文版 —— 跨語言相同的識別字串，與 email 同理。 */
   extension: string;
+  homepage_url: string;
   photo_url: string;
   sort_order: number;
 };
@@ -284,6 +285,24 @@ export function FacultyForm({
               />
             </Field>
           </div>
+
+          <Field
+            htmlFor="homepage_url"
+            label="個人網頁"
+            error={state.fieldErrors?.homepage_url}
+            hint="老師自己的個人或實驗室網頁，也可以是 Google Scholar。卡片上會多一行「個人網頁 ↗︎」，點了在新分頁開啟；留空就整行不顯示。"
+          >
+            <Input
+              id="homepage_url"
+              name="homepage_url"
+              type="url"
+              inputMode="url"
+              placeholder="https://…"
+              defaultValue={initial.homepage_url}
+              maxLength={500}
+              aria-invalid={Boolean(state.fieldErrors?.homepage_url)}
+            />
+          </Field>
 
           <Field
             htmlFor="photo_url"
