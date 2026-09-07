@@ -96,7 +96,7 @@ export const ABOUT = {
   nav: {
     items: [
       { href: "#section-1", label: { zh: "系史沿革", en: "History" } },
-      { href: "#section-2", label: { zh: "目標與使命", en: "Mission & Vision" } },
+      { href: "#section-2", label: { zh: "使命與願景", en: "Mission & Vision" } },
       { href: "#section-3", label: { zh: "系所榮譽", en: "Honors" } },
       { href: "#section-4", label: { zh: "環境與設備", en: "Environment" } },
     ],

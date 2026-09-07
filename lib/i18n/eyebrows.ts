@@ -34,6 +34,27 @@ import type { Dict } from "./index";
  * ⚠️ 這八條是我擬的，不是客戶給的字。要改回直譯（接受重複）或換別的說法，
  * 改這一個檔就好，元件不必動。
  *
+ * ## 🔴 一條必須守住的規則：頁內導覽點下去，落點要看得到同一個詞
+ *
+ * `.local-nav` 的每一個標籤，都必須**原字**出現在它指向的那個區塊最上面 ——
+ * 當那一段的小標，或當那一段的大標。二選一即可，但不能兩個都不是。
+ *
+ * 讀者按下「系所榮譽」，落點的區塊如果寫著「榮譽紀錄」加上一句
+ * 「研究與人才，在世界舞臺持續被看見」，他會以為自己跳錯地方了 —— 三個詞
+ * 講同一件事，而畫面上沒有任何一個字告訴他這裡就是他要的。
+ *
+ * 分工是這樣的：大標是長句子的區塊（/about 四段全部、/students §2 §3、
+ * /alumni §1 §2⋯），導覽標籤配**小標**；大標本身就是短名詞的區塊
+ * （/courses 三段、/faculty、/admissions §2⋯），導覽標籤配**大標**，小標
+ * 就維持上面那種不直譯的說法。
+ *
+ * 2026-09 對照過全部七頁，修掉七處對不上的：/about 四段、/admissions §1 §4、
+ * /news §1。改哪一邊的原則是「保留英文那一組已經一致的講法」——
+ * 例如 §3 英文本來就是 Honors／HONORS，所以動的是中文小標而不是導覽標籤。
+ *
+ * 縮寫算數：「合聘與兼任」對「合聘與兼任師資」、「演講」對「演講與研討會」
+ * 是同一個詞的短寫，讀者不會誤會。
+ *
  * ## 排版
  *
  * `.eyebrow` / `.inner-section-title p` 是 `letter-spacing:.18em` ＋
@@ -43,10 +64,10 @@ import type { Dict } from "./index";
  */
 export const EYEBROWS = {
   /* --- /about ----------------------------------------------------------- */
-  ourHistory: { zh: "本系沿革", en: "OUR HISTORY" },
+  ourHistory: { zh: "系史沿革", en: "OUR HISTORY" },
   missionVision: { zh: "使命與願景", en: "MISSION & VISION" },
-  honors: { zh: "榮譽紀錄", en: "HONORS" },
-  environment: { zh: "教學環境", en: "ENVIRONMENT" },
+  honors: { zh: "系所榮譽", en: "HONORS" },
+  environment: { zh: "環境與設備", en: "ENVIRONMENT" },
 
   /* --- /admissions ------------------------------------------------------ */
   programs: { zh: "學制與班別", en: "PROGRAMS" },
@@ -88,7 +109,7 @@ export const EYEBROWS = {
   retiredFaculty: { zh: "退休傳承", en: "RETIRED FACULTY" },
 
   /* --- /news ------------------------------------------------------------ */
-  latestUpdates: { zh: "系上公告", en: "LATEST UPDATES" },
+  latestUpdates: { zh: "全部消息", en: "ALL NEWS" },
   /** 大標是「演講與研討會」，直譯會重複。 */
   talksSeminars: { zh: "學術活動", en: "TALKS & SEMINARS" },
 

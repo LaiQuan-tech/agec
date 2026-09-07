@@ -34,13 +34,16 @@ export const ADMISSIONS = {
   nav: {
     label: { zh: "招生資訊", en: "Admissions" },
     items: [
-      { href: "#section-1", label: { zh: "四學制入口", en: "Four programs" } },
+      { href: "#section-1", label: { zh: "學制與班別", en: "Programs" } },
       { href: "#section-2", label: { zh: "重要時程", en: "Key dates" } },
       {
         href: "#section-3",
         label: { zh: "核心能力", en: "Core competencies" },
       },
-      { href: "#section-4", label: { zh: "常見問題", en: "FAQ" } },
+      /* 「常見問題／FAQ」是錯的，不只是不一致：這一區是四條資源連結
+         （當年度招生簡章、書面資料格式、考古題專區、聯絡系辦），站上沒有
+         任何 FAQ。改成小標本來就在說的「申請協助」。 */
+      { href: "#section-4", label: { zh: "申請協助", en: "Need help?" } },
     ],
   },
   section1: {
@@ -160,7 +163,10 @@ export const ADMISSIONS = {
   section3: {
     heading: {
       zh: "在農經系建立的核心能力",
-      en: "The capabilities you build at AGEC",
+      // "core competencies"，不是 "capabilities"：頁內導覽那一格寫的是
+      // Core competencies，中文那邊「核心能力」也原字出現在大標裡。英文
+      // 用另一個同義字，等於只有英文站的讀者按下去看不到自己按的詞。
+      en: "The core competencies you build at AGEC",
     },
     /** `.capability-cloud` — 8 static tags. */
     capabilities: [

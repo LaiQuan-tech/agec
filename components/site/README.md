@@ -90,7 +90,7 @@ VS15 強制走文字字體，是唯一在各家瀏覽器都可靠的做法（CSS
 | 元件 | 對應區塊 |
 |---|---|
 | `InteriorHero` | `section.interior-hero#content`：hero 圖／影片、breadcrumb、英文小標、`<h1>`、`NN / 08`、導言 |
-| `LocalNav` | `nav.local-nav` 頁內 sticky 導覽（4 個 `#section-N` 錨點） |
+| `LocalNav` | `nav.local-nav` 頁內 sticky 導覽（4 個 `#section-N` 錨點）。🔴 標籤必須原字出現在落點區塊的小標或大標上 —— 見 `lib/i18n/eyebrows.ts` 檔頭 |
 | `SectionTitle` | `header.inner-section-title`，**7 頁共 27 次，最高頻** |
 | `NextRoute` | `section.next-route`，7 個內頁完全相同 |
 | `FilterTabs`（client） | `.filter-tabs`。**只切 active 態、不篩選**（這是原站行為），目前只有 /courses 在用。/faculty 那組會真的篩選的籤已於 2026-09 移除 —— 見 `Faculty.tsx` 檔頭 |

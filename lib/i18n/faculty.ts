@@ -72,7 +72,13 @@ export const FACULTY = {
   nav: {
     items: [
       { href: "#section-1", label: { zh: "專任師資", en: "Full-time" } },
-      { href: "#section-2", label: { zh: "合聘與兼任", en: "Joint & adjunct" } },
+      // 英文刻意比中文長一點："Joint & adjunct" 不是大標
+      // "Jointly appointed and adjunct faculty" 的前綴，讀者按下去看不到自己
+      // 按的詞；中文的「合聘與兼任」對「合聘與兼任師資」則是。
+      {
+        href: "#section-2",
+        label: { zh: "合聘與兼任", en: "Jointly appointed & adjunct" },
+      },
       {
         href: "#section-3",
         label: { zh: "客座、名譽與退休", en: "Visiting, emeritus & retired" },

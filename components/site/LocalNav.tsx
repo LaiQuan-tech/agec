@@ -16,6 +16,11 @@ import { SHARED } from "@/lib/i18n/shared";
  *
  * The anchors are page-level static config (each page names its own 4 sections),
  * not data, so pass them in from the page component.
+ *
+ * 🔴 **標籤必須原字出現在落點區塊的最上面** —— 當那一段的小標，或當那一段的
+ * 大標，二選一。點「系所榮譽」卻落在一個寫著「榮譽紀錄」的區塊，讀者會以為
+ * 自己跳錯了。完整規則與 2026-09 的全站對照結果寫在 lib/i18n/eyebrows.ts 的
+ * 檔頭；/sitemap 也是印同一組標籤，所以對不上的話會錯兩個地方。
  */
 
 /**
