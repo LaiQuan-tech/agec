@@ -35,12 +35,32 @@ type PostgresErrorLike = {
   details?: string | null;
 };
 
+/**
+ * 具名約束 → 給系辦看的中文。
+ *
+ * 這裡列的每一條都是資料庫上真的存在、而且從後台操作碰得到的約束（2026-09-08
+ * 對正式站的 pg_constraint 清查過）。原本那五條 posts_* 已隨部落格資料表一起
+ * 刪除，不再列出。
+ *
+ * ⚠️ 新增具名 CHECK 或 UNIQUE 的時候記得回來補一條，否則系辦會看到通用的
+ *    「資料不符合規則」，不知道要改哪個欄位。
+ *
+ * 沒有列出來的幾條是後台碰不到的：alumni_events_not_oversold 與
+ * alumni_events_seats_nonneg 由 register_for_alumni_event() 獨佔維護，
+ * admin_audit_log_action_valid 只有 trigger 寫得進去。
+ */
 const CONSTRAINT_MESSAGES: Record<string, string> = {
-  posts_slug_key: "網址代稱已被使用，請換一個",
-  posts_slug_format: "網址代稱只能用小寫英文、數字與連字號",
-  posts_status_check: "文章狀態不正確",
-  posts_published_needs_date: "設為「已發佈」時必須填寫發佈時間",
-  posts_title_not_blank: "標題不能空白",
+  news_status_check: "消息狀態不正確",
+  admin_users_role_valid: "層級只能是「管理員」或「操作人員」",
+  alumni_events_title_not_blank: "活動名稱不能空白",
+  alumni_events_slug_format: "網址代稱只能用小寫英文、數字與連字號",
+  alumni_events_status_valid: "活動狀態不正確",
+  alumni_events_time_valid: "結束時間不能早於開始時間",
+  alumni_events_capacity_nonneg: "名額不能是負數",
+  alumni_registrations_name_not_blank: "報名人姓名不能空白",
+  alumni_registrations_email_shape: "電子信箱的格式看起來不對，請確認有 @ 與網域",
+  alumni_registrations_guests_range: "同行人數超出允許範圍",
+  alumni_registrations_status_valid: "報名狀態不正確",
 };
 
 /**

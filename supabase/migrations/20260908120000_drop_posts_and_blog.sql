@@ -1,0 +1,70 @@
+-- ============================================================
+-- 移除部落格的殘留：public.posts 資料表（blog 儲存桶要另外走 Storage API）
+--
+-- 部落格在 197a953 就整站移除了（/blog 線上 404、後台入口與導覽都拿掉了），
+-- 但資料表與儲存桶還留著。兩者都沒有任何頁面或程式碼在讀。
+--
+-- 刪之前實際查過（2026-09-08，正式站）：
+--   public.posts            0 列
+--   blog 儲存桶             0 個物件
+--   相依於 posts 的 view    無
+--   指向 posts 的外鍵       無
+--
+-- 🔴 **不要順手把 public.set_updated_at() 一起刪掉。** 它雖然定義在
+--    20260814090000_posts_table.sql（部落格那一支）裡，但現在被
+--    alumni_events 與 alumni_event_registrations 兩張表的 trigger 使用。
+--    刪掉它會讓系友活動的每一次寫入都失敗。
+--    posts 自己的 posts_set_updated_at trigger 會跟著表一起消失，這是對的。
+--
+-- ⚠️ 刻意**不動 storage.objects 的四條 policy**。它們的 bucket 清單裡還留著
+--    'blog'（見 20260831120100_attachments_bucket.sql），桶子刪掉之後那個值
+--    就只是一個對不到任何東西的字串，沒有任何效果。為了拿掉一個死字串而重建
+--    四條上傳／讀取／更新／刪除的 policy，風險遠大於收益 —— 那四條是後台唯一
+--    的檔案上傳授權，寫錯一條就是靜默失效。下次真的要改那幾條時再一併清掉。
+--
+-- ⚠️ 這個專案沒有 Supabase CLI，migration 是人工貼進 Dashboard SQL Editor。
+--    跑完請回 supabase/README.md 勾記。
+--
+-- 可重複執行。
+-- ============================================================
+
+-- 不加 cascade：已經確認沒有東西相依於它，所以萬一之後有人加了 view 或外鍵，
+-- 這一行應該要大聲失敗，而不是安靜地把對方一起刪掉。
+drop table if exists public.posts;
+
+-- 🔴 **桶子不能用 SQL 刪。** Supabase 在 storage.buckets 上掛了保護：
+--
+--    ERROR: 42501: Direct deletion from storage tables is not allowed.
+--           Use the Storage API instead.
+--
+--    而 Management API 的 /database/query 是整批放在一個交易裡跑的，所以上面
+--    那行 drop table 會被這個錯誤一起回滾 —— 實測過（2026-09-08），跑完之後
+--    posts 表原封不動還在。這一支因此只做資料表，桶子另外走 Storage API。
+--
+--    刪桶子的指令（DELETE 只在桶子是空的時候會成功，這正是我們要的保險）：
+--
+--      curl -X DELETE "$SUPABASE_URL/storage/v1/bucket/blog" \
+--        -H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY"
+--
+--    或在 Dashboard 的 Storage 頁面上刪。
+
+-- ------------------------------------------------------------
+-- 驗收（唯讀）
+-- ------------------------------------------------------------
+-- 1) 兩者都不在了（桶子那半要先跑上面的 curl）：
+--    select to_regclass('public.posts') as posts_表,
+--           (select count(*) from storage.buckets where id='blog') as blog_桶;
+--    期望：null、0
+--
+-- 2) 🔴 set_updated_at() 還在，而且系友活動的兩個 trigger 還掛著：
+--    select c.relname, t.tgname
+--      from pg_trigger t
+--      join pg_class c on c.oid = t.tgrelid
+--      join pg_proc  p on p.oid = t.tgfoid
+--     where p.proname = 'set_updated_at' and not t.tgisinternal
+--     order by 1;
+--    期望：alumni_event_registrations、alumni_events 兩列（posts 那列已消失）
+--
+-- 3) 其餘四個桶都在：
+--    select id from storage.buckets order by id;
+--    期望：attachments、journal、photos、posters

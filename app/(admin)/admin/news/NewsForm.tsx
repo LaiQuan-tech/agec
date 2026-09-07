@@ -11,7 +11,7 @@ import type { NewsAttachment } from "@/lib/data";
 /**
  * The shared Tiptap editor.
  *
- * 它原本住在部落格區（`admin/posts/Editor.tsx`），因為那裡是它的第一個使用者；
+ * 它原本住在部落格區（`admin/posts/Editor.tsx`，該目錄已隨部落格移除），
  * 部落格收掉時搬到 `components/admin/ui/`，也就是其他後台 UI 元件的所在地。
  * 它本來就沒有任何跟部落格綁定的東西 —— 參數化（htmlName / jsonName /
  * ariaLabel / lang）正是為了讓一份表單掛兩次，所以搬家只是換 import 路徑。

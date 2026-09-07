@@ -25,7 +25,7 @@ import sanitizeHtml from "sanitize-html";
  *
  * ⚠️ Three things move together. Change one and check the others:
  *   1. this list
- *   2. the extensions in app/(admin)/admin/posts/Editor.tsx — the client-side
+ *   2. the extensions in components/admin/ui/Editor.tsx — the client-side
  *      half of the same contract. Every tag allowed here that the editor
  *      cannot parse is a tag it *deletes* the moment an author touches the
  *      body, which is why Table and Youtube are loaded there rather than left

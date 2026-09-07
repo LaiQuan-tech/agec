@@ -31,6 +31,7 @@
 | 11 | `migrations/20260902100000_admin_user_management.sql` | 後台兩層權限（`admin_users.role`、`admin_role()`、`is_manager()`）、`created_by`、保底 trigger、操作日誌 `admin_audit_log` 與通用稽核 trigger | ✅ 2026-09-02 |
 | 12 | `migrations/20260908100000_faculty_extension.sql` | `faculty` 加 `extension`（分機）一欄。🔴 **必須在推程式碼之前跑** —— `FACULTY_COLUMNS` 是逐一列欄位的，欄位不存在會讓 /faculty 整頁空白 | ✅ 2026-09-08 |
 | 13 | `migrations/20260908110000_capabilities.sql` | 建 `capabilities` 表（/admissions §3 的核心能力膠囊）、RLS、明寫 grant/revoke、稽核 trigger，並種入原本硬編的 8 筆。沒有部署順序限制：表不存在時前台會退回 `lib/i18n/admissions.ts` 的備援 | ✅ 2026-09-08 |
+| 14 | `migrations/20260908120000_drop_posts_and_blog.sql` | 刪除部落格殘留的 `public.posts` 資料表。🔴 blog 儲存桶**不能用 SQL 刪**（Supabase 擋住直接 delete storage.buckets，而 Management API 是單一交易，會把同一批的 drop table 一起回滾）—— 桶子另走 Storage API | ✅ 2026-09-08 |
 | 14 | `migrations/20260908120000_course_forms.sql` | 建 `course_forms` 表（/courses §3 的系上專屬表單下載卡）、RLS、明寫 grant/revoke、稽核 trigger。沒有種子資料，也沒有部署順序限制：表不存在時 `getCourseForms()` 回空陣列，前台整區不印，§3 維持原樣 | ✅ 2026-09-08 |
 | 9 | **人工步驟** | 清掉 `faculty` 原本的 8 筆佔位假資料。語句在第 8 支檔案末尾的註解區塊，**先跑 select 版本確認清單再改成 delete** | ✅ 2026-08-14 |
 
@@ -61,6 +62,33 @@ PostgreSQL 18 上連跑兩次驗證過：第二次不會產生重複列，欄位
 
 表是空的，所以前台的「系上表單」區塊還不會出現 —— 系辦到
 `/admin/forms` 新增第一筆並上傳檔案之後才會顯示。
+
+## 2026-09-08 執行紀錄（第 14 步：刪 posts 與 blog）
+
+刪之前查過：`public.posts` 0 列、blog 桶 0 個物件、沒有 view 相依於 posts、
+沒有外鍵指向 posts。
+
+🔴 **`public.set_updated_at()` 沒有一起刪，而且不能刪。** 它定義在部落格那一支
+migration（20260814090000_posts_table.sql）裡，但現在被 `alumni_events` 與
+`alumni_event_registrations` 兩張表的 trigger 使用。本機拋棄式 PostgreSQL 驗過：
+drop table 之後函式還在、兩個系友活動的 trigger 還掛著、實際 insert/update 正常。
+
+🔴 **桶子不能用 SQL 刪。** 第一次把兩件事寫在同一支 migration 裡送進 Management
+API，回的是：
+
+    ERROR: 42501: Direct deletion from storage tables is not allowed.
+           Use the Storage API instead.
+
+而 `/database/query` 是整批放在一個交易裡跑的，所以那一行 `drop table` **也被
+一起回滾了** —— 查完發現 posts 表原封不動還在。分成兩步之後才成功：SQL 只做
+資料表，桶子走 `DELETE /storage/v1/bucket/blog`（回 `Successfully deleted`）。
+
+刪完複查：posts 表為 null、blog 桶 0 個、剩下 attachments／journal／photos／
+posters 四個桶、`set_updated_at()` 仍在且兩個系友活動的 trigger 完好。
+
+程式碼端同步清掉：`lib/admin/action-result.ts` 的 `CONSTRAINT_MESSAGES` 原本
+五條全是 posts_*，已換成對正式站 pg_constraint 清查後真正存在、而且後台碰得到
+的那幾條；兩處指向已刪除目錄 `admin/posts/` 的註解也修正了。
 
 ## 2026-09-08 執行紀錄（第 12–13 步）
 
