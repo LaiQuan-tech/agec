@@ -40,7 +40,10 @@ export const STUDENTS = {
         href: "#section-3",
         label: { zh: "系學會", en: "Student association" },
       },
-      { href: "#section-4", label: { zh: "常用資源", en: "Resources" } },
+      {
+        href: "#section-4",
+        label: { zh: "學習與發展資源", en: "Learning resources" },
+      },
     ],
   },
   section1: {
@@ -160,6 +163,16 @@ export const STUDENTS = {
     ],
   },
   section4: {
-    heading: { zh: "常用資源", en: "Frequently used resources" },
+    heading: { zh: "學習與發展資源", en: "Learning and development resources" },
+    description: {
+      zh: "集中整理選課、學位考試、研究計畫、獎助學金與校園服務，陪伴學生從在學到專業發展的每一階段。",
+      en: "Course registration, degree examinations, research projects, financial aid and campus services gathered in one place to support every stage of study and professional development.",
+    },
+    learningFallback: [
+      { zh: "選課相關表格", en: "Course registration forms" },
+      { zh: "學位考試申請", en: "Degree examination application" },
+      { zh: "離校程序表格", en: "Departure clearance forms" },
+      { zh: "研究計畫申請", en: "Research project application" },
+    ],
   },
 } satisfies Dict;

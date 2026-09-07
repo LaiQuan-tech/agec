@@ -1,4 +1,4 @@
-import type { Course, LinkItem, Program } from "@/lib/data";
+import type { Course, Program } from "@/lib/data";
 import { translate, type Lang } from "@/lib/i18n";
 import { COURSES } from "@/lib/i18n/courses";
 import { EYEBROWS } from "@/lib/i18n/eyebrows";
@@ -32,27 +32,13 @@ export function Courses({
   lang,
   courses,
   programs,
-  links,
 }: {
   lang: Lang;
   courses: Course[];
   programs: Program[];
-  links: LinkItem[];
 }) {
   const t = translate(COURSES, lang);
   const eb = translate(EYEBROWS, lang);
-
-  /**
-   * `.resource-row` — 常用表格. Falls back to the reference site's four labels
-   * when the section has no rows, so the four-column grid never renders empty.
-   * DB rows arrive from lib/data.ts already resolved to the page's language,
-   * the fallback comes from the dictionary — `label` is ready to print either
-   * way, and must not be translated again here.
-   */
-  const forms: { id: number; label: string; url: string | null }[] =
-    links.length > 0
-      ? links
-      : t.formsFallback.map((label, i) => ({ id: -(i + 1), label, url: null }));
 
   /**
    * The reference site hard-codes five tabs (全部 + four programs), the last of
@@ -134,8 +120,8 @@ export function Courses({
               eyebrow={eb.degreeRequirements}
               heading={t.section2.heading}
             />
-            {/* `.document-grid` — 修業規定 PDF cards.
-                ⚠️ Static on purpose, for now. These want
+            {/* `.document-grid` — 修業規定 cards.
+                The four department PDFs are static placeholders for now. They want
                 `links.section = 'course_docs'` plus a description and a
                 file-type badge, but the `links` table has neither those rows
                 nor those columns, and `LinkItem["section"]` has no
@@ -143,23 +129,21 @@ export function Courses({
                 reference site so the port is visually complete; move it to the
                 DB once the schema gains those fields.
 
-                site.css lays this out as `repeat(4,1fr)` → `repeat(2,1fr)` →
-                `1fr`, so a fifth card is safe geometrically but breaks the 2x2
-                pairing at 1180px. */}
+                The first four are pending department PDFs; the final two are
+                maintained by NTU and therefore link to the official sites. */}
             <div className="document-grid">
               {t.documents.map((doc) => (
-                // No URLs for these PDFs anywhere yet — see the note above.
                 <MaybeLink
-                  href={null}
+                  href={doc.url || null}
                   key={doc.title}
-                  // `.document-grid i` is the gold "下載 ↗" footer, absolutely
+                  // `.document-grid i` is the gold action footer, absolutely
                   // positioned at the card's bottom-left. It is the card's call
                   // to action, so it appears only once there is a file to open.
-                  arrow={<i>{t.download} ↗︎</i>}
+                  arrow={<i>{doc.action} ↗︎</i>}
                 >
                   {/* `.document-grid>a>span` is the gold file-type badge —
                       it has to be a direct child span. */}
-                  <span>PDF</span>
+                  <span>{doc.type}</span>
                   <h3>{doc.title}</h3>
                   <p>{doc.description}</p>
                 </MaybeLink>
@@ -170,19 +154,20 @@ export function Courses({
 
         <section className="inner-section" id="section-3">
           <div className="container">
-            <SectionTitle no="03" eyebrow={eb.forms} heading={t.section3.heading} />
-            {/* `.resource-row a` carries the cell borders and the 120px min
-                height, so every cell stays an <a> — MaybeLink only removes the
-                href when the row has no url, which is most of them until the
-                office fills them in at /admin/links. */}
+            <SectionTitle
+              no="03"
+              eyebrow={eb.courseResources}
+              heading={t.section3.heading}
+              description={t.section3.description}
+            />
             <div className="resource-row">
-              {forms.map((form) => (
+              {t.section3.links.map((link) => (
                 <MaybeLink
-                  href={form.url}
-                  key={form.id}
+                  href={link.url}
+                  key={link.url}
                   arrow={<span> ↗︎</span>}
                 >
-                  {form.label}
+                  {link.label}
                 </MaybeLink>
               ))}
             </div>

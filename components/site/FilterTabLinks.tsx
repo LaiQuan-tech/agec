@@ -17,6 +17,10 @@ import type { FilterTab } from "./FilterTabs";
  * with `useState` the row would reset to 「全部」 on every navigation, which is
  * exactly what a reader would not expect after clicking one.
  *
+ * `scroll={false}` keeps the reader at the filter/list area while Next.js
+ * changes routes. Without it, a category click can park the viewport at the
+ * top of the replacement page, forcing the reader past the hero again.
+ *
  * ⚠️ site.css styles these as `.filter-tabs button` — an element selector, so
  * an `<a>` inherits none of it. The matching rules live in site-extensions.css;
  * that file and this component have to move together.
@@ -55,6 +59,7 @@ export function FilterTabLinks({
           <Link
             key={tab.value}
             href={hrefFor(tab.value)}
+            scroll={false}
             className={active ? "active" : undefined}
             aria-current={active ? "page" : undefined}
           >

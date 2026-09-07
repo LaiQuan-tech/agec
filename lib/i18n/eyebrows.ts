@@ -88,6 +88,7 @@ export const EYEBROWS = {
   curriculum: { zh: "課程規劃", en: "CURRICULUM" },
   /** 大標是「修業規定」，直譯會重複。 */
   degreeRequirements: { zh: "畢業條件", en: "DEGREE REQUIREMENTS" },
+  courseResources: { zh: "選課與查詢", en: "COURSE TOOLS" },
   /** 大標是「常用表格」，直譯會重複。 */
   forms: { zh: "表單下載", en: "FORMS" },
 
@@ -117,5 +118,5 @@ export const EYEBROWS = {
   startHere: { zh: "從這裡開始", en: "START HERE" },
   campusLife: { zh: "校園生活", en: "CAMPUS LIFE" },
   studentAssociation: { zh: "系學會", en: "STUDENT ASSOCIATION" },
-  quickAccess: { zh: "快速連結", en: "QUICK ACCESS" },
+  learningResources: { zh: "學習支援", en: "LEARNING SUPPORT" },
 } satisfies Dict;

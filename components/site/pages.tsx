@@ -210,21 +210,27 @@ export async function AdmissionsRoute({ lang }: { lang: Lang }) {
 export async function CoursesRoute({ lang }: { lang: Lang }) {
   // getPrograms supplies both the `.filter-tabs` labels and the display order
   // the course table is re-sorted into — see components/site/Courses.tsx.
-  const [courses, programs, links] = await Promise.all([
+  const [courses, programs] = await Promise.all([
     getCourses(lang),
     getPrograms(lang),
+  ]);
+
+  return <Courses lang={lang} courses={courses} programs={programs} />;
+}
+
+export async function StudentsRoute({ lang }: { lang: Lang }) {
+  const [studentLinks, learningLinks] = await Promise.all([
+    getLinks("students", lang),
     getLinks("courses", lang),
   ]);
 
   return (
-    <Courses lang={lang} courses={courses} programs={programs} links={links} />
+    <Students
+      lang={lang}
+      studentLinks={studentLinks}
+      learningLinks={learningLinks}
+    />
   );
-}
-
-export async function StudentsRoute({ lang }: { lang: Lang }) {
-  const links = await getLinks("students", lang);
-
-  return <Students lang={lang} links={links} />;
 }
 
 /**
@@ -238,4 +244,3 @@ export async function AlumniRoute({ lang }: { lang: Lang }) {
   const events = await getAlumniEvents(lang);
   return <Alumni lang={lang} events={events} />;
 }
-

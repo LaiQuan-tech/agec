@@ -42,7 +42,10 @@ export const COURSES = {
         label: { zh: "各學制課程表", en: "Course listings" },
       },
       { href: "#section-2", label: { zh: "修業規定", en: "Requirements" } },
-      { href: "#section-3", label: { zh: "常用表格", en: "Forms" } },
+      {
+        href: "#section-3",
+        label: { zh: "臺大課程資源", en: "NTU course resources" },
+      },
     ],
   },
   section1: {
@@ -84,9 +87,12 @@ export const COURSES = {
   section2: {
     heading: { zh: "修業規定", en: "Degree requirements" },
   },
-  /** `.document-grid` — 4 cards; a 5th breaks the 2x2 pairing at 1180px. */
+  /** `.document-grid` — four department documents plus two official NTU resources. */
   documents: [
     {
+      type: { zh: "PDF", en: "PDF" },
+      url: "",
+      action: { zh: "下載", en: "Download" },
       title: {
         zh: "大學部修業規定",
         en: "Undergraduate degree requirements",
@@ -97,6 +103,9 @@ export const COURSES = {
       },
     },
     {
+      type: { zh: "PDF", en: "PDF" },
+      url: "",
+      action: { zh: "下載", en: "Download" },
       title: {
         zh: "碩士班修業規定",
         en: "Master's degree requirements",
@@ -107,6 +116,9 @@ export const COURSES = {
       },
     },
     {
+      type: { zh: "PDF", en: "PDF" },
+      url: "",
+      action: { zh: "下載", en: "Download" },
       title: {
         zh: "博士班修業規定",
         en: "Doctoral degree requirements",
@@ -117,6 +129,9 @@ export const COURSES = {
       },
     },
     {
+      type: { zh: "PDF", en: "PDF" },
+      url: "",
+      action: { zh: "下載", en: "Download" },
       title: {
         zh: "在職專班修業規定",
         en: "Executive master's degree requirements",
@@ -126,22 +141,60 @@ export const COURSES = {
         en: "Course scheduling, independent study and graduation requirements",
       },
     },
+    {
+      type: { zh: "臺大教務處", en: "NTU Academic Affairs" },
+      url: "https://gra108.aca.ntu.edu.tw/graVoxCourse/index.php",
+      action: { zh: "前往查詢", en: "Open website" },
+      title: {
+        zh: "必修科目及應修學分查詢",
+        en: "Required courses and credits",
+      },
+      description: {
+        zh: "依入學年度與學制查詢系所必修科目、應修學分及相關規定",
+        en: "Look up required courses, credits and related rules by entry year and degree level.",
+      },
+    },
+    {
+      type: { zh: "臺大共同教育中心", en: "NTU Center for General Education" },
+      url: "https://cge.ntu.edu.tw/cp_n_199444.html",
+      action: { zh: "查看規定", en: "View requirements" },
+      title: {
+        zh: "通識課程修習與指定領域",
+        en: "General education requirements and designated areas",
+      },
+      description: {
+        zh: "查看通識學分、各院系指定領域、充抵與學分採計規定",
+        en: "Review general education credits, designated areas, substitutions and credit-recognition rules.",
+      },
+    },
   ],
-  /** `.document-grid>a>i` — the download affordance on each PDF card. */
-  // Arrow lives on MaybeLink, not here — see students.ts section2.cta.
-  download: { zh: "下載", en: "Download" },
   section3: {
-    heading: { zh: "常用表格", en: "Forms" },
+    heading: { zh: "臺大課程資源", en: "NTU course resources" },
+    description: {
+      zh: "從選課公告、課程查詢到課程地圖，集中連結臺大教務處提供的官方系統。必修科目與應修學分可於上方「修業規定」查詢。",
+      en: "Official NTU systems for course-selection notices, course searches and curriculum maps. Required courses and credits are available in Degree requirements above.",
+    },
+    links: [
+      {
+        label: { zh: "教務處選課專區", en: "Academic Affairs course-selection portal" },
+        url: "https://www.aca.ntu.edu.tw/w/aca/UAADForms_21102811111810357",
+      },
+      {
+        label: { zh: "臺大課程網 1", en: "NTU Online course search 1" },
+        url: "https://nol.ntu.edu.tw/nol/guest/index.php",
+      },
+      {
+        label: { zh: "臺大課程網 2", en: "NTU Online course search 2" },
+        url: "https://nol2.aca.ntu.edu.tw/nol/guest/index.php",
+      },
+      {
+        label: { zh: "新版臺大課程網", en: "New NTU course search" },
+        url: "https://course.ntu.edu.tw/search/quick",
+      },
+      {
+        label: { zh: "臺大課程地圖", en: "NTU curriculum map" },
+        url: "https://coursemap.aca.ntu.edu.tw/course_map_all/index.php",
+      },
+    ],
   },
-  /**
-   * `.resource-row` fallback labels, used only while `links.section='courses'`
-   * has no rows. Rows that do come from the DB are already in the right
-   * language and must not be translated again here.
-   */
-  formsFallback: [
-    { zh: "選課相關表格", en: "Course registration forms" },
-    { zh: "學位考試申請", en: "Degree examination application" },
-    { zh: "離校程序表格", en: "Departure clearance forms" },
-    { zh: "研究計畫申請", en: "Research project application" },
-  ],
 } satisfies Dict;
