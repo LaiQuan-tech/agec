@@ -223,11 +223,14 @@ export async function AdmissionsRoute({ lang }: { lang: Lang }) {
 export async function CoursesRoute({ lang }: { lang: Lang }) {
   // getPrograms supplies both the `.filter-tabs` labels and the display order
   // the course table is re-sorted into — see components/site/Courses.tsx.
-  // getDocuments 是 §3 的系上表單；表還沒建時它回空陣列，那一區就不印。
-  const [courses, programs, links, courseDocuments] = await Promise.all([
+  // getDocuments 是 §2 的系上表單；表還沒建時它回空陣列，那一區就不印。
+  //
+  // ⚠️ 不再讀 getLinks("courses")。那四條（選課相關表格、學位考試申請、
+  //    離校程序表格、研究計畫申請）已經搬到 /students §4 —— 它們是臺大教務處
+  //    的表格，對學生比對課程更有意義。§3 現在是硬編的臺大官方系統入口。
+  const [courses, programs, courseDocuments] = await Promise.all([
     getCourses(lang),
     getPrograms(lang),
-    getLinks("courses", lang),
     getDocuments("courses", lang),
   ]);
 
@@ -236,16 +239,27 @@ export async function CoursesRoute({ lang }: { lang: Lang }) {
       lang={lang}
       courses={courses}
       programs={programs}
-      links={links}
       courseDocuments={courseDocuments}
     />
   );
 }
 
 export async function StudentsRoute({ lang }: { lang: Lang }) {
-  const links = await getLinks("students", lang);
+  // §4 同時收兩個 section 的連結卡：students 是原本就有的學生資源，
+  // courses 是從 /courses 搬過來的教務處表格。兩份都由系辦在 /admin/links
+  // 維護，section 決定它們落在哪一頁。
+  const [studentLinks, learningLinks] = await Promise.all([
+    getLinks("students", lang),
+    getLinks("courses", lang),
+  ]);
 
-  return <Students lang={lang} links={links} />;
+  return (
+    <Students
+      lang={lang}
+      studentLinks={studentLinks}
+      learningLinks={learningLinks}
+    />
+  );
 }
 
 /**
@@ -259,4 +273,3 @@ export async function AlumniRoute({ lang }: { lang: Lang }) {
   const events = await getAlumniEvents(lang);
   return <Alumni lang={lang} events={events} />;
 }
-

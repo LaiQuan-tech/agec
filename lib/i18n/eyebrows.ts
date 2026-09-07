@@ -79,7 +79,13 @@ export const EYEBROWS = {
   /* --- /courses --------------------------------------------------------- */
   curriculum: { zh: "各學制課程表", en: "COURSE LISTINGS" },
   degreeRequirements: { zh: "修業規定", en: "REQUIREMENTS" },
-  forms: { zh: "常用表格", en: "FORMS" },
+  /**
+   * §3 從「常用表格」改成臺大官方系統的入口之後的新小標。
+   *
+   * 值是導覽標籤那個詞（「臺大課程資源」），不是分支上原本擬的「選課與查詢」——
+   * 那會違反這個檔頭的規則。`forms` 因此沒有呼叫端了，一併移除。
+   */
+  courseResources: { zh: "臺大課程資源", en: "NTU COURSE RESOURCES" },
 
   /* --- /faculty --------------------------------------------------------- */
   fullTimeFaculty: { zh: "專任師資", en: "FULL-TIME" },
@@ -103,5 +109,6 @@ export const EYEBROWS = {
   startHere: { zh: "新生攻略", en: "NEW STUDENTS" },
   campusLife: { zh: "校園生活", en: "CAMPUS LIFE" },
   studentAssociation: { zh: "系學會", en: "STUDENT ASSOCIATION" },
-  quickAccess: { zh: "常用資源", en: "RESOURCES" },
+  /** 同上：值跟著導覽標籤走，不是分支上原本擬的「學習支援」。 */
+  learningResources: { zh: "學習與發展資源", en: "LEARNING RESOURCES" },
 } satisfies Dict;

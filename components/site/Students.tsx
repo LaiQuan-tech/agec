@@ -16,8 +16,8 @@ const CAMPUS_MAP_URL = "https://map.ntu.edu.tw/";
  * 學生專區 (/students) — route 07 / 08.
  *
  * Three of the four sections are static copy (A-class) and live in
- * lib/i18n/students.ts; only `.resource-row` in `#section-4` reads the DB via
- * getLinks("students").
+ * lib/i18n/students.ts; `.resource-row` in `#section-4` combines the DB-backed
+ * student links with the course/form links moved here from /courses.
  *
  * `.steps` and `.association-branches` are deliberately hard-coded. site.css
  * draws their dividers positionally:
@@ -31,9 +31,31 @@ const CAMPUS_MAP_URL = "https://map.ntu.edu.tw/";
  * easiest kind of regression to miss. Keep these counts at 4 and 5.
  */
 
-export function Students({ lang, links }: { lang: Lang; links: LinkItem[] }) {
+export function Students({
+  lang,
+  studentLinks,
+  learningLinks,
+}: {
+  lang: Lang;
+  studentLinks: LinkItem[];
+  learningLinks: LinkItem[];
+}) {
   const t = translate(STUDENTS, lang);
   const eb = translate(EYEBROWS, lang);
+  const resources: LinkItem[] = [
+    ...(learningLinks.length > 0
+      ? learningLinks
+      : t.section4.learningFallback.map((label, i) => ({
+          id: -(i + 1),
+          section: "courses" as const,
+          label,
+          url: null,
+          // links.program 是 /admissions §4 的學制標記；這一頁不分學制。
+          program: null,
+          sort_order: i,
+        }))),
+    ...studentLinks,
+  ];
 
   return (
     <SiteShell lang={lang} variant="interior">
@@ -126,15 +148,16 @@ export function Students({ lang, links }: { lang: Lang; links: LinkItem[] }) {
           <div className="container">
             <SectionTitle
               no="04"
-              eyebrow={eb.quickAccess}
+              eyebrow={eb.learningResources}
               heading={t.section4.heading}
+              description={t.section4.description}
             />
             {/* `.resource-row a` carries every border, min-height and hover
                 state, so a row with no url still renders an <a> — MaybeLink
                 removes only the href. `label` arrives from lib/data.ts already
                 in the page's language. */}
             <div className="resource-row">
-              {links.map((link) => (
+              {resources.map((link) => (
                 <MaybeLink
                   key={link.id}
                   href={link.url}

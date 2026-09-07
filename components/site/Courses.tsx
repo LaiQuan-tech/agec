@@ -1,4 +1,4 @@
-import type { Course, SiteDocument, LinkItem, Program } from "@/lib/data";
+import type { Course, SiteDocument, Program } from "@/lib/data";
 import { translate, type Lang } from "@/lib/i18n";
 import { COURSES } from "@/lib/i18n/courses";
 import { EYEBROWS } from "@/lib/i18n/eyebrows";
@@ -33,35 +33,19 @@ export function Courses({
   lang,
   courses,
   programs,
-  links,
   courseDocuments,
 }: {
   lang: Lang;
   courses: Course[];
   programs: Program[];
-  links: LinkItem[];
   /**
-   * 系上專屬表單。空陣列時 SiteDocuments 整區不印。
-   *
-   * ⚠️ 叫 courseDocuments 而不是 forms：下面那個 `const forms` 已經佔走這個名字，
-   * 而且是完全不同的東西 —— 它是 `.resource-row` 那排校方表格的連結。
+   * 系上表單（`documents` 表 section='courses'）。空陣列時 SiteDocuments
+   * 整區不印。掛在 §2 而不是 §3 —— §3 現在整段是臺大官方系統的入口。
    */
   courseDocuments: SiteDocument[];
 }) {
   const t = translate(COURSES, lang);
   const eb = translate(EYEBROWS, lang);
-
-  /**
-   * `.resource-row` — 常用表格. Falls back to the reference site's four labels
-   * when the section has no rows, so the four-column grid never renders empty.
-   * DB rows arrive from lib/data.ts already resolved to the page's language,
-   * the fallback comes from the dictionary — `label` is ready to print either
-   * way, and must not be translated again here.
-   */
-  const forms: { id: number; label: string; url: string | null }[] =
-    links.length > 0
-      ? links
-      : t.formsFallback.map((label, i) => ({ id: -(i + 1), label, url: null }));
 
   /**
    * The reference site hard-codes five tabs (全部 + four programs), the last of
@@ -143,8 +127,8 @@ export function Courses({
               eyebrow={eb.degreeRequirements}
               heading={t.section2.heading}
             />
-            {/* `.document-grid` — 修業規定 PDF cards.
-                ⚠️ Static on purpose, for now. These want
+            {/* `.document-grid` — 修業規定 cards.
+                The four department PDFs are static placeholders for now. They want
                 `links.section = 'course_docs'` plus a description and a
                 file-type badge, but the `links` table has neither those rows
                 nor those columns, and `LinkItem["section"]` has no
@@ -152,56 +136,56 @@ export function Courses({
                 reference site so the port is visually complete; move it to the
                 DB once the schema gains those fields.
 
-                site.css lays this out as `repeat(4,1fr)` → `repeat(2,1fr)` →
-                `1fr`, so a fifth card is safe geometrically but breaks the 2x2
-                pairing at 1180px. */}
+                The first four are pending department PDFs; the final two are
+                maintained by NTU and therefore link to the official sites. */}
             <div className="document-grid">
               {t.documents.map((doc) => (
-                // No URLs for these PDFs anywhere yet — see the note above.
                 <MaybeLink
-                  href={null}
+                  href={doc.url || null}
                   key={doc.title}
-                  // `.document-grid i` is the gold "下載 ↗" footer, absolutely
+                  // `.document-grid i` is the gold action footer, absolutely
                   // positioned at the card's bottom-left. It is the card's call
                   // to action, so it appears only once there is a file to open.
-                  arrow={<i>{t.download} ↗︎</i>}
+                  arrow={<i>{doc.action} ↗︎</i>}
                 >
                   {/* `.document-grid>a>span` is the gold file-type badge —
                       it has to be a direct child span. */}
-                  <span>PDF</span>
+                  <span>{doc.type}</span>
                   <h3>{doc.title}</h3>
                   <p>{doc.description}</p>
                 </MaybeLink>
               ))}
             </div>
-          </div>
-        </section>
 
-        <section className="inner-section" id="section-3">
-          <div className="container">
-            <SectionTitle no="03" eyebrow={eb.forms} heading={t.section3.heading} />
-
-            {/* 系上自己的表單，先出現 —— 這一頁的讀者要找的多半是這些。
-                空的時候整區（含小標）不印，§3 就維持原本的樣子。 */}
+            {/* 系上表單，接在四份修業規定與兩個臺大入口後面。
+                同一區是因為它們是同一類東西：系上自己的文件。§3 已經整段
+                讓給臺大的官方系統了，把系辦上傳的檔案放進去會讓那個標題
+                名實不符。一個檔都沒有時整區（含小標）不印。 */}
             <SiteDocuments
               lang={lang}
               documents={courseDocuments}
               heading={t.section3.forms.heading}
               description={t.section3.forms.description}
             />
+          </div>
+        </section>
 
-            {/* `.resource-row a` carries the cell borders and the 120px min
-                height, so every cell stays an <a> — MaybeLink only removes the
-                href when the row has no url, which is most of them until the
-                office fills them in at /admin/links. */}
+        <section className="inner-section" id="section-3">
+          <div className="container">
+            <SectionTitle
+              no="03"
+              eyebrow={eb.courseResources}
+              heading={t.section3.heading}
+              description={t.section3.description}
+            />
             <div className="resource-row">
-              {forms.map((form) => (
+              {t.section3.links.map((link) => (
                 <MaybeLink
-                  href={form.url}
-                  key={form.id}
+                  href={link.url}
+                  key={link.url}
                   arrow={<span> ↗︎</span>}
                 >
-                  {form.label}
+                  {link.label}
                 </MaybeLink>
               ))}
             </div>
