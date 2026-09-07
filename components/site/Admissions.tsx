@@ -1,4 +1,4 @@
-import type { CapabilityItem, LinkItem, Program } from "@/lib/data";
+import type { CapabilityItem, LinkItem, Program, SiteDocument } from "@/lib/data";
 import { translate, type Lang } from "@/lib/i18n";
 import { ADMISSIONS } from "@/lib/i18n/admissions";
 import { EYEBROWS } from "@/lib/i18n/eyebrows";
@@ -9,6 +9,7 @@ import { LocalNav } from "./LocalNav";
 import { SectionTitle } from "./SectionTitle";
 import { NextRoute } from "./NextRoute";
 import { AdmissionResources } from "./AdmissionResources";
+import { SiteDocuments } from "./SiteDocuments";
 import { MaybeLink } from "./MaybeLink";
 import { padNo } from "./nav";
 
@@ -50,6 +51,7 @@ export function Admissions({
   programs,
   links,
   capabilities,
+  documents,
 }: {
   lang: Lang;
   /** getPrograms() — 4 學制, in sort_order. */
@@ -61,6 +63,11 @@ export function Admissions({
    * 還沒建（程式先上線）或系辦把標籤全刪了，都不會留下一塊空白。
    */
   capabilities: CapabilityItem[];
+  /**
+   * getDocuments('admissions') —— §4 的招生檔案。空陣列時整區不印，§4 就是
+   * 原本那排連結卡而已。
+   */
+  documents: SiteDocument[];
 }) {
   const t = translate(ADMISSIONS, lang);
   const eb = translate(EYEBROWS, lang);
@@ -227,6 +234,15 @@ export function Admissions({
               eyebrow={eb.needHelp}
               heading={t.section4.heading}
             />
+            {/* 系上自己的檔案先出現 —— 底下那排是別的單位維護的系統。
+                一個檔都沒有時整區不印，§4 維持原樣。 */}
+            <SiteDocuments
+              lang={lang}
+              documents={documents}
+              heading={t.section4.documents.heading}
+              description={t.section4.documents.description}
+            />
+
             {/*
               籤與卡片一起交給 client 元件。
 

@@ -19,4 +19,13 @@ export const SHARED = {
   /** Language toggle in the institution bar. */
   switchLanguage: { zh: "Switch to English", en: "切換為中文" },
   languageLabel: { zh: "EN", en: "中" },
+
+  /* --- 檔案下載卡（components/site/SiteDocuments.tsx） -------------------
+   * /courses §3 與 /admissions §4 共用同一個版型，這兩個字每一頁都一樣，
+   * 所以放這裡而不是各自的頁面字典 —— 小標與說明才是每一頁自己的字。
+   */
+  /** `.document-grid>a>i` — 每張卡左下角的行動呼籲。 */
+  download: { zh: "下載", en: "Download" },
+  /** 從檔名推不出副檔名時，左上角徽章印這個。 */
+  fileBadge: { zh: "檔案", en: "FILE" },
 } satisfies Record<string, Msg>;

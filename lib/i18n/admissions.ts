@@ -193,6 +193,22 @@ export const ADMISSIONS = {
   },
   section4: {
     /**
+     * §4 的招生檔案下載區（components/site/SiteDocuments.tsx）。
+     *
+     * 這一區是為了把舊系網上的招生簡章、書面資料格式與考古題搬過來 ——
+     * 那些是系上自己的檔案，不該長期寄居在舊站。底下那排 .resource-row 則是
+     * 教務處等**別的單位**維護的系統，留在外連才是對的，不會搬。
+     *
+     * ⚠️ 一個檔都沒有時整區（含小標）不印，§4 就跟原本一模一樣。
+     */
+    documents: {
+      heading: { zh: "招生檔案", en: "Admission documents" },
+      description: {
+        zh: "簡章、書面資料格式與歷年考古題，由系辦維護，點卡片即可下載。",
+        en: "Guidelines, document formats and past examination papers — maintained by the department office.",
+      },
+    },
+    /**
      * §4 的學制篩選籤。只有在 `links` 真的有一筆標了學制時才會印出來 ——
      * 見 components/site/AdmissionResources.tsx 的檔頭。所以這三條字串平常
      * 看不到，不是死字串。

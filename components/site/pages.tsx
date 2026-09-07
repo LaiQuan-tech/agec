@@ -4,7 +4,7 @@ import {
   getAlumniEventBySlug,
   getAlumniEvents,
   getCapabilities,
-  getCourseForms,
+  getDocuments,
   getCourses,
   getFaculty,
   getLinks,
@@ -201,10 +201,12 @@ export async function FacultyRoute({ lang }: { lang: Lang }) {
  * 只剩重要時程還是硬編的 static copy（沒有對應的資料表）。
  */
 export async function AdmissionsRoute({ lang }: { lang: Lang }) {
-  const [programs, links, capabilities] = await Promise.all([
+  const [programs, links, capabilities, documents] = await Promise.all([
     getPrograms(lang),
     getLinks("admissions", lang),
     getCapabilities(lang),
+    // 招生檔案（簡章、書面資料格式、考古題）。表是空的時候 §4 不印這一區。
+    getDocuments("admissions", lang),
   ]);
 
   return (
@@ -213,6 +215,7 @@ export async function AdmissionsRoute({ lang }: { lang: Lang }) {
       programs={programs}
       links={links}
       capabilities={capabilities}
+      documents={documents}
     />
   );
 }
@@ -220,12 +223,12 @@ export async function AdmissionsRoute({ lang }: { lang: Lang }) {
 export async function CoursesRoute({ lang }: { lang: Lang }) {
   // getPrograms supplies both the `.filter-tabs` labels and the display order
   // the course table is re-sorted into — see components/site/Courses.tsx.
-  // getCourseForms 是 §3 的系上表單；表還沒建時它回空陣列，那一區就不印。
-  const [courses, programs, links, courseForms] = await Promise.all([
+  // getDocuments 是 §3 的系上表單；表還沒建時它回空陣列，那一區就不印。
+  const [courses, programs, links, courseDocuments] = await Promise.all([
     getCourses(lang),
     getPrograms(lang),
     getLinks("courses", lang),
-    getCourseForms(lang),
+    getDocuments("courses", lang),
   ]);
 
   return (
@@ -234,7 +237,7 @@ export async function CoursesRoute({ lang }: { lang: Lang }) {
       courses={courses}
       programs={programs}
       links={links}
-      courseForms={courseForms}
+      courseDocuments={courseDocuments}
     />
   );
 }

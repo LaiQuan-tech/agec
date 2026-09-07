@@ -1,10 +1,11 @@
-import type { CourseForm } from "@/lib/data";
+import type { SiteDocument } from "@/lib/data";
 import { translate, type Lang } from "@/lib/i18n";
-import { COURSES } from "@/lib/i18n/courses";
+import { SHARED } from "@/lib/i18n/shared";
 import { MaybeLink } from "./MaybeLink";
 
 /**
- * 系上專屬表單 —— /courses §3「常用表格」底下的下載卡。
+ * 檔案下載卡 —— 目前有兩個落點：/courses §3「常用表格」底下的系上表單，
+ * 與 /admissions §4「申請協助」底下的招生檔案。
  *
  * ## 為什麼是新的一區，而不是塞進既有那排連結
  *
@@ -25,9 +26,15 @@ import { MaybeLink } from "./MaybeLink";
  *
  * ## 空的時候不印任何東西
  *
- * 包含小標。表還沒建、或系辦還沒上傳任何表單時，§3 就跟今天一模一樣 ——
- * 所以 migration 與程式碼誰先上線都可以（見 lib/data.ts 的 getCourseForms）。
+ * 包含小標。表還沒建、或系辦還沒上傳任何檔案時，那一區就跟原本一模一樣 ——
+ * 所以 migration 與程式碼誰先上線都可以（見 lib/data.ts 的 getDocuments）。
  * 這也是為什麼呼叫端不需要自己判斷，直接把陣列丟進來就好。
+ *
+ * ## 文案由呼叫端給
+ *
+ * 小標與說明是每一頁自己的字（課程資訊講「系上表單」、招生資訊講「招生檔案」），
+ * 所以從 props 進來而不是在這裡挑字典 —— 這個元件只負責版型與空狀態。
+ * 唯一自己讀字典的是「下載」與推不出副檔名時的備援徽章，那兩個字每一頁都一樣。
  */
 
 /**
@@ -41,7 +48,7 @@ import { MaybeLink } from "./MaybeLink";
  * ⚠️ 用 lastIndexOf 而不是 split(".").pop()：「農經系_實習同意書.v2.pdf」
  * 這種檔名很常見，split 之後要取哪一段還是得判斷，直接找最後一個點更短。
  */
-function badgeFor(form: CourseForm, fallback: string): string {
+function badgeFor(form: SiteDocument, fallback: string): string {
   const source = form.file_name ?? form.file_url;
   if (!source) return fallback;
 
@@ -56,27 +63,33 @@ function badgeFor(form: CourseForm, fallback: string): string {
   return ext.toUpperCase();
 }
 
-export function CourseForms({
+export function SiteDocuments({
   lang,
-  forms,
+  documents,
+  heading,
+  description,
 }: {
   lang: Lang;
-  /** 已依 sort_order 排好 —— lib/data.ts 的 getCourseForms。 */
-  forms: CourseForm[];
+  /** 已依 sort_order 排好 —— lib/data.ts 的 getDocuments。 */
+  documents: SiteDocument[];
+  /** 這一區的小標，例如「系上表單」「招生檔案」。 */
+  heading: string;
+  /** 小標下面那一行說明。 */
+  description: string;
 }) {
-  if (forms.length === 0) return null;
+  if (documents.length === 0) return null;
 
-  const t = translate(COURSES, lang);
+  const t = translate(SHARED, lang);
 
   return (
     <>
       <div className="forms-subhead">
-        <h3>{t.section3.forms.heading}</h3>
-        <p>{t.section3.forms.description}</p>
+        <h3>{heading}</h3>
+        <p>{description}</p>
       </div>
 
       <div className="document-grid">
-        {forms.map((form) => (
+        {documents.map((form) => (
           <MaybeLink
             href={form.file_url}
             key={form.id}
@@ -86,7 +99,7 @@ export function CourseForms({
             arrow={<i>{t.download} ↗︎</i>}
           >
             {/* `.document-grid>a>span` 是金色的副檔名徽章，必須是直接子元素。 */}
-            <span>{badgeFor(form, t.section3.forms.fileBadge)}</span>
+            <span>{badgeFor(form, t.fileBadge)}</span>
             <h3>{form.label}</h3>
             {form.description ? <p>{form.description}</p> : null}
           </MaybeLink>

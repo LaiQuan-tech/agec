@@ -8,10 +8,11 @@ import {
   type ActionState,
 } from "@/lib/admin/action-result";
 import { revalidateFor } from "@/lib/admin/revalidate";
-import { collect, number, requireId, text } from "@/lib/admin/validate";
+import { collect, number, oneOf, requireId, text } from "@/lib/admin/validate";
+import { DOCUMENT_SECTIONS } from "./constants";
 
 /**
- * 系上專屬表單（/courses §3 的下載卡）。
+ * 檔案下載卡。`section` 決定它落在 /courses §3 還是 /admissions §4。
  *
  * 形狀照 /admin/capabilities 抄，多了檔案那一組欄位。檔案本身不經過這裡 ——
  * 瀏覽器先把它 POST 到 /admin/api/upload（見 components/admin/ui/UploadField），
@@ -20,7 +21,8 @@ import { collect, number, requireId, text } from "@/lib/admin/validate";
  * ⚠️ `"use server"` 檔只能匯出 async function。要放常數得另開 constants.ts。
  */
 
-type CourseFormInput = {
+type DocumentInput = {
+  section: (typeof DOCUMENT_SECTIONS)[number];
   label: string;
   label_en: string | null;
   description: string | null;
@@ -31,12 +33,13 @@ type CourseFormInput = {
 };
 
 function parse(form: FormData): {
-  values?: CourseFormInput;
+  values?: DocumentInput;
   fieldErrors?: Record<string, string>;
 } {
   // 全部欄位都先跑完再一次 collect，不 early-return —— 使用者一次看到所有
   // 錯誤，而不是修好一個才發現下一個。
-  const label = text(form, "label", "表單名稱", { required: true, max: 60 });
+  const section = oneOf(form, "section", "區塊", DOCUMENT_SECTIONS, { required: true });
+  const label = text(form, "label", "檔案名稱", { required: true, max: 60 });
   const labelEn = text(form, "label_en", "英文表單名稱", { max: 120 });
   const description = text(form, "description", "說明", { max: 120 });
   const descriptionEn = text(form, "description_en", "英文說明", { max: 240 });
@@ -45,6 +48,7 @@ function parse(form: FormData): {
   const sortOrder = number(form, "sort_order", "顯示順序", { min: 0, max: 9999 });
 
   const fieldErrors = collect({
+    section: section.error,
     label: label.error,
     label_en: labelEn.error,
     description: description.error,
@@ -57,6 +61,7 @@ function parse(form: FormData): {
 
   return {
     values: {
+      section: section.value!,
       label: label.value!,
       // text() 把空字串回成 null。刻意的：讓「清空過」與「從沒填過」在資料庫
       // 裡長得一樣，否則會出現兩種都代表「沒填」的值。
@@ -72,7 +77,7 @@ function parse(form: FormData): {
   };
 }
 
-export async function createCourseForm(
+export async function createDocument(
   _prev: ActionState,
   form: FormData
 ): Promise<ActionState> {
@@ -85,13 +90,13 @@ export async function createCourseForm(
     if (fieldErrors) return { ok: false, message: "請修正下列欄位", fieldErrors };
 
     const { data, error } = await supabase
-      .from("course_forms")
+      .from("documents")
       .insert(values!)
       .select("id")
       .single();
     if (error) return { ok: false, message: toChineseError(error) };
 
-    revalidateFor("course_forms");
+    revalidateFor("documents");
     newId = data.id as number;
   } catch (error) {
     const authState = toAuthErrorState(error);
@@ -101,10 +106,10 @@ export async function createCourseForm(
 
   // 🔴 redirect() 必須在 try 外面：Next 的 redirect 是靠 throw 實作的，包在
   // try 裡會被 catch 吃掉，把一次成功的儲存變成沒有說明的錯誤。
-  redirect(`/admin/forms/${newId}?created=1`);
+  redirect(`/admin/documents/${newId}?created=1`);
 }
 
-export async function updateCourseForm(
+export async function updateDocument(
   _prev: ActionState,
   form: FormData
 ): Promise<ActionState> {
@@ -116,12 +121,12 @@ export async function updateCourseForm(
     if (fieldErrors) return { ok: false, message: "請修正下列欄位", fieldErrors };
 
     const { error } = await supabase
-      .from("course_forms")
+      .from("documents")
       .update(values!)
       .eq("id", id);
     if (error) return { ok: false, message: toChineseError(error) };
 
-    revalidateFor("course_forms");
+    revalidateFor("documents");
     return { ok: true, message: "已儲存，前台已同步更新" };
   } catch (error) {
     const authState = toAuthErrorState(error);
@@ -138,22 +143,22 @@ export async function updateCourseForm(
  * uuid key），而同一個網址可能已經被系辦貼到公告內文或別的地方；連帶刪檔會讓
  * 那些連結一起壞掉，而且救不回來。孤兒檔案的成本只是幾 KB 的儲存空間。
  */
-export async function deleteCourseForm(form: FormData): Promise<void> {
+export async function deleteDocument(form: FormData): Promise<void> {
   try {
     const { supabase } = await requireAdmin();
     const id = requireId(form);
 
-    const { error } = await supabase.from("course_forms").delete().eq("id", id);
+    const { error } = await supabase.from("documents").delete().eq("id", id);
     if (error) {
-      console.error("[admin/forms] delete failed:", toChineseError(error));
+      console.error("[admin/documents] delete failed:", toChineseError(error));
       return;
     }
 
-    revalidateFor("course_forms");
+    revalidateFor("documents");
   } catch (error) {
     if (toAuthErrorState(error)) return;
     throw error;
   }
 
-  redirect("/admin/forms");
+  redirect("/admin/documents");
 }

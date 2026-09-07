@@ -4,18 +4,20 @@ import Link from "next/link";
 import type { ActionState } from "@/lib/admin/action-result";
 import { FormShell } from "@/components/admin/ui/FormShell";
 import { Field } from "@/components/admin/ui/Field";
-import { Input } from "@/components/admin/ui/Input";
+import { Input, Select } from "@/components/admin/ui/Input";
+import { DOCUMENT_SECTIONS, documentSectionLabel } from "./constants";
 import { UploadField } from "@/components/admin/ui/UploadField";
 
 /**
- * 系上表單的新增／編輯表單。
+ * 檔案下載卡的新增／編輯表單。
  *
  * 檔案走 UploadField：一個網址輸入框加一顆「上傳」。兩種用法都成立 ——
  * 上傳一份 PDF，或把已經放在別處（例如教務處）的網址貼進來。`nameField` 讓它
  * 順便把原始檔名寫進 hidden input，前台的副檔名徽章是從那裡推出來的。
  */
-export type CourseFormValues = {
+export type DocumentFormValues = {
   id?: number;
+  section: string;
   label: string;
   /** Empty string stands in for a null column, so the input stays uncontrolled. */
   label_en: string;
@@ -26,13 +28,13 @@ export type CourseFormValues = {
   sort_order: number;
 };
 
-export function CourseFormForm({
+export function DocumentForm({
   action,
   initial,
   submitLabel,
 }: {
   action: (prev: ActionState, form: FormData) => Promise<ActionState>;
-  initial: CourseFormValues;
+  initial: DocumentFormValues;
   submitLabel: string;
 }) {
   return (
@@ -41,7 +43,7 @@ export function CourseFormForm({
       submitLabel={submitLabel}
       secondary={
         <Link
-          href="/admin/forms"
+          href="/admin/documents"
           className="text-[13px] underline underline-offset-2"
           style={{ color: "var(--muted)" }}
         >
@@ -54,11 +56,33 @@ export function CourseFormForm({
           {initial.id != null && <input type="hidden" name="id" value={initial.id} />}
 
           <Field
+            htmlFor="section"
+            label="放在哪一頁"
+            required
+            error={state.fieldErrors?.section}
+            hint="「課程資訊」的卡片出現在課程資訊頁最下方的「系上表單」；「招生資訊」的出現在招生資訊頁最下方的「招生檔案」（招生簡章、書面資料格式、考古題就放這裡）。"
+          >
+            <Select
+              id="section"
+              name="section"
+              defaultValue={initial.section}
+              required
+              aria-invalid={Boolean(state.fieldErrors?.section)}
+            >
+              {DOCUMENT_SECTIONS.map((sec) => (
+                <option key={sec} value={sec}>
+                  {documentSectionLabel(sec)}
+                </option>
+              ))}
+            </Select>
+          </Field>
+
+          <Field
             htmlFor="label"
-            label="表單名稱"
+            label="檔案名稱"
             required
             error={state.fieldErrors?.label}
-            hint="卡片上的標題，例如「實習申請同意書」。"
+            hint="卡片上的標題，例如「實習申請同意書」或「114 學年度碩士班招生簡章」。"
           >
             <Input
               id="label"
@@ -72,7 +96,7 @@ export function CourseFormForm({
 
           <Field
             htmlFor="label_en"
-            label="表單名稱 Name (English)"
+            label="檔案名稱 Name (English)"
             error={state.fieldErrors?.label_en}
             hint="留空的話，英文版網頁會直接顯示上面的中文，所以不必一次全部翻完。"
           >

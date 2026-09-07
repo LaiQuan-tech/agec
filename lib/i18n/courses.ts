@@ -134,7 +134,7 @@ export const COURSES = {
     heading: { zh: "常用表格", en: "Forms" },
 
     /**
-     * 系上專屬表單那一區的小標（components/site/CourseForms.tsx）。
+     * 系上專屬表單那一區的小標（components/site/SiteDocuments.tsx）。
      *
      * 它與底下那排 `.resource-row` 是兩件事：這一區是系上自己的表單，檔案
      * 存在我們的 Storage 裡、由系辦在 /admin/forms 維護；那一排是校方的表格，
@@ -149,8 +149,6 @@ export const COURSES = {
         zh: "由系辦維護，點卡片即可下載。",
         en: "Maintained by the department office — select a card to download.",
       },
-      /** 推不出副檔名時，徽章印這個。 */
-      fileBadge: { zh: "檔案", en: "FILE" },
     },
   },
   /**

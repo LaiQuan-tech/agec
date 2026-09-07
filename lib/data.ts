@@ -247,8 +247,10 @@ export type CapabilityItem = {
  * `file_name` 是上傳時的原始檔名，用來推導卡片左上角的副檔名徽章，
  * 並讓下載存檔時是看得懂的名字而不是 uuid。
  */
-export type CourseForm = {
+export type SiteDocument = {
   id: number;
+  /** 決定它出現在哪一頁。值域同 `LinkItem["section"]` 的子集。 */
+  section: "courses" | "admissions";
   label: string;
   description: string | null;
   file_url: string | null;
@@ -299,7 +301,7 @@ type ProgramRow = {
 
 type LinkRow = LinkItem & { label_en: string | null };
 type CapabilityRow = CapabilityItem & { label_en: string | null };
-type CourseFormRow = CourseForm & {
+type DocumentRow = SiteDocument & {
   label_en: string | null;
   description_en: string | null;
 };
@@ -349,8 +351,9 @@ const LINK_COLUMNS =
 
 const CAPABILITY_COLUMNS = "id, label, sort_order, label_en";
 
-const COURSE_FORM_COLUMNS =
-  "id, label, description, file_url, file_name, sort_order, label_en, description_en";
+/** 🔴 逐一列欄位，與資料庫 schema 綁死 —— 見 PROGRAM_COLUMNS 上面的說明。 */
+const DOCUMENT_COLUMNS =
+  "id, section, label, description, file_url, file_name, sort_order, label_en, description_en";
 
 function toNews(row: NewsRow, lang: Lang): NewsItem {
   return {
@@ -430,9 +433,10 @@ function toCapability(row: CapabilityRow, lang: Lang): CapabilityItem {
   };
 }
 
-function toCourseForm(row: CourseFormRow, lang: Lang): CourseForm {
+function toDocument(row: DocumentRow, lang: Lang): SiteDocument {
   return {
     id: row.id,
+    section: row.section,
     label: pick(row.label, row.label_en, lang),
     // pickNullable，不是 pick：說明是選填的，沒填就該是 null 讓卡片少一段，
     // 而不是一個空字串把 <p> 印出來占掉 70px。
@@ -587,27 +591,34 @@ export async function getCapabilities(lang: Lang): Promise<CapabilityItem[]> {
 }
 
 /**
- * 系上專屬表單，/courses §3 用。
+ * 檔案下載卡，依區塊取。
  *
- * 表不存在時（migration 20260908120000 還沒跑）會走 error 那一條回空陣列，
- * 前台就什麼都不印 —— §3 維持今天的樣子。所以程式碼與 migration 誰先上線
- * 都可以，中間沒有一刻會壞掉。
+ * `section` 決定它落在哪一頁：'courses' 是 /courses §3 的系上表單，
+ * 'admissions' 是 /admissions §4 的招生檔案（招生簡章、書面資料格式、考古題
+ * ——舊系網上那些系上自己的檔案，正在逐步搬過來）。
+ *
+ * 表不存在或欄位對不上時（migration 還沒跑）會走 error 那一條回空陣列，
+ * 前台整區不印 —— 那一頁就維持沒有這一區的樣子。
  */
-export async function getCourseForms(lang: Lang): Promise<CourseForm[]> {
+export async function getDocuments(
+  section: SiteDocument["section"],
+  lang: Lang
+): Promise<SiteDocument[]> {
   const supabase = createServerClient();
   const { data, error } = await supabase
-    .from("course_forms")
-    .select(COURSE_FORM_COLUMNS)
+    .from("documents")
+    .select(DOCUMENT_COLUMNS)
+    .eq("section", section)
     // 第二鍵 id：sort_order 打平時 Postgres 的回傳順序不保證穩定。
     .order("sort_order", { ascending: true })
     .order("id", { ascending: true })
-    .returns<CourseFormRow[]>();
+    .returns<DocumentRow[]>();
 
   if (error) {
-    console.error("[lib/data] getCourseForms failed:", error.message);
+    console.error(`[lib/data] getDocuments(${section}) failed:`, error.message);
     return [];
   }
-  return (data ?? []).map((row) => toCourseForm(row, lang));
+  return (data ?? []).map((row) => toDocument(row, lang));
 }
 
 /**
