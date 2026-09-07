@@ -1577,3 +1577,45 @@
   line-height: 1.9;
   margin: 6px 0 0;
 }
+
+/* ---------------------------------------------------------------------------
+ * 課表滑過時不要位移 — `.course-table > a:hover`
+ *
+ * site.css 原本的寫法是：
+ *
+ *   .course-table>a       { transition: padding .2s, color .2s }
+ *   .course-table>a:hover { color: var(--green-soft); padding-inline: 10px }
+ *
+ * 那 10px 的內距不是視覺回饋，是版面位移。`.course-table>a` 自己就是那一列的
+ * grid 容器（`140px 1fr 80px 150px 100px 30px`），加了內距等於把整個 grid
+ * 縮窄 20px —— 實測 1400px 視窗下：課號與課程名稱右移 10px、課程名稱那一欄
+ * 同時縮 20px、學分／學制／類別各左移 10px。而 `.course-head` 沒有這條規則，
+ * 所以表頭不動，五欄與表頭的對齊在滑過的瞬間整排跑掉（2026-09 客戶回報）。
+ *
+ * 🔴 更根本的是：這些列**沒有 href**。`courses` 表沒有 url 欄位，也沒有單一
+ * 課程的頁面，所以 MaybeLink 只印出 `<a>` 的骨架（site.css 靠它撐格線），
+ * 不給目的地也不給箭頭 —— 那正是為了不要謊稱「這裡可以點」。留著綠色文字加
+ * 位移的 hover，等於把 MaybeLink 拆掉的那個謊用 CSS 又講了一次。
+ *
+ * 所以：位移全部拿掉，行動色只留給真的是連結的列（`a[href]`）。整列改成一層
+ * 中性底色 —— 六欄的寬表格，滑過時知道自己在看哪一列是有用的閱讀輔助，而
+ * 底色不會移動任何東西，也不是「可以點」的承諾。底色沿用 `.search-results`
+ * 已經在用的 `--cream`，那是這個站的 hover 色。
+ *
+ * `courses.url` 哪天加上去、列變成真的連結之後，`a[href]` 那條會自動接手，
+ * 這個檔不必再動。
+ * ------------------------------------------------------------------------ */
+.course-table > a {
+  /* 只留背景。padding 不再變動，所以也不需要為它過場。 */
+  transition: background 0.2s, color 0.2s;
+}
+.course-table > a:hover {
+  background: var(--cream);
+  /* 明寫覆蓋 site.css 的兩條。相同特異度（0,2,1），靠後於它，所以會贏。 */
+  padding-inline: 0;
+  color: inherit;
+}
+/* 真的有目的地的列，才給行動色。今天一列都沒有。 */
+.course-table > a[href]:hover {
+  color: var(--green-soft);
+}
