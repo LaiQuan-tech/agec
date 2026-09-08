@@ -4,6 +4,7 @@ import { useActionState, useId, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { idleState, type ActionState } from "@/lib/admin/action-result";
 import { Button } from "@/components/admin/ui/Button";
+import { PASSWORD_MIN_LENGTH, PASSWORD_RULE_HINT } from "@/lib/admin/validate";
 import { Input, Select } from "@/components/admin/ui/Input";
 import { deleteUser, resetPassword, revokeAccess, updateRole } from "./actions";
 import { ADMIN_ROLES, ROLE_LABEL, type AdminRoleValue } from "./constants";
@@ -161,6 +162,10 @@ export function RowActions({
             type="text"
             required
             placeholder="新密碼"
+            /* 瀏覽器先擋一次最短長度；英數字混合由 Server Action 用中文回報
+               （見 lib/admin/validate.ts 的 password()）。 */
+            minLength={PASSWORD_MIN_LENGTH}
+            title={PASSWORD_RULE_HINT}
             aria-label={`${email} 的新密碼`}
             className="text-[13px]"
             /* 與上面的 Select 同一個理由：Input 也內建 w-full，不給寬度會撐開

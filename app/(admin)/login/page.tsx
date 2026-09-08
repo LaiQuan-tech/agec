@@ -59,7 +59,11 @@ export default async function LoginPage({
 
         <LoginForm next={next ?? "/admin"} notAdmin={error === "not_admin"} />
 
-        <p className="mt-6 text-center text-[12px]" style={{ color: "var(--muted)" }}>
+        <p className="mt-6 flex justify-center gap-3 text-center text-[12px]" style={{ color: "var(--muted)" }}>
+          <Link href="/forgot-password" className="underline underline-offset-2">
+            忘記密碼
+          </Link>
+          <span aria-hidden="true">·</span>
           <Link href="/" className="underline underline-offset-2">
             回到網站首頁
           </Link>

@@ -2,6 +2,7 @@
 
 import type { ActionState } from "@/lib/admin/action-result";
 import { FormShell } from "@/components/admin/ui/FormShell";
+import { PASSWORD_RULE_HINT } from "@/lib/admin/validate";
 import { Field } from "@/components/admin/ui/Field";
 import { Input, Select } from "@/components/admin/ui/Input";
 import { ADMIN_ROLES, ROLE_HINT, ROLE_LABEL } from "./constants";
@@ -48,7 +49,7 @@ export function UserForm({
             label="密碼"
             required
             error={state.fieldErrors?.password}
-            hint="建好之後請自行把密碼交給對方 —— 這個站沒有寄信服務，系統不會通知他。⚠️ 若這個信箱已經有帳號，這一欄會被忽略、他原本的密碼不變；要換請用列表上的「重設密碼」。"
+            hint={`${PASSWORD_RULE_HINT}。建好之後請自行把密碼交給對方。⚠️ 若這個信箱已經有帳號，這一欄會被忽略、他原本的密碼不變；要換請用列表上的「重設密碼」。`}
           >
             <Input
               id="password"

@@ -7,7 +7,7 @@ import {
   toAuthErrorState,
   type ActionState,
 } from "@/lib/admin/action-result";
-import { collect, oneOf, text } from "@/lib/admin/validate";
+import { collect, oneOf, password as passwordField, text } from "@/lib/admin/validate";
 import {
   createAuthUser,
   deleteAuthUser,
@@ -69,15 +69,16 @@ export async function createUser(
     const { supabase, userId: actorId } = await requireManager();
 
     const email = parseEmail(form);
-    const password = String(form.get("password") ?? "");
+    const password = passwordField(form, "password", "密碼");
     const role = oneOf(form, "role", "層級", ADMIN_ROLES, { required: true });
     const note = text(form, "note", "備註", { max: 100 });
 
     const fieldErrors = collect({
       email: email.error,
-      // 只驗非空。這個 Supabase 專案沒有設最短長度（admin 五碼建得起來就是
-      // 證據），在前端加一個資料庫不會擋的規則只會讓人以為有保護。
-      password: password.length === 0 ? "請填寫密碼" : undefined,
+      // 2026-09：Supabase 專案已經設成最短 8 碼、英數字混合（依臺大計中的
+      // 資安要求），所以這裡的檢查有資料庫在背後撐著，不再是「前端裝樣子」。
+      // 先攔下來只是為了用中文說清楚缺什麼 —— Supabase 回的是英文。
+      password: password.error,
       role: role.error,
       note: note.error,
     });
@@ -98,7 +99,7 @@ export async function createUser(
     let userId: string;
     let reusedExisting = false;
 
-    const created = await createAuthUser(email.value!, password);
+    const created = await createAuthUser(email.value!, password.value);
     if (created.ok) {
       userId = created.userId;
     } else if (created.code === "EMAIL_EXISTS") {
@@ -152,12 +153,12 @@ export async function resetPassword(
   try {
     await requireManager();
     const userId = requireUserId(form);
-    const password = String(form.get("password") ?? "");
-    if (!password) {
-      return { ok: false, message: "請填寫新密碼", fieldErrors: { password: "請填寫新密碼" } };
+    const password = passwordField(form, "password", "新密碼");
+    if (password.error) {
+      return { ok: false, message: password.error, fieldErrors: { password: password.error } };
     }
 
-    const result = await setUserPassword(userId, password);
+    const result = await setUserPassword(userId, password.value);
     if (!result.ok) return { ok: false, message: result.message };
 
     return { ok: true, message: "密碼已更新，請把新密碼交給對方" };

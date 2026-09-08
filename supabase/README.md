@@ -229,6 +229,35 @@ faculty / courses / programs / links 任意增刪改。這是實際可利用的�
 posts、更新 faculty、刪除 links、讀取或竄改 `admin_users` 全部被擋，
 公開讀取不受影響。資料筆數在測試前後一致（10/8/6/5/7）。
 
+## 2026-09-08 Auth 設定變更（忘記密碼 ＋ 密碼強度）
+
+經 Management API（`/v1/projects/{ref}/config/auth`）改的四項：
+
+| 設定 | 之前 | 之後 | 為什麼 |
+|---|---|---|---|
+| `site_url` | `http://localhost:3000` | `https://agec-theta.vercel.app` | 🔴 重設密碼的信會用它組連結。不改的話系辦收到的信會指向 localhost |
+| `uri_allow_list` | （空） | 正式站 ＋ `localhost:3000` / `:3100` | `redirectTo` 不在清單裡會被 Supabase 忽略，退回 Site URL |
+| `password_min_length` | 6 | **8** | 臺大計中資安要求 |
+| `password_required_characters` | （無） | 英文字母 ＋ 數字兩組 | 同上，「英數字混合」 |
+
+密碼政策是**專案層級**的，不論從哪一條路設密碼都擋得住：後台的新增人員、
+重設密碼、忘記密碼的重設頁，以及 Supabase Dashboard。直接打 auth API 驗過：
+
+    abc123    → Password should be at least 8 characters.
+    abcdefgh  → should contain at least one character of each: …, 0123456789.
+    12345678  → 同上
+    abcd1234  → 通過密碼檢查
+
+⚠️ 兩件與這次有關、但**還沒處理**的事：
+
+1. **仍然沒有自訂 SMTP**（`smtp_host` 是 null），所以忘記密碼是走 Supabase
+   內建的寄信服務，`rate_limit_email_sent` 是**每小時 2 封**。同一小時內第三個
+   人按下忘記密碼就收不到信，而且內建寄件人容易被歸到垃圾郵件。要正式用的話
+   請設一組系上的 SMTP（Dashboard → Project Settings → Auth → SMTP Settings）。
+
+2. **開放註冊還是開著的**（`disable_signup: false`）。下面那一段第 1 點從
+   2026-08 就記著要關，至今未關。白名單擋住了寫入權，但沒有理由留著。
+
 ## Dashboard 上要手動做的事（SQL 做不到）
 
 1. **Authentication → Sign In / Providers → 關閉「Allow new users to sign up」**

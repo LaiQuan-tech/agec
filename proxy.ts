@@ -18,5 +18,8 @@ export const config = {
   // Note this is not the security boundary — matchers are anchored at the start
   // of the path and Server Actions POST to their own route, so authorization
   // lives in lib/admin/auth.ts and is re-checked in every page and action.
-  matcher: ["/admin/:path*", "/login"],
+  // 忘記密碼／重設密碼也要進來：它們會讀寫 Supabase 的 session cookie
+  // （重設連結換到的那個 recovery session 就是靠這裡續命），漏掉的話
+  // Server Action 會看不到剛剛在瀏覽器端建立的 session。
+  matcher: ["/admin/:path*", "/login", "/forgot-password", "/reset-password"],
 };

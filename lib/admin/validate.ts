@@ -165,6 +165,54 @@ export function email(
 }
 
 /** Collects non-empty errors; returns undefined when everything passed. */
+/**
+ * 後台密碼的規則：至少 8 碼，而且英文字母與數字都要有。
+ *
+ * 依臺大計中的資安要求（2026-09 客戶提出）。同一組規則在三個地方生效：
+ *
+ *   1. Supabase 專案設定（`password_min_length: 8` 加
+ *      `password_required_characters` 兩組：英文字母、數字）。那是真正的
+ *      防線 —— 不論從哪一條路設密碼都擋得住，包含忘記密碼的重設頁與
+ *      Supabase Dashboard。
+ *   2. 這一支：後台的兩個入口（新增人員、重設密碼）。
+ *   3. 重設密碼頁（前端即時提示）。
+ *
+ * ⚠️ 為什麼前端也要驗一次，明明資料庫已經擋了：Supabase 回的是英文的
+ * "Password should contain at least one character of each..."，那句話對系辦
+ * 沒有幫助。這裡先攔下來，用中文說清楚缺什麼。
+ *
+ * ⚠️ 只要求英數字混合，不強制大小寫或符號 —— 需求寫的是「英數字混合」。
+ * 規則要與 Supabase 那邊一致，改一邊就要改另一邊，否則會出現「前端說可以、
+ * 存檔卻被拒」或反過來。
+ */
+export const PASSWORD_MIN_LENGTH = 8;
+
+/** 給表單提示用的一句話，與下面的檢查同一份規則。 */
+export const PASSWORD_RULE_HINT =
+  `至少 ${PASSWORD_MIN_LENGTH} 碼，且必須同時包含英文字母與數字（依臺大計中資安要求）`;
+
+export function password(
+  form: FormData,
+  key: string,
+  label: string
+): { value: string; error?: string } {
+  // 不 trim：前後空白是密碼的一部分，去掉會讓使用者設的密碼與他以為的不同。
+  const value = String(form.get(key) ?? "");
+
+  if (!value) return { value, error: `請填寫${label}` };
+  if (value.length < PASSWORD_MIN_LENGTH) {
+    return { value, error: `${label}至少要 ${PASSWORD_MIN_LENGTH} 碼` };
+  }
+  // 逐條說缺什麼，而不是丟一句「格式錯誤」——使用者才知道要補哪一種。
+  const hasLetter = /[A-Za-z]/.test(value);
+  const hasDigit = /[0-9]/.test(value);
+  if (!hasLetter && !hasDigit) return { value, error: `${label}必須包含英文字母與數字` };
+  if (!hasLetter) return { value, error: `${label}還需要至少一個英文字母` };
+  if (!hasDigit) return { value, error: `${label}還需要至少一個數字` };
+
+  return { value };
+}
+
 export function collect(entries: Record<string, string | undefined>): FieldErrors | undefined {
   const errors: FieldErrors = {};
   for (const [key, message] of Object.entries(entries)) {
