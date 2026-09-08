@@ -1755,3 +1755,64 @@
   color: var(--gold);
   font-size: 11px;
 }
+
+/* ---------------------------------------------------------------------------
+ * 老師個人頁的資料區 — `.profile-facts`（/faculty/[id]）
+ *
+ * 這一頁沿用 `.post-*`（與 /news/[id]、/alumni/events/[slug] 相同），只有標題
+ * 下面這一塊是它自己的：左邊一張頭像，右邊一個 `<dl>` 列出領域、分機、email
+ * 與站外個人網頁。
+ *
+ * `<dl>` 而不是幾個 <p>：這裡每一項都是「標籤 + 值」，而客座那個版型
+ * （`.visiting-profile-list dl`）已經先用了同一個結構，兩邊讀起來才一致。
+ *
+ * ⚠️ 這一塊在 `.post-head` 裡面，而 `.post-page .post-head` 是 760px 的閱讀
+ * 寬度。頭像固定 120px，右欄吃剩下的空間，所以窄螢幕會自己疊成一欄。
+ * ------------------------------------------------------------------------ */
+.profile-facts {
+  align-items: start;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(20px, 3vw, 36px);
+  margin: 32px 0 0;
+  padding-top: 28px;
+}
+
+.profile-portrait {
+  border-radius: 50%;
+  flex: none;
+  height: 120px;
+  object-fit: cover;
+  width: 120px;
+}
+
+/* `<dl>` 本體。105px 的標籤欄與客座版型同寬，兩頁的節奏一致。 */
+.profile-facts > div {
+  display: grid;
+  flex: 1 1 260px;
+  gap: 4px 16px;
+  grid-template-columns: 105px minmax(0, 1fr);
+}
+.profile-facts dt {
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1.9;
+}
+.profile-facts dd {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.9;
+  margin: 0;
+  /* 個人網頁那一條印的是完整網址，可能很長。 */
+  overflow-wrap: anywhere;
+}
+.profile-facts a {
+  color: var(--green);
+  transition: color 0.2s;
+}
+.profile-facts a:hover {
+  color: var(--green-soft);
+}

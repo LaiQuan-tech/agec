@@ -1,5 +1,6 @@
 import type { Faculty } from "@/lib/data";
-import { translate, type Lang } from "@/lib/i18n";
+import Link from "next/link";
+import { localizePath, translate, type Lang } from "@/lib/i18n";
 import {
   categoryLabel,
   displayName,
@@ -129,7 +130,14 @@ export function FacultyCard({
         站外連結，target/rel 自己給：這裡不用 MaybeLink，因為它會把沒有網址
         的情況渲染成一個沒有 href 的 <a>，而這張卡的規則是「沒填就不印」。
       */}
-      {member.homepage_url ? (
+      {member.bio_html ? (
+        // 站內優先：系辦寫了介紹就連到 /faculty/<id>，那一頁裡面還會再列出
+        // 站外的個人網頁（兩者並存，卡片上只放得下一條）。
+        // 內部連結用 <Link> 且箭頭是 →，站外才是 ↗︎ —— 全站的約定。
+        <Link className="faculty-home" href={localizePath(`/faculty/${member.id}`, lang)}>
+          {t.homepageLabel} →
+        </Link>
+      ) : member.homepage_url ? (
         <a
           className="faculty-home"
           href={member.homepage_url}

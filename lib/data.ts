@@ -136,6 +136,17 @@ export type Faculty = {
    * null = 沒有或還沒填；四種卡片版型都是「有值才印那一行」。
    */
   homepage_url: string | null;
+  /**
+   * 站內個人頁的內文（已過濾的 HTML）。
+   *
+   * 🔴 這一欄是不是 null，決定這位老師**有沒有** /faculty/<id> 這一頁 ——
+   * 卡片的連結、generateStaticParams、以及那條路由自己的 notFound() 都看它。
+   * null 是正常狀態，多數老師不會有內文。
+   *
+   * 與 news.content_html 同一個模式：Tiptap 的 json 只給後台回填，前台永遠
+   * 不讀，所以它不在這個型別上。
+   */
+  bio_html: string | null;
   /** Long-form career summary, 名譽教授 and 退休師資 only (11 of 37). */
   experience: string | null;
   photo_url: string | null;
@@ -286,10 +297,12 @@ type NewsRow = Omit<NewsItem, "category_zh" | "speaker" | "venue"> & {
 };
 
 /** `is_chair` is computed by toFaculty(), not selected — the table has no such column. */
-type FacultyRow = Omit<Faculty, "is_chair"> & {
+type FacultyRow = Omit<Faculty, "is_chair" | "bio_html"> & {
   title_en: string | null;
   fields_en: string | null;
   experience_en: string | null;
+  bio_html: string | null;
+  bio_html_en: string | null;
 };
 
 type CourseRow = Omit<Course, "program_label"> & {
@@ -340,7 +353,7 @@ const PUBLISHED = "published";
 //    **必須先在資料庫加好欄位再推程式**：欄位不存在時 PostgREST 會回錯誤，
 //    getFaculty() 依慣例回空陣列，於是 /faculty 變成一片空白而且沒有錯誤畫面。
 const FACULTY_COLUMNS =
-  "id, name, name_en, title, category, fields, email, extension, homepage_url, experience, photo_url, sort_order, title_en, fields_en, experience_en";
+  "id, name, name_en, title, category, fields, email, extension, homepage_url, bio_html, bio_html_en, experience, photo_url, sort_order, title_en, fields_en, experience_en";
 
 const COURSE_COLUMNS = "id, code, name, credit, ctype, program, name_en, ctype_en";
 
@@ -402,6 +415,9 @@ function toFaculty(row: FacultyRow, lang: Lang): Faculty {
     // 與 email 同列：語言無關，不經 pick()。
     extension: row.extension,
     homepage_url: row.homepage_url,
+    // pickNullable，不是 pick：英文欄空著代表「還沒翻」，退回中文；而兩邊
+    // 都空才是「這位老師沒有站內頁面」，那個 null 是路由與卡片連結的判斷依據。
+    bio_html: pickNullable(row.bio_html, row.bio_html_en, lang),
     experience: pickNullable(row.experience, row.experience_en, lang),
     photo_url: row.photo_url,
     sort_order: row.sort_order,
@@ -498,6 +514,59 @@ export async function getFaculty(lang: Lang): Promise<Faculty[]> {
     return [];
   }
   return (data ?? []).map((row) => toFaculty(row, lang));
+}
+
+/**
+ * 一位老師，給 /faculty/[id] 用。
+ *
+ * 沒有 `bio_html` 就回 null —— 那位老師沒有站內頁面，路由據此 404。這一層
+ * 就擋掉，而不是讓路由自己判斷：卡片的連結、generateStaticParams 與這裡用的
+ * 是同一個條件，分散在三處遲早會不一致。
+ *
+ * ⚠️ 用的是 `toFaculty` 解析後的 `bio_html`（已經套過 pickNullable），所以
+ * 英文頁在英文內文空著時會退回中文 —— 與 /news/[id] 的行為一致。
+ */
+export async function getFacultyById(
+  id: number,
+  lang: Lang
+): Promise<Faculty | null> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("faculty")
+    .select(FACULTY_COLUMNS)
+    .eq("id", id)
+    .maybeSingle<FacultyRow>();
+
+  if (error) {
+    console.error(`[lib/data] getFacultyById(${id}) failed:`, error.message);
+    return null;
+  }
+  if (!data) return null;
+
+  const member = toFaculty(data, lang);
+  return member.bio_html ? member : null;
+}
+
+/**
+ * 有站內個人頁的老師 id，給 generateStaticParams 與 sitemap.xml 用。
+ *
+ * 只挑中文內文非空的：英文那一欄空著會退回中文，所以「有沒有頁面」由中文那
+ * 一欄決定。只有英文、沒有中文的情況在後台是做不出來的（英文欄是選填的翻譯）。
+ */
+export async function getFacultyBioIds(): Promise<number[]> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("faculty")
+    .select("id")
+    .not("bio_html", "is", null)
+    .order("sort_order", { ascending: true })
+    .returns<{ id: number }[]>();
+
+  if (error) {
+    console.error("[lib/data] getFacultyBioIds failed:", error.message);
+    return [];
+  }
+  return (data ?? []).map((row) => row.id);
 }
 
 /**

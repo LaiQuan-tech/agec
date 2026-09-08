@@ -2,6 +2,8 @@ import type { Faculty as FacultyMember } from "@/lib/data";
 import { translate, type Lang } from "@/lib/i18n";
 import { FACULTY, categoryLabel, displayName, fill, namePair } from "@/lib/i18n/faculty";
 import { EYEBROWS } from "@/lib/i18n/eyebrows";
+import Link from "next/link";
+import { localizePath } from "@/lib/i18n";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
@@ -71,6 +73,45 @@ const ADMINISTRATION = "行政同仁";
  * 這一區才不會跟著跑掉。
  */
 const AFFILIATED = ["合聘師資", "兼任師資"];
+
+/**
+ * 「個人網頁」那一行該連去哪，四種卡片版型共用。
+ *
+ * 站內優先：有 `bio_html` 就是 /faculty/<id>（內部連結，箭頭 →），
+ * 否則退回站外的 `homepage_url`（新分頁，箭頭 ↗︎），兩者都沒有就整行不印。
+ *
+ * 寫成一個元件而不是各自 if：四個落點的判斷一旦分家，日後只會改到其中三個。
+ */
+function HomepageLink({
+  lang,
+  member,
+  label,
+}: {
+  lang: Lang;
+  member: FacultyMember;
+  label: string;
+}) {
+  if (member.bio_html) {
+    return (
+      <Link className="faculty-home" href={localizePath(`/faculty/${member.id}`, lang)}>
+        {label} →
+      </Link>
+    );
+  }
+  if (member.homepage_url) {
+    return (
+      <a
+        className="faculty-home"
+        href={member.homepage_url}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {label} ↗︎
+      </a>
+    );
+  }
+  return null;
+}
 
 /** `details.legacy-group` — native disclosure, no JS anywhere in the port.
  *
@@ -161,16 +202,9 @@ function LegacyResumeList({
             {/* 個人網頁也放在 .legacy-career 裡面，理由與分機同一條：
                 `.legacy-resume-list article` 是三欄 grid，多一個直接子元素
                 會掉到第二列第一欄。 */}
-            {member.homepage_url ? (
+            {member.bio_html || member.homepage_url ? (
               <p className="faculty-home-row">
-                <a
-                  className="faculty-home"
-                  href={member.homepage_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {homepageLabel} ↗︎
-                </a>
+                <HomepageLink lang={lang} member={member} label={homepageLabel} />
               </p>
             ) : null}
           </div>
@@ -356,7 +390,10 @@ export function Faculty({
                             就是為「標籤 + 值」設計的，而這個版型已經有一個。
                             條件是「兩者任一有值」，不是只看 fields：只有分機
                             沒有領域時仍然要印得出來。 */}
-                        {member.fields || member.extension || member.homepage_url ? (
+                        {member.fields ||
+                        member.extension ||
+                        member.bio_html ||
+                        member.homepage_url ? (
                           <dl>
                             {member.fields ? (
                               <>
@@ -370,18 +407,15 @@ export function Faculty({
                                 <dd>{member.extension}</dd>
                               </>
                             ) : null}
-                            {member.homepage_url ? (
+                            {member.bio_html || member.homepage_url ? (
                               <>
                                 <dt>{t.homepageLabel}</dt>
                                 <dd>
-                                  <a
-                                    className="faculty-home"
-                                    href={member.homepage_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    {t.homepageLabel} ↗︎
-                                  </a>
+                                  <HomepageLink
+                                    lang={lang}
+                                    member={member}
+                                    label={t.homepageLabel}
+                                  />
                                 </dd>
                               </>
                             ) : null}
@@ -444,16 +478,9 @@ export function Faculty({
                   ) : null}
                   {/* 行政同仁通常沒有個人網頁，但欄位是整張表共用的 ——
                       系辦真的填了就要看得到，靜靜吞掉才是壞的那種。 */}
-                  {member.homepage_url ? (
+                  {member.bio_html || member.homepage_url ? (
                     <p className="faculty-home-row">
-                      <a
-                        className="faculty-home"
-                        href={member.homepage_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {t.homepageLabel} ↗︎
-                      </a>
+                      <HomepageLink lang={lang} member={member} label={t.homepageLabel} />
                     </p>
                   ) : null}
                   {member.email ? (

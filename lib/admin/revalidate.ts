@@ -87,6 +87,17 @@ export function revalidateFor(entity: RevalidateEntity, ...slugs: (string | null
     }
   }
 
+  if (entity === "faculty") {
+    // 老師的站內個人頁。改了介紹之後那一頁必須跟著更新，而不是等 300 秒
+    // ——「存了看不到」正是這個檔存在的理由。
+    revalidatePath("/faculty/[id]", "page");
+    revalidatePath(`${EN_PREFIX}/faculty/[id]`, "page");
+    for (const id of slugs) {
+      if (!id) continue;
+      for (const path of bothLanguages(`/faculty/${id}`)) revalidatePath(path);
+    }
+  }
+
   if (entity === "events") {
     // 活動詳情頁。slugs 帶舊值與新值兩個 —— 改了 slug 而只重新驗證新的，
     // 舊網址會繼續供應快取內容。

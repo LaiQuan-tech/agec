@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { LANGS, localizePath } from "@/lib/i18n";
-import { getNewsIds, getNewsYears } from "@/lib/data";
+import { getFacultyBioIds, getNewsIds, getNewsYears } from "@/lib/data";
 import { NEWS_CATEGORIES } from "@/lib/news-categories";
 import { SITE_ORIGIN } from "@/lib/site-routes";
 
@@ -40,8 +40,15 @@ const ROUTES = [
  * getNewsIds, so this never advertises a URL that would 404.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [newsIds, years] = await Promise.all([getNewsIds(), getNewsYears()]);
+  const [newsIds, years, facultyIds] = await Promise.all([
+    getNewsIds(),
+    getNewsYears(),
+    getFacultyBioIds(),
+  ]);
   const articles = newsIds.map((id) => `/news/${id}`);
+  // 老師的站內個人頁。只有真的寫了介紹的才有頁面，所以這裡列的就是全部 ——
+  // 不會出現一個會 404 的網址。
+  const profiles = facultyIds.map((id) => `/faculty/${id}`);
 
   /*
    * 年份頁。這些是真正的封存索引 —— 十一年的消息，年份是讀者實際會用來找東西
@@ -54,7 +61,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
    */
   const yearRoutes = years.map(({ year }) => `/news/year/${year}`);
 
-  return [...ROUTES, ...yearRoutes, ...articles].flatMap((route) =>
+  return [...ROUTES, ...yearRoutes, ...profiles, ...articles].flatMap((route) =>
     LANGS.map((lang) => ({
       url: `${SITE_ORIGIN}${localizePath(route, lang)}`,
       changeFrequency: "weekly" as const,

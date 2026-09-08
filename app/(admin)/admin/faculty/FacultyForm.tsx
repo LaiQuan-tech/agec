@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { ActionState } from "@/lib/admin/action-result";
+import { Editor } from "@/components/admin/ui/Editor";
 import { FormShell } from "@/components/admin/ui/FormShell";
 import { Field } from "@/components/admin/ui/Field";
 import { Input, Textarea } from "@/components/admin/ui/Input";
@@ -32,6 +33,10 @@ export type FacultyFormValues = {
   /** 系辦分機。沒有英文版 —— 跨語言相同的識別字串，與 email 同理。 */
   extension: string;
   homepage_url: string;
+  bio_html: string;
+  bio_html_en: string;
+  bio_json: unknown;
+  bio_json_en: unknown;
   photo_url: string;
   sort_order: number;
 };
@@ -303,6 +308,45 @@ export function FacultyForm({
               aria-invalid={Boolean(state.fieldErrors?.homepage_url)}
             />
           </Field>
+
+          {/* 不是 <Field>：編輯區是 contenteditable 的 div，<label htmlFor>
+              指不到它。標題用純文字，無障礙名稱以 aria-label 傳給編輯器 ——
+              與 /admin/news 的內文欄同一個處理。 */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[13px] font-medium" style={{ color: "var(--ink)" }}>
+              個人頁內容
+            </span>
+            <Editor
+              initialHtml={initial.bio_html}
+              initialJson={initial.bio_json}
+              htmlName="bio_html"
+              jsonName="bio_json"
+              ariaLabel="老師個人頁內容編輯區"
+            />
+            <p className="text-[12px]" style={{ color: "var(--muted)" }}>
+              寫了內容之後，這位老師在「系所成員」頁上的「個人網頁」就會連到本站的個人頁（網址是
+              /faculty/編號），而不是上面那個外部網址；上面的外部網址仍然會列在個人頁裡，兩個並存。
+              留空就沒有站內頁面，連結維持指向上面的外部網址；兩個都空就整行不顯示。
+              圖片請先上傳到別處，再用「插入圖片」貼上網址。工具列以外的格式（例如底線、顏色）儲存時會被移除。
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[13px] font-medium" style={{ color: "var(--ink)" }}>
+              個人頁內容 Profile (English)
+            </span>
+            <Editor
+              initialHtml={initial.bio_html_en}
+              initialJson={initial.bio_json_en}
+              htmlName="bio_html_en"
+              jsonName="bio_json_en"
+              ariaLabel="老師個人頁英文內容編輯區"
+              lang="en"
+            />
+            <p className="text-[12px]" style={{ color: "var(--muted)" }}>
+              留空的話，英文版個人頁會直接顯示上面的中文內容，所以不必一次翻完。動過又全部刪光也算留空。
+            </p>
+          </div>
 
           <Field
             htmlFor="photo_url"

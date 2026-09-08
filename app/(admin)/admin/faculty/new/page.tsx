@@ -40,6 +40,10 @@ export default async function NewFacultyPage() {
           email: "",
           extension: "",
           homepage_url: "",
+          bio_html: "",
+          bio_html_en: "",
+          bio_json: null,
+          bio_json_en: null,
           // No Chinese 經歷 input exists, so a brand-new person never has one to
           // translate — FacultyForm hides the English box on an empty value.
           experience: "",

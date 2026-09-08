@@ -70,6 +70,8 @@ type FacultyDict = {
    * 資訊，網址不是 —— 一長串 https:// 在 9px 的卡片底部只會換行三次。
    */
   homepageLabel: Msg;
+  /** 個人頁底部回到 /faculty 的連結。 */
+  backToList: Msg;
 };
 
 export const FACULTY = {
@@ -143,6 +145,7 @@ export const FACULTY = {
   },
   extensionLabel: { zh: "分機", en: "Ext." },
   homepageLabel: { zh: "個人網頁", en: "Personal page" },
+  backToList: { zh: "← 回到系所成員", en: "← Back to Faculty & Staff" },
 } satisfies FacultyDict;
 
 /**
