@@ -1816,3 +1816,25 @@
 .profile-facts a:hover {
   color: var(--green-soft);
 }
+
+/* ---------------------------------------------------------------------------
+ * 首頁研究領域那四列，不再有 hover — `.research-item`
+ *
+ * site.css 給它的是 `:hover { background; padding-inline: 18px }`，那是為
+ * 「這一列可以點」寫的。2026-09 之後這四列不是連結了（見 Home.tsx 的說明：
+ * 四個領域在 faculty.fields 上沒有被實作，四條連結全部指向同一頁），所以
+ * hover 就成了對非互動元素的假暗示 —— 與 /courses 課表那一列同一個問題。
+ *
+ * 位移也一起拿掉：那 18px 的內距會讓整列在滑過時橫移，而它旁邊三列不會，
+ * 看起來像沒對齊。
+ *
+ * ⚠️ transition 留著沒有意義（沒有東西會變），一併清掉，免得下次有人看到
+ * 這一列以為它還有互動。
+ * ------------------------------------------------------------------------ */
+.research-item {
+  transition: none;
+}
+.research-item:hover {
+  background: transparent;
+  padding-inline: 0;
+}

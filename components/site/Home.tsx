@@ -5,6 +5,7 @@ import { HOME, HOME_STATS, RESEARCH_AREAS } from "@/lib/i18n/home";
 import { SiteShell } from "./SiteShell";
 import { HomeHero } from "./HomeHero";
 import { formatNewsDate } from "./format";
+import { MaybeLink } from "./MaybeLink";
 import { padNo } from "./nav";
 
 /**
@@ -168,20 +169,29 @@ export function Home({
             // Both languages are on screen at once, so this row is a swap, not
             // a lookup: `<h3>` takes the page's language and `<p>` the other.
             // The key stays the Chinese string, which is the stable identity.
-            // `/faculty`, not the `#research` band these sit inside — an
-            // anchor to their own section scrolls nowhere. The four strings are
-            // `faculty.fields` values, so the people working in each are one
-            // page away.
-            <Link
-              href={localizePath("/faculty", lang)}
-              className="research-item"
-              key={area.zh}
-            >
+            //
+            // 🔴 2026-09：這四列**不再是連結**。
+            //
+            // 它們原本四條全部指向 /faculty，這裡的舊註解說「這四個字串是
+            // faculty.fields 的值，所以做這些研究的人只隔一頁」—— 那句話寫的
+            // 當下也許成立，現在只對四個人成立：`fields` 是自由文字，37 位
+            // 老師有 22 種寫法（環境與資源經濟、國際貿易與產業、農業政策與
+            // 農企業管理…），14 位完全空白，而剛好等於這四個領域名稱的只有
+            // 排序最前面的四位。看起來是當初種資料時拿它們當佔位。
+            //
+            // 也就是說這個分類在資料上沒有被實作。四張卡各帶一個 ↗︎ 指向同一
+            // 個沒有區別的頁面，是在承諾一件做不到的事（客戶回報）。真的要
+            // 做成可篩選，需要先在 faculty 上加一個封閉的「研究領域」欄位、
+            // 由系上把 37 位逐一歸類 —— 那是學術判斷，不是這裡能決定的。
+            //
+            // 在那之前，這四列就是「系上的四個研究方向」這件事實本身：
+            // MaybeLink 拿掉 href（<a> 還在，site.css 的格線全靠它），也拿掉
+            // 箭頭 —— 箭頭在這個站是「會前往某處」的承諾。
+            <MaybeLink href={null} className="research-item" key={area.zh}>
               <span>{padNo(i + 1)}</span>
               <h3>{lang === "en" ? area.en : area.zh}</h3>
               <p>{lang === "en" ? area.zh : area.en}</p>
-              <i>↗︎</i>
-            </Link>
+            </MaybeLink>
           ))}
         </div>
       </section>
