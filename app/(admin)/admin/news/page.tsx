@@ -14,6 +14,7 @@ export const dynamic = "force-dynamic";
 type Row = {
   id: number;
   published_at: string;
+  expires_at: string | null;
   category: string;
   category_en: string | null;
   title: string;
@@ -25,6 +26,11 @@ type Row = {
   is_pinned: boolean;
   status: string;
 };
+
+/** 台北時間的今天（YYYY-MM-DD）。與 lib/data.ts 的判斷同一個時區。 */
+function todayInTaipei(): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Taipei" });
+}
 
 export default async function NewsListPage() {
   const { supabase } = await requireAdminOrRedirect();
@@ -42,7 +48,7 @@ export default async function NewsListPage() {
   const { data, error } = await supabase
     .from("news")
     .select(
-      "id, published_at, category, category_en, title, title_en, " +
+      "id, published_at, expires_at, category, category_en, title, title_en, " +
         "body, body_en, content_html, content_html_en, is_pinned, status"
     )
     .order("is_pinned", { ascending: false })
@@ -94,6 +100,7 @@ export default async function NewsListPage() {
         <Table>
           <THead>
             <TH className="w-[110px]">日期</TH>
+            <TH className="w-[120px]">結束日期</TH>
             <TH className="w-[110px]">分類</TH>
             <TH>標題</TH>
             <TH className="w-[80px]">狀態</TH>
@@ -123,6 +130,27 @@ export default async function NewsListPage() {
               return (
                 <TR key={row.id}>
                   <TD className="whitespace-nowrap tabular-nums">{row.published_at.slice(0, 10)}</TD>
+                  <TD className="whitespace-nowrap text-[13px]">
+                    {/* 已經過期的列標出來。系辦最常問的是「這則為什麼在前台
+                        看不到」—— 答案就在這一欄，而不是要他們回想設過什麼。
+                        比較用字串：兩邊都是 YYYY-MM-DD 的台北日期。 */}
+                    {row.expires_at ? (
+                      <span
+                        className="tabular-nums"
+                        style={{
+                          color:
+                            row.expires_at.slice(0, 10) < todayInTaipei()
+                              ? "var(--danger, #b91c1c)"
+                              : "var(--ink)",
+                        }}
+                      >
+                        {row.expires_at.slice(0, 10)}
+                        {row.expires_at.slice(0, 10) < todayInTaipei() ? "（已結束）" : ""}
+                      </span>
+                    ) : (
+                      <span style={{ color: "var(--muted)" }}>—</span>
+                    )}
+                  </TD>
                   <TD>
                     <span
                       className="rounded px-1.5 py-0.5 text-[12px]"

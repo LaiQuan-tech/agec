@@ -31,6 +31,7 @@ import { ChoiceField } from "@/components/admin/ui/ChoiceField";
 export type NewsFormValues = {
   id?: number;
   published_at: string;
+  expires_at: string;
   category: string;
   /** Empty string stands in for a null column, so the inputs stay uncontrolled. */
   category_en: string;
@@ -122,6 +123,21 @@ export function NewsForm({
                 defaultValue={initial.published_at}
                 required
                 aria-invalid={Boolean(state.fieldErrors?.published_at)}
+              />
+            </Field>
+
+            <Field
+              htmlFor="expires_at"
+              label="結束日期"
+              error={state.fieldErrors?.expires_at}
+              hint="含當天顯示，隔天起這則消息就會從前台的所有清單與它自己的頁面上消失（後台仍然看得到、也改得回來）。留空＝永遠顯示，這是目前所有消息的狀態。適合招生截止日、徵才期限、活動結束日。"
+            >
+              <Input
+                id="expires_at"
+                name="expires_at"
+                type="date"
+                defaultValue={initial.expires_at}
+                aria-invalid={Boolean(state.fieldErrors?.expires_at)}
               />
             </Field>
 

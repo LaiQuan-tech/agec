@@ -28,6 +28,7 @@ const NEWS_STATUSES = ["draft", "published"] as const;
 
 type NewsInput = {
   published_at: string;
+  expires_at: string | null;
   category: string;
   category_en: string | null;
   title: string;
@@ -192,6 +193,8 @@ function parseEditorBody(
  */
 function parse(form: FormData): { values?: NewsInput; fieldErrors?: Record<string, string> } {
   const publishedAt = date(form, "published_at", "發佈日期", { required: true });
+  // 選填。null = 永遠顯示 —— 現有 585 則全部是這個。
+  const expiresAt = date(form, "expires_at", "結束日期");
   const category = text(form, "category", "分類", { required: true, max: 20 });
   const categoryEn = text(form, "category_en", "英文分類", { max: 40 });
   const title = text(form, "title", "標題", { required: true, max: 200 });
@@ -214,6 +217,7 @@ function parse(form: FormData): { values?: NewsInput; fieldErrors?: Record<strin
 
   const fieldErrors = collect({
     published_at: publishedAt.error,
+    expires_at: expiresAt.error,
     category: category.error,
     category_en: categoryEn.error,
     title: title.error,
@@ -237,6 +241,9 @@ function parse(form: FormData): { values?: NewsInput; fieldErrors?: Record<strin
   return {
     values: {
       published_at: publishedAt.value!,
+      // 🔴 一定要一起送出。update 是 `.update(values)` 全欄覆蓋，漏掉這一欄
+      // 會在每次存檔時把系辦設好的結束日期清成 null。
+      expires_at: expiresAt.value,
       category: category.value!,
       title: title.value!,
       body: body.value,

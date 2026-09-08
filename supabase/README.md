@@ -38,6 +38,7 @@
 | 17 | `migrations/20260908150000_documents.sql` | `course_forms` 改名為 `documents` 並加 `section` 欄（courses / admissions），讓檔案下載從課程資訊放大到全站。🔴 **必須在推程式碼之前跑** —— 表名與 `DOCUMENT_COLUMNS` 都變了 | ✅ 2026-09-08 |
 | 18 | `migrations/20260908160000_faculty_homepage.sql` | `faculty` 加 `homepage_url` 一欄（老師的個人／實驗室網頁，四種卡片版型都會印）。🔴 **必須在推程式碼之前跑** —— `FACULTY_COLUMNS` 是逐一列欄位的，欄位不存在會讓 /faculty 整頁空白 | ✅ 2026-09-08 |
 | 19 | `migrations/20260908170000_faculty_bio.sql` | `faculty` 加 `bio_html` / `bio_html_en` / `bio_json` / `bio_json_en` 四欄（站內個人頁的內文，形狀照 news 的內文）。🔴 **必須在推程式碼之前跑** —— `FACULTY_COLUMNS` 是逐一列欄位的 | ✅ 2026-09-08 |
+| 20 | `migrations/20260908180000_news_expires_at.sql` | `news` 加 `expires_at`（結束日期，含當天）與 `expires_effective`（generated，null 折成 infinity）＋索引。🔴 **必須在推程式碼之前跑** —— 前台九支查詢都會加上 `expires_effective >= 今天` | ✅ 2026-09-08 |
 | 9 | **人工步驟** | 清掉 `faculty` 原本的 8 筆佔位假資料。語句在第 8 支檔案末尾的註解區塊，**先跑 select 版本確認清單再改成 delete** | ✅ 2026-08-14 |
 
 第 7、8 支必須照順序跑（seed 依賴 extend 新增的兩個欄位）。兩支都在本機
@@ -49,6 +50,17 @@ PostgreSQL 18 上連跑兩次驗證過：第二次不會產生重複列，欄位
 對得上的佔位資料，對不上的會留在表上（實測 8 筆裡有 7 筆會留下），讓師資頁
 多出幾張沒照片、分類也對不上篩選標籤的卡片。刪除不可逆，且系辦若已自行在
 後台新增過真的師資也會被同一條 `where` 掃到，所以交給人工確認。
+
+## 2026-09-08 執行紀錄（第 20 步）
+
+`20260908180000_news_expires_at.sql` 經 Management API 執行，**在推程式碼之前**。
+驗收：`expires_at | YES | date`；585 列的 `expires_at` 全部是 null，
+`expires_effective` 相應全部是 `infinity`（行為完全不變）。
+
+用兩則消息實測過整條路徑（驗完已清空）：結束日期設在昨天的那一則從 /news、
+首頁、分類頁、年份頁與搜尋結果全部消失，它自己的頁面回 404，靜態產生的頁數
+也從 1578 掉到 1574；結束日期設在 30 天後的那一則照常顯示。後台兩則都還看得到、
+也改得回來。
 
 ## 2026-09-08 執行紀錄（第 19 步）
 

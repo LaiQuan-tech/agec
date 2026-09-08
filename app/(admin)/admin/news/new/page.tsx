@@ -29,6 +29,8 @@ export default async function NewNewsPage() {
         submitLabel="新增"
         initial={{
           published_at: today,
+          // 預設不設結束日期 —— 多數公告本來就該一直在。
+          expires_at: "",
           category: "最新公告",
           category_en: "",
           title: "",

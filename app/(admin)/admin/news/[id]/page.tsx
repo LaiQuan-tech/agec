@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 type Row = {
   id: number;
   published_at: string;
+  expires_at: string | null;
   category: string;
   category_en: string | null;
   title: string;
@@ -79,7 +80,7 @@ export default async function EditNewsPage({
   const { data, error } = await supabase
     .from("news")
     .select(
-      "id, published_at, category, category_en, title, title_en, " +
+      "id, published_at, expires_at, category, category_en, title, title_en, " +
         "body, body_en, content_html, content_json, content_html_en, content_json_en, " +
         "cover_url, is_pinned, status, attachments, speaker, speaker_en, " +
         "venue, venue_en, event_at"
@@ -150,6 +151,8 @@ export default async function EditNewsPage({
         initial={{
           id: data.id,
           published_at: data.published_at.slice(0, 10),
+          // null 轉空字串，讓 <input type="date"> 維持 uncontrolled。
+          expires_at: data.expires_at?.slice(0, 10) ?? "",
           category: data.category,
           category_en: data.category_en ?? "",
           title: data.title,

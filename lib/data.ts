@@ -349,6 +349,50 @@ const NEWS_COLUMNS =
  */
 const PUBLISHED = "published";
 
+/**
+ * 台北時間的今天（YYYY-MM-DD）。
+ *
+ * ⚠️ 不能用 `new Date().toISOString().slice(0, 10)`：伺服器跑在 UTC，台北
+ * 早上八點以前那一段會被算成前一天 —— 一則昨天到期的消息會在台灣的整個上午
+ * 都還看得見。`published_at` 與 `expires_at` 存的都是台北時區的日期。
+ *
+ * `en-CA` 的日期格式正好就是 YYYY-MM-DD，不必自己補零。
+ */
+function todayInTaipei(): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Taipei" });
+}
+
+/**
+ * 🔴 結束日期的過濾條件，與上面的 `status` 是**一對**。
+ *
+ * ⚠️ 每一支對外的 news 查詢都必須同時有這兩行：
+ *
+ *     .eq("status", PUBLISHED)
+ *     .gte("expires_effective", todayInTaipei())
+ *
+ * 少了上面那行會漏出草稿，少了下面這行會讓早該下架的公告繼續掛著 —— 兩種都
+ * 是靜默的，沒有錯誤也沒有警告。目前有八支：getNewsHome、getNewsPage、
+ * getNewsYears、getTalks、getTalksPage、countTalks、getNewsById、getNewsIds，
+ * 外加 lib/search.ts 一支。
+ *
+ * ## 為什麼是 expires_effective 而不是 `.or(expires_at.is.null,…)`
+ *
+ * 「沒設日期就永遠顯示」寫成 `.or(expires_at.is.null,expires_at.gte.今天)` 是
+ * 最直覺的，而且**它是可以動的** —— 直接打 PostgREST 驗過：同一個請求上兩個
+ * `or=` 參數確實會 AND 起來，已結束的消息不會被撈出來。所以這裡不是在修 bug。
+ *
+ * 選 `expires_effective`（migration 20260908180000 的 generated 欄位，把 null
+ * 折成 `infinity`）的理由是**它比較不微妙**：有些查詢本來就有自己的 `.or()`
+ * ——搜尋的關鍵字、/news 的分類——而「一個請求上有幾個 or、它們之間是 AND
+ * 還是 OR」是一條要去翻文件才敢確定的規則。換成單一個 `.gte()` 之後，這一個
+ * 條件跟其他任何條件並存都不必想，而且那一欄有索引。
+ *
+ * ⚠️ 後台的查詢**不要**加這個。系辦必須看得到、也改得動已經過期的消息，
+ * 否則日期設錯之後就再也找不回來了。
+ */
+const EXPIRES_COLUMN = "expires_effective";
+
+
 // ⚠️ 逐一列欄位，不是 select("*")。加欄位時這裡與 Faculty 型別要一起改，而且
 //    **必須先在資料庫加好欄位再推程式**：欄位不存在時 PostgREST 會回錯誤，
 //    getFaculty() 依慣例回空陣列，於是 /faculty 變成一片空白而且沒有錯誤畫面。
@@ -484,6 +528,7 @@ export async function getNewsHome(
     .from("news")
     .select(NEWS_COLUMNS)
     .eq("status", PUBLISHED)
+    .gte(EXPIRES_COLUMN, todayInTaipei())
     .order("is_pinned", { ascending: false })
     .order("published_at", { ascending: false })
     .limit(limit)
@@ -749,7 +794,8 @@ export async function getNewsPage(
   let query = supabase
     .from("news")
     .select(NEWS_COLUMNS, { count: "exact" })
-    .eq("status", PUBLISHED);
+    .eq("status", PUBLISHED)
+    .gte(EXPIRES_COLUMN, todayInTaipei());
 
   // Either narrow to one category, or exclude the talks — never both. On the
   // same column an `.eq` beside the `.neq` is redundant when they differ and
@@ -826,7 +872,8 @@ export async function getNewsYears(category?: string): Promise<NewsYear[]> {
   let query = supabase
     .from("news")
     .select("published_at")
-    .eq("status", PUBLISHED);
+    .eq("status", PUBLISHED)
+    .gte(EXPIRES_COLUMN, todayInTaipei());
 
   // 與 getNewsPage 完全相同的分類述詞。兩邊若分岔，就會出現「年份列說 2015
   // 有資料，該年的頁面卻是空的」。
@@ -879,6 +926,7 @@ export async function getTalks(lang: Lang, limit?: number): Promise<NewsItem[]> 
     .from("news")
     .select(NEWS_COLUMNS)
     .eq("status", PUBLISHED)
+    .gte(EXPIRES_COLUMN, todayInTaipei())
     .eq("category", TALKS_CATEGORY)
     .order("published_at", { ascending: false });
   if (limit) query = query.limit(limit);
@@ -905,6 +953,7 @@ export async function getTalksPage(page: number, lang: Lang): Promise<NewsPage> 
     .from("news")
     .select(NEWS_COLUMNS, { count: "exact" })
     .eq("status", PUBLISHED)
+    .gte(EXPIRES_COLUMN, todayInTaipei())
     .eq("category", TALKS_CATEGORY)
     .order("published_at", { ascending: false })
     .range(from, from + NEWS_PAGE_SIZE - 1)
@@ -929,6 +978,7 @@ export async function countTalks(): Promise<number> {
     .from("news")
     .select("id", { count: "exact", head: true })
     .eq("status", PUBLISHED)
+    .gte(EXPIRES_COLUMN, todayInTaipei())
     .eq("category", TALKS_CATEGORY);
 
   if (error) {
@@ -954,6 +1004,7 @@ export async function getNewsById(
     .from("news")
     .select(NEWS_COLUMNS)
     .eq("status", PUBLISHED)
+    .gte(EXPIRES_COLUMN, todayInTaipei())
     .eq("id", id)
     .maybeSingle<NewsRow>();
 
@@ -979,6 +1030,7 @@ export async function getNewsIds(): Promise<number[]> {
     .from("news")
     .select("id")
     .eq("status", PUBLISHED)
+    .gte(EXPIRES_COLUMN, todayInTaipei())
     .returns<{ id: number }[]>();
 
   if (error) {

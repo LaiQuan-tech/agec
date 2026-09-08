@@ -101,6 +101,14 @@ export async function search(query: string, lang: Lang): Promise<SearchResult> {
       .from("news")
       .select("id, title, title_en, body, body_en, category, category_en, published_at")
       .eq("status", "published")
+      // 🔴 與 lib/data.ts 的八支查詢同一對條件：過了結束日期的消息不該被
+      // 搜出來。用 expires_effective（generated，null 折成 infinity）是因為
+      // 下面已經有一個 or 在放關鍵字 —— 兩個 or 掛在同一個請求上其實會正確
+      // AND（驗過），但單一個 gte 不需要任何人去確認那條規則。
+      .gte(
+        "expires_effective",
+        new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Taipei" })
+      )
       .or(
         `title.ilike.${like},title_en.ilike.${like},body.ilike.${like},` +
           `content_html.ilike.${like}`
