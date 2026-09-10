@@ -78,18 +78,23 @@ export async function NewsRoute({
   // and the main list's page count has to be computed from the announcements
   // alone. The count is its own head-only request rather than a length — the
   // block is a preview, so the number it advertises is not the number it holds.
-  // The talks block only appears on the unfiltered first page, so a filtered
-  // request skips both of its queries rather than fetching what it will not
-  // render.
-  const filtered = Boolean(category || year);
+  // 演講區塊出現在「任何一種檢視的第 1 頁」，包含分類與年份。
+  //
+  // ⚠️ 原本的條件是「只有未篩選的第 1 頁」，於是點任何一個分類籤，演講與
+  //    研討會整區就消失，要點回「全部消息」才會回來 —— 系辦回報過這件事。
+  //    演講公告被 getNewsPage() 用 .neq() 排除在主列表之外，所以它不是那五個
+  //    籤的其中一個；如果它又只在「全部」底下出現，讀者實際上很難走到它。
+  //    它現在是一個常駐的區塊，不隨篩選消失。
+  //
+  // 仍然限定第 1 頁：它是一個預覽區塊，翻到第 7 頁還跟著同一批演講沒有意義。
   const [newsPage, years, talks, talkCount] = await Promise.all([
     getNewsPage(page, lang, category, year),
     // ⚠️ 只帶 category，不帶 year。年份列要列出「這個分類底下所有有資料的
     // 年份」，把目前選的年份也套進去，列表就只會剩下那一年，等於選了之後
     // 再也換不掉。
     getNewsYears(category),
-    filtered ? [] : getTalks(lang, TALKS_PREVIEW_SIZE),
-    filtered ? 0 : countTalks(),
+    page === 1 ? getTalks(lang, TALKS_PREVIEW_SIZE) : [],
+    page === 1 ? countTalks() : 0,
   ]);
 
   // A page number past the end is a 404 rather than an empty list — otherwise

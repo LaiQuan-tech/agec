@@ -264,7 +264,9 @@ export function News({
         {/* Page 1 only. Repeating the block under page 2's list would show
             the same items again and put one panel at two URLs. LocalNav drops
             its 演講 anchor by itself when the section is absent. */}
-        {page === 1 && !category && talks.length > 0 ? (
+        {/* ⚠️ 條件裡刻意沒有 category：點分類籤時這一區不該消失。
+            見 components/site/pages.tsx 裡對應的查詢說明。 */}
+        {page === 1 && talks.length > 0 ? (
           <section className="inner-section tint" id="section-2">
             <div className="container">
               <SectionTitle
