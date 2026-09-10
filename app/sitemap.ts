@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 import { LANGS, localizePath } from "@/lib/i18n";
-import { getFacultyBioIds, getNewsIds, getNewsYears } from "@/lib/data";
+import { getProgramsWithRequirements, getFacultyBioIds, getNewsIds, getNewsYears } from "@/lib/data";
 import { NEWS_CATEGORIES } from "@/lib/news-categories";
+import { slugForProgram } from "@/lib/program-slugs";
 import { SITE_ORIGIN } from "@/lib/site-routes";
 
 const ROUTES = [
@@ -40,15 +41,22 @@ const ROUTES = [
  * getNewsIds, so this never advertises a URL that would 404.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [newsIds, years, facultyIds] = await Promise.all([
+  const [newsIds, years, facultyIds, programNames] = await Promise.all([
     getNewsIds(),
     getNewsYears(),
     getFacultyBioIds(),
+    getProgramsWithRequirements(),
   ]);
   const articles = newsIds.map((id) => `/news/${id}`);
   // 老師的站內個人頁。只有真的寫了介紹的才有頁面，所以這裡列的就是全部 ——
   // 不會出現一個會 404 的網址。
   const profiles = facultyIds.map((id) => `/faculty/${id}`);
+  // 各學制的修業規定頁。同上：只有真的有內文的學制才有頁面，而且代稱來自
+  // 程式碼裡的白名單，所以這裡不會列出會 404 的網址。
+  const requirements = programNames
+    .map((name) => slugForProgram(name))
+    .filter((slug): slug is string => Boolean(slug))
+    .map((slug) => `/courses/${slug}`);
 
   /*
    * 年份頁。這些是真正的封存索引 —— 十一年的消息，年份是讀者實際會用來找東西
@@ -61,7 +69,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
    */
   const yearRoutes = years.map(({ year }) => `/news/year/${year}`);
 
-  return [...ROUTES, ...yearRoutes, ...profiles, ...articles].flatMap((route) =>
+  return [
+    ...ROUTES,
+    ...yearRoutes,
+    ...requirements,
+    ...profiles,
+    ...articles,
+  ].flatMap((route) =>
     LANGS.map((lang) => ({
       url: `${SITE_ORIGIN}${localizePath(route, lang)}`,
       changeFrequency: "weekly" as const,

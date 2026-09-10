@@ -214,6 +214,21 @@ export type Program = {
    * 只有一份，招生頁本身通常自己就有語言切換。
    */
   admission_url: string | null;
+  /**
+   * 修業規定內文（已過濾的 HTML）。null = 這個學制沒有規定頁面。
+   *
+   * ⚠️ 已經套過 `pickNullable`，所以英文欄空著時回的是中文原文 —— 與
+   * /faculty/[id] 的 `bio_html` 同一個行為。「有沒有頁面」由中文欄決定。
+   */
+  requirements_html: string | null;
+  /**
+   * 英文頁正在顯示中文原文時為 true —— 英文欄空著，`pickNullable` 退回了中文。
+   *
+   * 需要這個布林是因為 `pickNullable` 之後就分不出內容是哪一種語言了，而
+   * /courses/[program] 要在那種情況下印一行「Official text in Chinese」。
+   * 中文頁永遠是 false。
+   */
+  requirements_untranslated: boolean;
   sort_order: number;
 };
 
@@ -317,6 +332,8 @@ type ProgramRow = {
   description: string | null;
   description_en: string | null;
   admission_url: string | null;
+  requirements_html: string | null;
+  requirements_html_en: string | null;
   sort_order: number;
 };
 
@@ -407,8 +424,12 @@ const COURSE_COLUMNS = "id, code, name, credit, ctype, program, name_en, ctype_e
  * 的學制卡，還有首頁的招生卡與 /courses 的學制篩選籤（籤與排序都靠它）。
  * 所以動這個字串的 migration 一律要在推程式碼之前跑完。
  */
+// ⚠️ 逐一列欄位，不是 select("*")。加欄位時 Program、ProgramRow 與這裡要一起
+//    改，而且**必須先在資料庫加好欄位再推程式**：欄位不存在時 PostgREST 回
+//    錯誤、getPrograms() 回空陣列，而吃它的不只 /courses 的學制籤 —— 首頁的
+//    招生卡與 /admissions 的四張學制卡也會一起空掉，且沒有任何錯誤畫面。
 const PROGRAM_COLUMNS =
-  "id, name, name_en, description, description_en, admission_url, sort_order";
+  "id, name, name_en, description, description_en, admission_url, requirements_html, requirements_html_en, sort_order";
 
 /** 🔴 逐一列欄位，與資料庫 schema 綁死 —— 見 PROGRAM_COLUMNS 上面的說明。 */
 const LINK_COLUMNS =
@@ -479,6 +500,16 @@ function toProgram(row: ProgramRow, lang: Lang): Program {
     name_en: row.name_en,
     description: pickNullable(row.description, row.description_en, lang),
     admission_url: row.admission_url,
+    // pickNullable，不是 pick：英文欄空著代表「還沒翻」，退回中文；兩邊都空
+    // 才是「這個學制沒有規定頁面」，那個 null 是路由與卡片連結的判斷依據。
+    requirements_html: pickNullable(
+      row.requirements_html,
+      row.requirements_html_en,
+      lang
+    ),
+    // 與上面那次 pickNullable 判斷同一件事：英文欄 trim 後是空的就算沒翻。
+    requirements_untranslated:
+      lang === "en" && !row.requirements_html_en?.trim() && Boolean(row.requirements_html),
     sort_order: row.sort_order,
   };
 }
@@ -666,6 +697,59 @@ export async function getPrograms(lang: Lang): Promise<Program[]> {
     return [];
   }
   return (data ?? []).map((row) => toProgram(row, lang));
+}
+
+/**
+ * 一個學制，給 /courses/[program] 用。
+ *
+ * 沒有 `requirements_html` 就回 null —— 那個學制沒有規定頁面，路由據此 404。
+ * 這一層就擋掉，而不是讓路由自己判斷：§2 的卡片連結、generateStaticParams
+ * 與這裡用的是同一個條件，分散在三處遲早會不一致。
+ *
+ * ⚠️ 參數是**中文學制名**，由 lib/program-slugs.ts 的 programForSlug() 從網址
+ * 代稱白名單換來 —— 網址上那一段永遠不會直接進到這個查詢。
+ */
+export async function getProgramByName(
+  nameZh: string,
+  lang: Lang
+): Promise<Program | null> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("programs")
+    .select(PROGRAM_COLUMNS)
+    .eq("name", nameZh)
+    .maybeSingle<ProgramRow>();
+
+  if (error) {
+    console.error(`[lib/data] getProgramByName(${nameZh}) failed:`, error.message);
+    return null;
+  }
+  if (!data) return null;
+
+  const program = toProgram(data, lang);
+  return program.requirements_html ? program : null;
+}
+
+/**
+ * 有修業規定頁的學制（中文名），給 generateStaticParams 與 sitemap.xml 用。
+ *
+ * 只挑中文內文非空的：英文那一欄空著會退回中文，所以「有沒有頁面」由中文那
+ * 一欄決定。
+ */
+export async function getProgramsWithRequirements(): Promise<string[]> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("programs")
+    .select("name")
+    .not("requirements_html", "is", null)
+    .order("sort_order", { ascending: true })
+    .returns<{ name: string }[]>();
+
+  if (error) {
+    console.error("[lib/data] getProgramsWithRequirements failed:", error.message);
+    return [];
+  }
+  return (data ?? []).map((row) => row.name);
 }
 
 /** Link cards for a section ('students' | 'alumni'), in display order. */

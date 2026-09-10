@@ -98,6 +98,19 @@ export function revalidateFor(entity: RevalidateEntity, ...slugs: (string | null
     }
   }
 
+  if (entity === "programs") {
+    // 學制的修業規定頁。系辦改完規定必須立刻看得到，而不是等 300 秒。
+    //
+    // ⚠️ 代稱不會變（lib/program-slugs.ts 是程式碼裡的對照表，不是可編輯的
+    //    欄位），所以這裡不必像 events 那樣同時帶舊值與新值。
+    revalidatePath("/courses/[program]", "page");
+    revalidatePath(`${EN_PREFIX}/courses/[program]`, "page");
+    for (const slug of slugs) {
+      if (!slug) continue;
+      for (const path of bothLanguages(`/courses/${slug}`)) revalidatePath(path);
+    }
+  }
+
   if (entity === "events") {
     // 活動詳情頁。slugs 帶舊值與新值兩個 —— 改了 slug 而只重新驗證新的，
     // 舊網址會繼續供應快取內容。

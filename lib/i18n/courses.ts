@@ -24,6 +24,32 @@ export const COURSES = {
    * lib/site-routes.ts so the <h1> and the <title> agree.
    */
   title: { zh: "課程資訊", en: "Courses & Curriculum" },
+
+  /**
+   * /courses/[program] —— 各學制的修業規定頁。
+   *
+   * ⚠️ 內文本身不在這裡：它存在 programs.requirements_html，由系辦在後台編輯。
+   * 這些規定每年系務會議都會改版，寫死在程式碼裡等於每次改版都要找開發者。
+   */
+  requirements: {
+    /** `.post-byline`，印在學制名上面。 */
+    label: { zh: "修業規定", en: "Degree requirements" },
+    /** §2 的卡片連過去時的行動呼籲。 */
+    action: { zh: "查看修業規定", en: "View requirements" },
+    /** 回到 /courses。 */
+    back: { zh: "← 回到課程資訊", en: "← Back to Courses & Curriculum" },
+    /**
+     * 英文頁顯示中文原文時的說明。
+     *
+     * ⚠️ 修業規定是規範性文字 —— 翻錯一個學分數或科目代碼，對照著它排課的
+     * 學生會真的受影響。所以英文版保留中文原文並明說，而不是硬翻。
+     * 中文那一邊是空字串：這一行只在英文頁出現。
+     */
+    chineseOnly: {
+      zh: "",
+      en: "The official text is maintained in Chinese and is reproduced below exactly as the department publishes it.",
+    },
+  },
   hero: {
     lead: {
       zh: "以經濟理論為基礎，連結資料分析、政策、產業、環境與國際視野，建立可自由探索的學習路徑。",
@@ -88,59 +114,15 @@ export const COURSES = {
     heading: { zh: "修業規定", en: "Degree requirements" },
   },
   /** `.document-grid` — four department documents plus two official NTU resources. */
+  /**
+   * 臺大維護的官方入口。
+   *
+   * ⚠️ 這裡原本還有四筆「各學制修業規定」的占位卡（url 全空、渲染成不可點的
+   * 殼）。修業規定改成由 programs.requirements_html 供應、有自己的頁面之後，
+   * 那四筆就被移除了 —— 留著會變成第二份會漂移的清單，而它其中一筆的學制名
+   * （「在職專班」）本來就已經跟資料庫的「碩士在職專班」對不起來。
+   */
   documents: [
-    {
-      type: { zh: "PDF", en: "PDF" },
-      url: "",
-      action: { zh: "下載", en: "Download" },
-      title: {
-        zh: "大學部修業規定",
-        en: "Undergraduate degree requirements",
-      },
-      description: {
-        zh: "畢業學分、必修課程與跨域修課說明",
-        en: "Graduation credits, required courses and cross-disciplinary study",
-      },
-    },
-    {
-      type: { zh: "PDF", en: "PDF" },
-      url: "",
-      action: { zh: "下載", en: "Download" },
-      title: {
-        zh: "碩士班修業規定",
-        en: "Master's degree requirements",
-      },
-      description: {
-        zh: "修業年限、學位考試與論文相關規範",
-        en: "Time limits, degree examinations and thesis regulations",
-      },
-    },
-    {
-      type: { zh: "PDF", en: "PDF" },
-      url: "",
-      action: { zh: "下載", en: "Download" },
-      title: {
-        zh: "博士班修業規定",
-        en: "Doctoral degree requirements",
-      },
-      description: {
-        zh: "資格考核、研究訓練與學位要求",
-        en: "Qualifying examinations, research training and degree requirements",
-      },
-    },
-    {
-      type: { zh: "PDF", en: "PDF" },
-      url: "",
-      action: { zh: "下載", en: "Download" },
-      title: {
-        zh: "在職專班修業規定",
-        en: "Executive master's degree requirements",
-      },
-      description: {
-        zh: "課程安排、專題研究與畢業要求",
-        en: "Course scheduling, independent study and graduation requirements",
-      },
-    },
     {
       type: { zh: "臺大教務處", en: "NTU Academic Affairs" },
       url: "https://gra108.aca.ntu.edu.tw/graVoxCourse/index.php",

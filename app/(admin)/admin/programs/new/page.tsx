@@ -35,6 +35,10 @@ export default async function NewProgramPage() {
           description: "",
           description_en: "",
           admission_url: "",
+          requirements_html: "",
+          requirements_html_en: "",
+          requirements_json: null,
+          requirements_json_en: null,
           sort_order: nextSortOrder,
         }}
       />

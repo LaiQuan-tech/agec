@@ -1,6 +1,8 @@
+import Link from "next/link";
 import type { Course, SiteDocument, Program } from "@/lib/data";
-import { translate, type Lang } from "@/lib/i18n";
+import { localizePath, translate, type Lang } from "@/lib/i18n";
 import { COURSES } from "@/lib/i18n/courses";
+import { slugForProgram } from "@/lib/program-slugs";
 import { EYEBROWS } from "@/lib/i18n/eyebrows";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
@@ -127,34 +129,55 @@ export function Courses({
               eyebrow={eb.degreeRequirements}
               heading={t.section2.heading}
             />
-            {/* `.document-grid` — 修業規定 cards.
-                The four department PDFs are static placeholders for now. They want
-                `links.section = 'course_docs'` plus a description and a
-                file-type badge, but the `links` table has neither those rows
-                nor those columns, and `LinkItem["section"]` has no
-                'course_docs' member. Copy is reproduced verbatim from the
-                reference site so the port is visually complete; move it to the
-                DB once the schema gains those fields.
+            {/*
+              `.document-grid` —— 四個學制的修業規定，加上臺大的兩個官方入口。
 
-                The first four are pending department PDFs; the final two are
-                maintained by NTU and therefore link to the official sites. */}
+              四張學制卡直接從 `programs` 產生，不再讀字典裡那四筆占位資料：
+              標題就是學制名、說明就是它自己的簡介，改一次資料庫四處同步。
+              ⚠️ 舊的占位資料把最後一個學制寫成「在職專班」，而資料庫存的是
+              「碩士在職專班」—— 兩份清單各寫各的，遲早對不起來。那四筆已經
+              從 lib/i18n/courses.ts 移除。
+
+              ⚠️ 內部連結用 `<Link>` 且箭頭是 →；站外的兩個維持 `MaybeLink`
+              與 ↗︎。這是全站的約定（見 FacultyCard 的同一段註解）。
+            */}
             <div className="document-grid">
-              {t.documents.map((doc) => (
-                <MaybeLink
-                  href={doc.url || null}
-                  key={doc.title}
-                  // `.document-grid i` is the gold action footer, absolutely
-                  // positioned at the card's bottom-left. It is the card's call
-                  // to action, so it appears only once there is a file to open.
-                  arrow={<i>{doc.action} ↗︎</i>}
-                >
-                  {/* `.document-grid>a>span` is the gold file-type badge —
-                      it has to be a direct child span. */}
-                  <span>{doc.type}</span>
-                  <h3>{doc.title}</h3>
-                  <p>{doc.description}</p>
-                </MaybeLink>
-              ))}
+              {programs.map((program) => {
+                const slug = slugForProgram(program.name_zh);
+                // 沒有代稱或沒有內文就沒有那一頁，卡片也就不該連過去。
+                if (!slug || !program.requirements_html) return null;
+                return (
+                  <Link
+                    key={program.id}
+                    href={localizePath(`/courses/${slug}`, lang)}
+                  >
+                    {/* `.document-grid>a>span` 是金色徽章，必須是直接子層的
+                        span。原本印的是檔案格式（PDF），但現在連過去的是網頁
+                        不是檔案，所以改印類別。 */}
+                    <span>{t.requirements.label}</span>
+                    <h3>{program.name}</h3>
+                    {program.description ? <p>{program.description}</p> : null}
+                    <i>{t.requirements.action} →</i>
+                  </Link>
+                );
+              })}
+
+              {/* 臺大維護的兩個官方入口。用 url 非空來篩，而不是用索引切 ——
+                  索引會在字典增刪一筆時安靜地錯位。 */}
+              {t.documents
+                .filter((doc) => doc.url)
+                .map((doc) => (
+                  <MaybeLink
+                    href={doc.url}
+                    key={doc.title}
+                    // `.document-grid i` 是金色的行動列，絕對定位在卡片左下。
+                    arrow={<i>{doc.action} ↗︎</i>}
+                  >
+                    <span>{doc.type}</span>
+                    <h3>{doc.title}</h3>
+                    <p>{doc.description}</p>
+                  </MaybeLink>
+                ))}
             </div>
 
             {/* 系上表單，接在四份修業規定與兩個臺大入口後面。

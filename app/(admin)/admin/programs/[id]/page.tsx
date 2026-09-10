@@ -15,6 +15,10 @@ type Row = {
   description: string | null;
   description_en: string | null;
   admission_url: string | null;
+  requirements_html: string | null;
+  requirements_html_en: string | null;
+  requirements_json: unknown;
+  requirements_json_en: unknown;
   sort_order: number;
 };
 
@@ -35,7 +39,13 @@ export default async function EditProgramPage({
 
   const { data, error } = await supabase
     .from("programs")
-    .select("id, name, name_en, description, description_en, admission_url, sort_order")
+    // 🔴 requirements_* 四欄**必須**在這裡被選出來。updateProgram 是
+    //    `.update(values)` 全欄覆寫，表單送出什麼就寫什麼 —— 少選一欄，
+    //    initial 就是空字串，parse() 把空字串轉成 null，於是「打開來看一下
+    //    再按儲存」會把整份修業規定清掉，而且沒有任何錯誤訊息。
+    .select(
+      "id, name, name_en, description, description_en, admission_url, requirements_html, requirements_html_en, requirements_json, requirements_json_en, sort_order"
+    )
     .eq("id", numericId)
     .maybeSingle<Row>();
 
@@ -75,6 +85,10 @@ export default async function EditProgramPage({
           description_en: data.description_en ?? "",
           // null 轉空字串，讓 input 維持 uncontrolled。
           admission_url: data.admission_url ?? "",
+          requirements_html: data.requirements_html ?? "",
+          requirements_html_en: data.requirements_html_en ?? "",
+          requirements_json: data.requirements_json ?? null,
+          requirements_json_en: data.requirements_json_en ?? null,
           sort_order: data.sort_order,
         }}
       />
