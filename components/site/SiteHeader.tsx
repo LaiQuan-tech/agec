@@ -15,13 +15,24 @@ import {
 import { COMMON } from "@/lib/i18n/common";
 import { SHARED } from "@/lib/i18n/shared";
 import { SEARCH } from "@/lib/i18n/search";
+import type { SitemapGroup } from "./sitemap-tree";
 
 /**
  * Institution bar + masthead + full-screen menu overlay, i.e. everything above
  * the page content. One client component because the menu-open and
  * header-scrolled states both live here (site.js lines 2–18).
  */
-export function SiteHeader({ lang }: { lang: Lang }) {
+export function SiteHeader({
+  lang,
+  navTree,
+}: {
+  lang: Lang;
+  /**
+   * 每條路線底下有哪些區塊，由 SiteShell（server）算好傳進來 —— 見那裡的說明。
+   * 桌機導覽用它展開下拉選單；行動版的全螢幕選單不吃這份資料。
+   */
+  navTree: SitemapGroup[];
+}) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -34,6 +45,15 @@ export function SiteHeader({ lang }: { lang: Lang }) {
   // are compared. Without this, `pathname === item.href` never matches under
   // /en and the whole header silently loses its active state.
   const { path } = splitLang(pathname);
+
+  /*
+   * 路線 → 它的細項。
+   *
+   * ⚠️ 用 href 查表，不要用索引對齊 sitemapTree()。那棵樹有九組（首頁 + 七條
+   * 路線 + 「其他」），desktopNav() 只有七項；今天 slice(1, 8) 會對，但樹的
+   * 組成一改就會靜默錯位成「滑到招生資訊、跑出課程資訊的細項」。
+   */
+  const childrenByHref = new Map(navTree.map((group) => [group.href, group.children]));
 
   // The language toggle points at *this* page in the other language, so the
   // visitor keeps their place instead of being dumped on a home page. The
@@ -141,15 +161,45 @@ export function SiteHeader({ lang }: { lang: Lang }) {
           <nav className="desktop-nav" aria-label={t.mainNav}>
             {desktopNav(lang).map((item) => {
               const active = path === item.href;
+              const href = navHref(item.href, lang);
+              const children = childrenByHref.get(href) ?? [];
+
               return (
-                <Link
-                  key={item.href}
-                  href={navHref(item.href, lang)}
-                  className={active ? "active" : ""}
-                  aria-current={active ? "page" : undefined}
-                >
-                  <span>{item.label}</span>
-                </Link>
+                /*
+                  多包一層 .nav-item，下拉面板才有錨點。
+                  ⚠️ 面板是 <a> 的兄弟，不是它的子元素 —— 面板裡是連結，放進
+                  <a> 就變成巢狀 anchor（不合法，而且瀏覽器會把它拆開重排）。
+                  ⚠️ site.css 對這一區的規則（.desktop-nav a、a:after、
+                  a.active span、.desktop-nav span）全是後代選擇器，穿過這層
+                  wrapper 仍然命中；唯一變的是 <a> 不再是 .desktop-nav 的
+                  flex item，所以 wrapper 自己要是 flex（見 site-extensions.css）。
+                */
+                <div className="nav-item" key={item.href}>
+                  <Link
+                    href={href}
+                    className={active ? "active" : ""}
+                    aria-current={active ? "page" : undefined}
+                  >
+                    <span>{item.label}</span>
+                  </Link>
+
+                  {children.length > 0 && (
+                    /*
+                      ⚠️ 這裡不設 aria-current。這個站的兩個值各有歸屬：路由用
+                      "page"（上面那個 Link），頁內位置用 "location"
+                      （LocalNav）。在這裡再加第三種用法只會製造歧義。
+                    */
+                    <div className="nav-dropdown">
+                      <ul>
+                        {children.map((child) => (
+                          <li key={child.href}>
+                            <Link href={child.href}>{child.label}</Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </nav>

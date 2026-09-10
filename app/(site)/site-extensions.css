@@ -1838,3 +1838,122 @@
   background: transparent;
   padding-inline: 0;
 }
+
+/* ==========================================================================
+   頁首下拉選單（2026-09-10）
+   --------------------------------------------------------------------------
+   滑鼠移到桌機導覽的大項上，展開那條路線底下的全部區塊。資料來自
+   components/site/sitemap-tree.ts —— 與頁內導覽、/sitemap 同一份，所以三處
+   的標籤永遠一致（LocalNav.tsx:20-29 的 🔴 說明了為什麼這件事不能將就）。
+
+   🔴 純 CSS，沒有任何 JavaScript 狀態。移開游標或 Tab 走就收合，瀏覽器自己
+   處理 —— 不需要點外面關閉、不需要 Esc、換頁時也不會有「選單還開著」的殘留。
+   SiteHeader.tsx:157-173 當初拒絕做展開式搜尋的三筆帳，這裡一筆都不欠。
+
+   ⚠️ 不要改 site.css 的 .desktop-nav a 規則。金色底線 .desktop-nav a:after 是
+   position:absolute + left:16px/right:16px 掛在那個 <a> 上，動它底線就跑掉。
+   ========================================================================== */
+
+/* 版面。
+   ⚠️ 這一條**不能**放進下面的 hover 查詢裡。包一層 .nav-item 之後，<a> 就不再
+   是 .desktop-nav 的 flex item；wrapper 自己必須是 flex，<a> 才會照舊撐滿頁首
+   高度（88px／捲動後 74px）。放進 hover 查詢的話，觸控裝置上 wrapper 會是
+   block，七個大項會排成直的一長條。 */
+.desktop-nav > .nav-item {
+  display: flex;
+  position: relative;
+}
+
+/* 展開中的那一項要蓋過右邊的鄰居：<a> 本身是 position:relative（site.css 給
+   底線用的），所以後面的兄弟預設會畫在面板上面。 */
+.desktop-nav > .nav-item:hover,
+.desktop-nav > .nav-item:focus-within {
+  z-index: 2;
+}
+
+/* 預設完全不存在。觸控裝置停在這裡 —— 見下面那段 🔴。 */
+.nav-dropdown {
+  display: none;
+}
+
+/* 🔴 (hover: hover) and (pointer: fine) 是必要的，不是保險。
+   components/site/README.md:230 已經把「觸控裝置有黏著 hover」列為已知現象，
+   全站 CSS 從來沒有用 (hover:hover) 包過任何 hover 規則。今天的後果只是一條
+   金線亮著（無害）；但 861px 以上包含 iPad 橫式（1024）、iPad Pro（1366）與
+   觸控筆電，一旦 hover 變成展開一整片面板，同一個缺陷就升級成「點一下 → 面板
+   蓋住畫面 → 沒有任何方法關掉」。
+   加上這個查詢之後，觸控裝置上面板連渲染都不渲染，大項維持是一個普通連結，
+   點了就進那一頁 —— 而那一頁自己的 .local-nav 印的正是同一組細項。 */
+@media (min-width: 861px) and (hover: hover) and (pointer: fine) {
+  .nav-dropdown {
+    display: block;
+    position: absolute;
+    top: 100%;
+    /* 置中對齊觸發區。大項只有 87px（≤1180px 更窄到 72px），面板一定得比它寬，
+       所以不能靠 left:0 —— 量過：1440px 時最後一項置中後右緣落在 1382，
+       900px 時落在 843，七項在兩個寬度下都不溢出視窗。 */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 220px;
+
+    /* 🔴 收合用 visibility 而不是只用 opacity。visibility:hidden 會把裡面的
+       連結移出 Tab 順序；只用 opacity:0 的話，鍵盤使用者按 Tab 會掉進二十幾個
+       看不見的連結裡 —— 這是 hover 選單最常見的無障礙缺陷。
+       也不要用 display:none 收合，那樣沒有轉場可言。 */
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.18s, visibility 0.18s;
+
+    background: var(--paper);
+    border: 1px solid var(--line);
+    /* 與 .site-header.scrolled 同一種陰影，兩者是同一片浮層的延伸。 */
+    box-shadow: 0 8px 28px #032f2114;
+    padding: 10px 0;
+    text-align: left;
+  }
+
+  /* :hover 讓滑鼠可用，:focus-within 讓鍵盤可用 —— Tab 到大項就展開，繼續 Tab
+     走訪細項，離開自動收合。因為每一項都是真的連結（不是按鈕），所以不需要
+     aria-expanded。 */
+  .desktop-nav > .nav-item:hover > .nav-dropdown,
+  .desktop-nav > .nav-item:focus-within > .nav-dropdown {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  /* 清單本身。明寫重設而不是倚賴 preflight：site.css 是參考站的移植檔，裡面
+     有好幾條以 li 結尾的規則。 */
+  .nav-dropdown ul {
+    display: block;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .nav-dropdown li {
+    border: 0;
+    display: block;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nav-dropdown a {
+    color: var(--ink);
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+    padding: 9px 18px;
+    transition: background 0.15s, color 0.15s;
+    /* 細項的字比大項長（「客座、名譽與退休」七個字），220px 放不下就換行，
+       不要截斷 —— 截斷的標籤會與區塊小標對不上，而那正是要避免的事。 */
+    white-space: normal;
+  }
+  .nav-dropdown a:hover {
+    background: #06472e0f;
+    color: var(--green);
+  }
+  .nav-dropdown a:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: -2px;
+  }
+}

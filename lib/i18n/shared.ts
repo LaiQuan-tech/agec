@@ -16,9 +16,14 @@ export const SHARED = {
     en: "KEEP EXPLORING · MORE OF AGEC",
   },
   backToHome: { zh: "回到首頁", en: "Back to home" },
-  /** Language toggle in the institution bar. */
+  /**
+   * Language toggle in the institution bar.
+   *
+   * 標籤寫的是「被提供的那個語言」，不是目前的語言：中文站顯示 EN、英文站顯示
+   * 中文。SiteHeader 會把 `lang` 屬性標在標籤本身，讀屏才不會用英文腔念中文字。
+   */
   switchLanguage: { zh: "Switch to English", en: "切換為中文" },
-  languageLabel: { zh: "EN", en: "中" },
+  languageLabel: { zh: "EN", en: "中文" },
 
   /* --- 檔案下載卡（components/site/SiteDocuments.tsx） -------------------
    * /courses §3 與 /admissions §4 共用同一個版型，這兩個字每一頁都一樣，
