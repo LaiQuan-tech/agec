@@ -37,11 +37,39 @@ export function SiteFooter({ lang }: { lang: Lang }) {
   return (
     <footer id="contact">
       <div className="container footer-top">
-        <img
-          className="footer-brand-mark"
-          src="/brand/footer_agec_logo_circle_white.svg"
-          alt={t.departmentFull}
-        />
+        {/*
+          兩個標誌是一組：現行的圓形標誌，加上舊官網的徽章。
+
+          🔴 包一層 .footer-marks 是刻意的，而且**必須連帶把尺寸規則補回來**。
+          site.css 的規則是 `.footer-top > img.footer-brand-mark`（子選擇器，
+          不是後代），多包一層就不再命中，圓形標誌會退回 SVG 的原始大小。
+          補回的那幾行在 site-extensions.css，與這裡是一組，不要只改一邊。
+
+          為什麼還是選擇包一層：.footer-top 是三欄格線，另一條路是把舊標誌當
+          第四個子元素、再用 grid-row/grid-column 釘位置 —— 實測那樣會擾動其餘
+          三項的自動排版，860px 時聯絡資訊與連結欄會對調（原本是
+          [標誌|聯絡]／[連結]，變成 [標誌|連結]／[聯絡]）。包一層之後
+          .footer-top 仍然剛好三個子元素，每個斷點的排列都與改動前一致。
+        */}
+        <div className="footer-marks">
+          <img
+            className="footer-brand-mark"
+            src="/brand/footer_agec_logo_circle_white.svg"
+            alt={t.departmentFull}
+          />
+          {/* alt="" 是刻意的：上面那個標誌已經用系所全名當 alt，同一個頁尾再念
+              一次同樣的名字對讀屏只是重複。這一張純粹是視覺上的識別。
+              圖檔已去背並裁掉空白畫布（原檔 345x80、右邊 266px 是空的，而且
+              徽章壓在一塊白色方塊上，直接放在深綠底上會像貼紙）。 */}
+          <img
+            className="footer-legacy-mark"
+            src="/brand/footer_agec_logo_legacy.png"
+            alt=""
+            aria-hidden="true"
+            width={79}
+            height={80}
+          />
+        </div>
         <div className="footer-contact">
           {/* The two address lines swap order between languages — see
               COMMON.addressLine1. The <br> stays a <br>: `.footer-contact p`

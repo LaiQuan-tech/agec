@@ -1957,3 +1957,42 @@
     outline-offset: -2px;
   }
 }
+
+/* ==========================================================================
+   頁尾的舊官網標誌（2026-09-10）
+   --------------------------------------------------------------------------
+   舊站的圓形徽章，擺在現行圓形標誌右邊那塊空白裡。量過：.footer-top 是
+   411 / 411 / 299 三欄，而圓形標誌只有 81px 寬，第一欄右邊有將近 330px 一直
+   是空的。
+
+   兩個標誌包在 .footer-marks 裡，所以 .footer-top 仍然剛好三個子元素 ——
+   ⚠️ 試過把舊標誌當第四個子元素再用 grid-row/grid-column 釘位置，那會擾動
+   其餘三項的自動排版：860px 時聯絡資訊與連結欄會對調。包一層才是無副作用的。
+   ========================================================================== */
+
+.footer-marks {
+  align-items: center;
+  display: flex;
+  gap: 44px;
+}
+
+/* 🔴 補回被 wrapper 擋掉的規則。site.css 寫的是
+   `.footer-top > img.footer-brand-mark`（子選擇器），包一層之後不再命中，
+   圓形標誌會退回 SVG 的原始尺寸。這幾行與 site.css 那條逐字相同，只是換了
+   祖先 —— 改動任何一邊都要同步。 */
+.footer-marks > img.footer-brand-mark {
+  background: 0 0;
+  height: 83px;
+  object-fit: contain;
+  padding: 0;
+  width: 81px;
+}
+
+.footer-marks > .footer-legacy-mark {
+  /* 檔案去背裁切後是 79x80（幾乎正方），高度給多少寬度就差不多是多少。
+     76px 對上圓形標誌的 83px —— 舊標誌是實心圓盤，同高會顯得比較重，
+     略小一點兩者才等重。 */
+  height: 76px;
+  object-fit: contain;
+  width: auto;
+}
