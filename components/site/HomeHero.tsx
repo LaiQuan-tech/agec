@@ -6,25 +6,39 @@ import { localizePath, translate, type Lang } from "@/lib/i18n";
 import { HOME_HERO } from "@/lib/i18n/home";
 
 /**
- * `section.hero#top` — the home page's video carousel.
+ * `section.hero#top` — the home page's video hero.
  *
- * The two clips are the department's own films, the same pair the current
- * official site (agec.ntu.edu.tw) runs in its jPlayer banner. Both are re-encoded
- * for the web from the originals: 1080p, **no audio track**, `+faststart`.
- * Stripping the audio is not an optimisation — browsers refuse to autoplay a
- * video with sound, and a muted track is bytes nobody will ever hear.
+ * The clip is the department's 2026 introduction film (YouTube AAx8Y3xxYck,
+ * channel 臺大農經系), re-encoded for the web: 1920×972, **no audio track**,
+ * `+faststart`, capped at 1.1 Mbit/s (38 MB for 295s — streamed, so a visitor
+ * only ever fetches what they watch). Stripping the audio is not an
+ * optimisation — browsers refuse to autoplay a video with sound, and a muted
+ * track is bytes nobody will ever hear.
  *
- * ⚠️ Both source films end on a white logo card (8 of video 1's 26 seconds,
- * 4 of video 2's 132). The hero headline is white, so those stretches would
- * make the page's own title disappear. Both are trimmed just before the fade —
- * 17.8s and 127s. An end card is for a film that finishes; this one loops, and
- * the site already carries the logo in its header. If either video is ever
- * re-encoded, check for the white tail again.
+ * ⚠️ Four things were cut from the film, on purpose (all in the ffmpeg pass,
+ * nothing here):
+ *  - the first 3.7s. The film opens on a centred, burned-in "Dept. of
+ *    Agriculture Economics / National Taiwan University" title — white, large,
+ *    exactly where the hero's own white headline sits. Two titles on top of
+ *    each other for the first four seconds of every loop.
+ *  - everything after 298.5s. The film ends on a three-logo card over a blurred
+ *    building; an end card is for a film that finishes, this one loops, and the
+ *    site already carries the logo in its header. The 2026-08 pair this
+ *    replaced were trimmed for the same reason.
+ *  - the bottom 10% of the frame (2560×1440 → 2560×1296 before scaling). The
+ *    film carries burned-in interview captions there; with the sound gone they
+ *    are text nobody can follow, flashing under the hero's own copy.
+ *  - the AGEC watermark in the top-left corner (ffmpeg `delogo`). Cropping it
+ *    away would cost the interviewees' heads; leaving it in, its lower half
+ *    peeked out under the site header at 1440×900. The interpolated patch is
+ *    a faint smear where a palm crosses it, and it sits under the header.
  *
- * Timing is driven by the videos, not a clock: each slide advances when its
- * own clip ends. That is why neither <video> carries `loop` — `loop` restarts
- * the clip instead of firing `ended`, and the carousel would sit on slide 1
- * forever. The cycle comes from the index wrapping instead.
+ * The component is still the carousel the reference site shipped, so a second
+ * clip can be added back by appending to SLIDES. With one slide the clip
+ * simply loops (`LOOPS`); with two or more, timing is driven by the videos,
+ * not a clock: each slide advances when its own clip ends, which is why the
+ * carousel case must not set `loop` — `loop` restarts the clip instead of
+ * firing `ended`, and the carousel would sit on slide 1 forever.
  *
  * Faithful details kept from the ported reference:
  *  - `prefers-reduced-motion` is read once at mount, not watched. Changing the
@@ -37,18 +51,24 @@ const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 /**
  * How close to the end of a clip the *next* one starts buffering.
  *
- * Slide 2 is 16.5MB and ships `preload="none"`, so it is not fetched at all
- * unless a visitor is still here after slide 1 — which most are not. That saves
- * the bytes, but it also means the switch would otherwise land on an empty
- * element while the browser starts the download. Five seconds is enough of a
- * head start to have something decoded by the crossfade.
+ * Any slide after the first ships `preload="none"`, so it is not fetched at
+ * all unless a visitor is still here when its turn comes — which most are not.
+ * That saves the bytes, but it also means the switch would otherwise land on
+ * an empty element while the browser starts the download. Five seconds is
+ * enough of a head start to have something decoded by the crossfade.
+ * (Unused while SLIDES has one entry; kept with the carousel.)
  */
 const PRELOAD_LEAD_SECONDS = 5;
 
 const SLIDES = [
-  { src: "/videos/hero-1.mp4", poster: "/images/hero-desktop/hero-1.jpg" },
-  { src: "/videos/hero-2.mp4", poster: "/images/hero-desktop/hero-2.jpg" },
+  { src: "/videos/hero-intro.mp4", poster: "/images/hero-desktop/hero-intro.jpg" },
 ];
+
+/**
+ * One clip loops natively; the carousel's `ended` → advance cycle is only
+ * wired up when there is somewhere to advance to. See the header comment.
+ */
+const LOOPS = SLIDES.length === 1;
 
 export function HomeHero({ lang }: { lang: Lang }) {
   const t = translate(HOME_HERO, lang);
@@ -80,6 +100,11 @@ export function HomeHero({ lang }: { lang: Lang }) {
     // from wherever it was paused rather than starting over.
     current.currentTime = 0;
     current.play().catch(() => {});
+
+    // A lone clip has nothing to advance to and nothing to prime. Wiring the
+    // listeners anyway would be worse than useless: `primeNext` would find
+    // `next === current` and call load() on the playing video near its end.
+    if (LOOPS) return;
 
     const advance = () => setIndex((i) => (i + 1) % SLIDES.length);
 
@@ -118,8 +143,9 @@ export function HomeHero({ lang }: { lang: Lang }) {
               autoPlay={i === 0}
               muted
               playsInline
-              // The first clip needs enough to start; the second is 16.5MB and
-              // must not be fetched until it is nearly needed.
+              loop={LOOPS}
+              // The first clip needs enough to start; any later one must not
+              // be fetched until it is nearly needed (see PRELOAD_LEAD_SECONDS).
               preload={i === 0 ? "metadata" : "none"}
               poster={slide.poster}
               tabIndex={-1}
