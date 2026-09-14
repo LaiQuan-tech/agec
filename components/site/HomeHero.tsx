@@ -10,30 +10,29 @@ import { HOME_HERO } from "@/lib/i18n/home";
  *
  * The clip is the department's 2026 introduction film (YouTube AAx8Y3xxYck,
  * channel 臺大農經系), re-encoded for the web: 1920×1080, **no audio track**,
- * `+faststart`, capped at 1.1 Mbit/s (39 MB for 295s — streamed, so a visitor
+ * `+faststart`, capped at 1.1 Mbit/s (40 MB for 302s — streamed, so a visitor
  * only ever fetches what they watch). Stripping the audio is not an
  * optimisation — browsers refuse to autoplay a video with sound, and a muted
  * track is bytes nobody will ever hear.
  *
- * ⚠️ Three things were cut from the film, on purpose (all in the ffmpeg pass,
- * nothing here):
- *  - the first 3.7s. The film opens on a centred, burned-in "Dept. of
- *    Agriculture Economics / National Taiwan University" title — white, large,
- *    exactly where the hero's own white headline sits. Two titles on top of
- *    each other for the first four seconds of every loop.
- *  - everything after 298.5s. The film ends on a three-logo card over a blurred
- *    building; an end card is for a film that finishes, this one loops, and the
- *    site already carries the logo in its header. The 2026-08 pair this
- *    replaced were trimmed for the same reason.
- *  - the AGEC watermark in the top-left corner (ffmpeg `delogo`). Cropping it
- *    away would cost the interviewees' heads; leaving it in, its lower half
- *    peeked out under the site header at 1440×900. The interpolated patch is
- *    a faint smear where a palm crosses it, and it sits under the header.
- *  The burned-in interview captions along the bottom edge are **kept** — the
- *  department wants them readable (2026-09-14). The full 16:9 frame is
- *  therefore shipped; do not crop the bottom band to "clean up" the hero.
- *  On a phone the centred captions are clipped at both sides by the portrait
- *  crop; that is the film's framing, not a bug.
+ * ⚠️ The film is shipped **whole** — opening title card, burned-in interview
+ * captions and the three-logo end card included. The department asked for
+ * all three to stay (2026-09-14), after a first cut had trimmed them:
+ *  - the opening title ("Dept. of Agriculture Economics / National Taiwan
+ *    University") is centred and white, and sits under the hero's own white
+ *    headline for the first ~3.5s of every loop. Known and accepted.
+ *  - the captions run along the bottom edge, which is the hero's bottom edge:
+ *    on viewports shorter than the hero's 920px minimum they are below the
+ *    fold until the visitor scrolls; on a phone the portrait crop clips long
+ *    lines at both sides. Both are the film's framing, not a bug.
+ *  - the end card loops straight back into the opening shot.
+ *  Do not "clean up" any of the three in a re-encode without asking.
+ *
+ *  The one edit that stays is the AGEC watermark in the top-left corner
+ *  (ffmpeg `delogo`): its lower half peeked out under the site header at
+ *  1440×900, and the header already carries the same mark. The interpolated
+ *  patch is a faint smear where a palm crosses it, and it sits under the
+ *  header.
  *
  * The component is still the carousel the reference site shipped, so a second
  * clip can be added back by appending to SLIDES. With one slide the clip
