@@ -9,13 +9,13 @@ import { HOME_HERO } from "@/lib/i18n/home";
  * `section.hero#top` — the home page's video hero.
  *
  * The clip is the department's 2026 introduction film (YouTube AAx8Y3xxYck,
- * channel 臺大農經系), re-encoded for the web: 1920×972, **no audio track**,
- * `+faststart`, capped at 1.1 Mbit/s (38 MB for 295s — streamed, so a visitor
+ * channel 臺大農經系), re-encoded for the web: 1920×1080, **no audio track**,
+ * `+faststart`, capped at 1.1 Mbit/s (39 MB for 295s — streamed, so a visitor
  * only ever fetches what they watch). Stripping the audio is not an
  * optimisation — browsers refuse to autoplay a video with sound, and a muted
  * track is bytes nobody will ever hear.
  *
- * ⚠️ Four things were cut from the film, on purpose (all in the ffmpeg pass,
+ * ⚠️ Three things were cut from the film, on purpose (all in the ffmpeg pass,
  * nothing here):
  *  - the first 3.7s. The film opens on a centred, burned-in "Dept. of
  *    Agriculture Economics / National Taiwan University" title — white, large,
@@ -25,13 +25,15 @@ import { HOME_HERO } from "@/lib/i18n/home";
  *    building; an end card is for a film that finishes, this one loops, and the
  *    site already carries the logo in its header. The 2026-08 pair this
  *    replaced were trimmed for the same reason.
- *  - the bottom 10% of the frame (2560×1440 → 2560×1296 before scaling). The
- *    film carries burned-in interview captions there; with the sound gone they
- *    are text nobody can follow, flashing under the hero's own copy.
  *  - the AGEC watermark in the top-left corner (ffmpeg `delogo`). Cropping it
  *    away would cost the interviewees' heads; leaving it in, its lower half
  *    peeked out under the site header at 1440×900. The interpolated patch is
  *    a faint smear where a palm crosses it, and it sits under the header.
+ *  The burned-in interview captions along the bottom edge are **kept** — the
+ *  department wants them readable (2026-09-14). The full 16:9 frame is
+ *  therefore shipped; do not crop the bottom band to "clean up" the hero.
+ *  On a phone the centred captions are clipped at both sides by the portrait
+ *  crop; that is the film's framing, not a bug.
  *
  * The component is still the carousel the reference site shipped, so a second
  * clip can be added back by appending to SLIDES. With one slide the clip
