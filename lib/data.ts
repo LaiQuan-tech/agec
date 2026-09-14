@@ -462,6 +462,9 @@ const CAPABILITY_COLUMNS = "id, label, sort_order, label_en";
 const DOCUMENT_COLUMNS =
   "id, section, label, description, file_url, file_name, sort_order, label_en, description_en, category, category_en, program";
 
+/** page_copy（migration 20260914110000）。zh / en 都是 not null default ''。 */
+const PAGE_COPY_COLUMNS = "name, zh, en";
+
 function toNews(row: NewsRow, lang: Lang): NewsItem {
   return {
     id: row.id,
@@ -878,6 +881,31 @@ export async function getDocumentsForProgram(
     return [];
   }
   return (data ?? []).map((row) => toDocument(row, lang));
+}
+
+/**
+ * 某一頁的可編輯文案格位（`page_copy` 表；目前只有 'students'）。
+ *
+ * 回的是原始列（name / zh / en），語言的挑選與退回字典交給該頁的 resolver
+ * （lib/page-copy/students.ts 的 resolveStudentsCopy）—— 這裡不知道每個 key
+ * 的預設值是什麼。表還沒建時走 error 那一條回空陣列，resolver 會全部退回
+ * 字典，前台與沒有這張表時一模一樣。
+ */
+export async function getPageCopy(
+  page: string
+): Promise<{ name: string; zh: string; en: string }[]> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("page_copy")
+    .select(PAGE_COPY_COLUMNS)
+    .eq("page", page)
+    .returns<{ name: string; zh: string; en: string }[]>();
+
+  if (error) {
+    console.error(`[lib/data] getPageCopy(${page}) failed:`, error.message);
+    return [];
+  }
+  return data ?? [];
 }
 
 /**

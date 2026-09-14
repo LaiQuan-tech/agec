@@ -3,9 +3,21 @@ import type { Dict } from "@/lib/i18n";
 /**
  * Every hard-coded string on 學生專區 (/students).
  *
- * Only `.resource-row` in `#section-4` reads the DB (getLinks("students")),
- * so almost the whole page lives here. `SectionTitle`'s `eyebrow` stays
- * uppercase Latin in both languages and is not in here.
+ * Two kinds of string live here now:
+ *
+ *  - page furniture (hero lead, nav labels, section headings and descriptions)
+ *    — still hard-coded, read straight from this file;
+ *  - **the editable slots** — §1's four steps, §2's heading/body/button/url,
+ *    §3's leader box and five branches. Those are the `page_copy` table's
+ *    business (lib/page-copy/students.ts; edited at /admin/students). The
+ *    values kept here are the seed the migration copied into the table and
+ *    the fallback the page prints when the table has no row for a key. So
+ *    changing a value here changes nothing on the live site once the row
+ *    exists — edit it in the admin instead.
+ *
+ * `.resource-row` in `#section-4` reads the `links` table (getLinks("students"))
+ * and has no copy here at all. `SectionTitle`'s `eyebrow` stays uppercase
+ * Latin in both languages and is not in here either.
  *
  * Arrows (`↗`) are part of the string rather than a separate node: React
  * would otherwise emit two text nodes and the browser shapes the run in two
@@ -103,6 +115,9 @@ export const STUDENTS = {
      * keep promising navigation after the destination was taken away.
      */
     cta: { zh: "開啟校園小地圖", en: "Open the campus mini-map" },
+    /** NTU's campus map, supplied by the client. Not a department page; one
+        value for both languages. Editable in the admin like the rest of §2. */
+    url: "https://map.ntu.edu.tw/",
     imageAlt: {
       zh: "臺大椰林大道",
       en: "Royal Palm Boulevard at NTU",
@@ -168,11 +183,10 @@ export const STUDENTS = {
       zh: "集中整理選課、學位考試、研究計畫、獎助學金與校園服務，陪伴學生從在學到專業發展的每一階段。",
       en: "Course registration, degree examinations, research projects, financial aid and campus services gathered in one place to support every stage of study and professional development.",
     },
-    learningFallback: [
-      { zh: "選課相關表格", en: "Course registration forms" },
-      { zh: "學位考試申請", en: "Degree examination application" },
-      { zh: "離校程序表格", en: "Departure clearance forms" },
-      { zh: "研究計畫申請", en: "Research project application" },
-    ],
+    // No fallback list: the eight cards are all `links` rows with
+    // section='students' now (the four 教務處 forms used to sit under
+    // section='courses' until migration 20260914110000 moved them). An empty
+    // table leaves the section with its heading only — that is a deliberate
+    // deletion by the office, not a state to paper over.
   },
 } satisfies Dict;

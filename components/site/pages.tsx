@@ -13,6 +13,7 @@ import {
   getNewsIds,
   getNewsPage,
   getNewsYears,
+  getPageCopy,
   getPrograms,
   getTalks,
   getTalksPage,
@@ -29,6 +30,7 @@ import { Faculty } from "./Faculty";
 import { Admissions } from "./Admissions";
 import { Courses } from "./Courses";
 import { Students } from "./Students";
+import { resolveStudentsCopy, STUDENTS_PAGE } from "@/lib/page-copy/students";
 import { Alumni } from "./Alumni";
 
 /**
@@ -250,19 +252,20 @@ export async function CoursesRoute({ lang }: { lang: Lang }) {
 }
 
 export async function StudentsRoute({ lang }: { lang: Lang }) {
-  // §4 同時收兩個 section 的連結卡：students 是原本就有的學生資源，
-  // courses 是從 /courses 搬過來的教務處表格。兩份都由系辦在 /admin/links
-  // 維護，section 決定它們落在哪一頁。
-  const [studentLinks, learningLinks] = await Promise.all([
+  // §4 的八張連結卡全部是 links.section='students'（四條教務處表格原本掛在
+  // 'courses'，migration 20260914110000 搬過來了 —— /courses 早就不讀那個
+  // section）。§1–§3 的文字走 page_copy（後台 /admin/students），表還沒建或
+  // 缺 key 時 resolver 退回字典，所以這裡不必判斷。
+  const [studentLinks, copyRows] = await Promise.all([
     getLinks("students", lang),
-    getLinks("courses", lang),
+    getPageCopy(STUDENTS_PAGE),
   ]);
 
   return (
     <Students
       lang={lang}
       studentLinks={studentLinks}
-      learningLinks={learningLinks}
+      copy={resolveStudentsCopy(copyRows, lang)}
     />
   );
 }

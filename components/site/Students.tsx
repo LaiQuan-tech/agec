@@ -1,6 +1,7 @@
 import type { LinkItem } from "@/lib/data";
 import { translate, type Lang } from "@/lib/i18n";
 import { STUDENTS } from "@/lib/i18n/students";
+import type { StudentsCopy } from "@/lib/page-copy/students";
 import { EYEBROWS } from "@/lib/i18n/eyebrows";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
@@ -9,15 +10,13 @@ import { SectionTitle } from "./SectionTitle";
 import { NextRoute } from "./NextRoute";
 import { MaybeLink } from "./MaybeLink";
 
-/** NTU's campus map, supplied by the client. Not a department page. */
-const CAMPUS_MAP_URL = "https://map.ntu.edu.tw/";
-
 /**
  * 學生專區 (/students) — route 07 / 08.
  *
- * Three of the four sections are static copy (A-class) and live in
- * lib/i18n/students.ts; `.resource-row` in `#section-4` combines the DB-backed
- * student links with the course/form links moved here from /courses.
+ * §1–§3 的文字來自 `copy`（page_copy 表，後台 /admin/students 編輯；缺什麼退回
+ * lib/i18n/students.ts 的字典，見 lib/page-copy/students.ts）。每一區的小標與
+ * 說明句仍是字典裡的固定文案。`.resource-row` in `#section-4` 是 links 表
+ * section='students' 的八張卡。
  *
  * `.steps` and `.association-branches` are deliberately hard-coded. site.css
  * draws their dividers positionally:
@@ -34,28 +33,18 @@ const CAMPUS_MAP_URL = "https://map.ntu.edu.tw/";
 export function Students({
   lang,
   studentLinks,
-  learningLinks,
+  copy,
 }: {
   lang: Lang;
+  /** getLinks("students") —— 已依 sort_order 排好。空陣列時 §4 只剩小標。 */
   studentLinks: LinkItem[];
-  learningLinks: LinkItem[];
+  /** resolveStudentsCopy() 的結果 —— 永遠是完整的 4 步驟／1＋5 部門。 */
+  copy: StudentsCopy;
 }) {
   const t = translate(STUDENTS, lang);
   const eb = translate(EYEBROWS, lang);
-  const resources: LinkItem[] = [
-    ...(learningLinks.length > 0
-      ? learningLinks
-      : t.section4.learningFallback.map((label, i) => ({
-          id: -(i + 1),
-          section: "courses" as const,
-          label,
-          url: null,
-          // links.program 是 /admissions §4 的學制標記；這一頁不分學制。
-          program: null,
-          sort_order: i,
-        }))),
-    ...studentLinks,
-  ];
+  // 步驟編號印在卡片左上，是版面的一部分而不是文案 —— 固定 01–04。
+  const STEP_NUMBERS = ["01", "02", "03", "04"];
 
   return (
     <SiteShell lang={lang} variant="interior">
@@ -80,9 +69,9 @@ export function Students({
             />
             {/* `.steps article` is the only card selector — no wrapper div. */}
             <div className="steps">
-              {t.section1.steps.map((step) => (
-                <article key={step.no}>
-                  <span>{step.no}</span>
+              {copy.steps.map((step, i) => (
+                <article key={STEP_NUMBERS[i]}>
+                  <span>{STEP_NUMBERS[i]}</span>
                   <h3>{step.title}</h3>
                   <p>{step.body}</p>
                 </article>
@@ -99,19 +88,20 @@ export function Students({
               <SectionTitle
                 no="02"
                 eyebrow={eb.campusLife}
-                heading={t.section2.heading}
+                heading={copy.campus.heading}
               />
               {/* Styled by `.student-life-grid>div>p` — a direct child only. */}
-              <p>{t.section2.body}</p>
-              {/* NTU's own campus map. External, so MaybeLink gives it a
+              <p>{copy.campus.body}</p>
+              {/* 校園小地圖之類的外站網址。External, so MaybeLink gives it a
                   plain <a target="_blank" rel="noopener noreferrer"> rather
-                  than a next/link route. */}
+                  than a next/link route；系辦把網址清空時按鈕留著但沒有去處
+                  （MaybeLink 不給 href、不印箭頭）。 */}
               <MaybeLink
                 className="button gold"
-                href={CAMPUS_MAP_URL}
+                href={copy.campus.url}
                 arrow={<span> ↗︎</span>}
               >
-                {t.section2.cta}
+                {copy.campus.cta}
               </MaybeLink>
             </div>
             <img src="/images/hero.jpg" alt={t.section2.imageAlt} />
@@ -129,12 +119,14 @@ export function Students({
               {/* `.leader:after` draws the 65px connector down to the branch
                   row, so the leader box has to be the first child here. */}
               <div className="leader">
-                <h3>{t.section3.leader.title}</h3>
-                <p>{t.section3.leader.body}</p>
+                <h3>{copy.leader.title}</h3>
+                <p>{copy.leader.body}</p>
               </div>
               <div className="association-branches">
-                {t.section3.branches.map((branch) => (
-                  <article key={branch.name}>
+                {copy.branches.map((branch, i) => (
+                  // key 用位置：五個格位是固定的，名稱是系辦可以改的文字
+                  //（兩個部門同名也不該讓 React 撞 key）。
+                  <article key={i}>
                     <h3>{branch.name}</h3>
                     <p>{branch.body}</p>
                   </article>
@@ -157,7 +149,7 @@ export function Students({
                 removes only the href. `label` arrives from lib/data.ts already
                 in the page's language. */}
             <div className="resource-row">
-              {resources.map((link) => (
+              {studentLinks.map((link) => (
                 <MaybeLink
                   key={link.id}
                   href={link.url}
