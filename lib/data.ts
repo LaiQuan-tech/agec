@@ -290,6 +290,23 @@ export type SiteDocument = {
   file_url: string | null;
   file_name: string | null;
   sort_order: number;
+  /**
+   * 分類，已解析成當前語言（英文空白時退回中文）。前台依它分組、各組一個
+   * 小標；null = 沒有分類，印在所有分組前面、不加小標。
+   *
+   * 系辦自由填，沒有固定清單（舊站是：其他／國際碩士專班／碩博相關／招生
+   * 相關／課程相關）。分組用的比對鍵是 **中文原值**，不是這個翻譯後的字 ——
+   * 見 SiteDocuments 的 groupByCategory。
+   */
+  category: string | null;
+  /** 分類的中文原值，分組用。與 category 分開存是為了英文頁也照中文分組。 */
+  category_zh: string | null;
+  /**
+   * 學制標記，值同 `programs.name`（中文原值，不翻譯，與 links.program 同一個
+   * 約定）。標了的檔案會出現在該學制的修業規定頁；/admissions §4 的學制篩選
+   * 也讀它。null = 不限學制。
+   */
+  program: string | null;
 };
 
 /* ------------------------------------------------------------------ *
@@ -339,9 +356,10 @@ type ProgramRow = {
 
 type LinkRow = LinkItem & { label_en: string | null };
 type CapabilityRow = CapabilityItem & { label_en: string | null };
-type DocumentRow = SiteDocument & {
+type DocumentRow = Omit<SiteDocument, "category_zh"> & {
   label_en: string | null;
   description_en: string | null;
+  category_en: string | null;
 };
 
 /**
@@ -438,8 +456,11 @@ const LINK_COLUMNS =
 const CAPABILITY_COLUMNS = "id, label, sort_order, label_en";
 
 /** 🔴 逐一列欄位，與資料庫 schema 綁死 —— 見 PROGRAM_COLUMNS 上面的說明。 */
+// 🔴 逐一列欄位：category / category_en / program 三欄來自 migration
+//    20260914100000，沒跑的話 PostgREST 會回錯、getDocuments 回空陣列，
+//    /courses 與 /admissions 的檔案區會整個消失。
 const DOCUMENT_COLUMNS =
-  "id, section, label, description, file_url, file_name, sort_order, label_en, description_en";
+  "id, section, label, description, file_url, file_name, sort_order, label_en, description_en, category, category_en, program";
 
 function toNews(row: NewsRow, lang: Lang): NewsItem {
   return {
@@ -546,6 +567,9 @@ function toDocument(row: DocumentRow, lang: Lang): SiteDocument {
     file_url: row.file_url,
     file_name: row.file_name,
     sort_order: row.sort_order,
+    category: pickNullable(row.category, row.category_en, lang),
+    category_zh: row.category,
+    program: row.program,
   };
 }
 
@@ -823,6 +847,34 @@ export async function getDocuments(
 
   if (error) {
     console.error(`[lib/data] getDocuments(${section}) failed:`, error.message);
+    return [];
+  }
+  return (data ?? []).map((row) => toDocument(row, lang));
+}
+
+/**
+ * 標了某個學制的檔案（/courses/[program] 修業規定頁底下那一區）。
+ *
+ * 只取 section='courses'：招生檔案就算標了學制，也是招生資訊頁的事。
+ * `nameZh` 是 programs.name 的中文原值（路由已經用 programForSlug 白名單過），
+ * 與 documents.program 逐字比對。
+ */
+export async function getDocumentsForProgram(
+  nameZh: string,
+  lang: Lang
+): Promise<SiteDocument[]> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("documents")
+    .select(DOCUMENT_COLUMNS)
+    .eq("section", "courses")
+    .eq("program", nameZh)
+    .order("sort_order", { ascending: true })
+    .order("id", { ascending: true })
+    .returns<DocumentRow[]>();
+
+  if (error) {
+    console.error(`[lib/data] getDocumentsForProgram(${nameZh}) failed:`, error.message);
     return [];
   }
   return (data ?? []).map((row) => toDocument(row, lang));

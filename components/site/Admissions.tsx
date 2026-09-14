@@ -9,7 +9,6 @@ import { LocalNav } from "./LocalNav";
 import { SectionTitle } from "./SectionTitle";
 import { NextRoute } from "./NextRoute";
 import { AdmissionResources } from "./AdmissionResources";
-import { SiteDocuments } from "./SiteDocuments";
 import { MaybeLink } from "./MaybeLink";
 import { padNo } from "./nav";
 
@@ -234,26 +233,21 @@ export function Admissions({
               eyebrow={eb.needHelp}
               heading={t.section4.heading}
             />
-            {/* 系上自己的檔案先出現 —— 底下那排是別的單位維護的系統。
-                一個檔都沒有時整區不印，§4 維持原樣。 */}
-            <SiteDocuments
-              lang={lang}
-              documents={documents}
-              heading={t.section4.documents.heading}
-              description={t.section4.documents.description}
-            />
-
             {/*
-              籤與卡片一起交給 client 元件。
+              籤、檔案卡與連結卡一起交給 client 元件 —— 三者共用同一排學制籤。
 
-              籤只有在 `links` 真的有一筆標了學制時才會出現 —— 沒有東西可以分
-              的時候印一排按了沒反應的按鈕，正是 /courses 那組籤被回報的問題。
-              系辦在 /admin/links 把招生簡章拆成四筆、各標一個學制之後，這一區
-              才會長出篩選。
+              籤只有在 `links` 或 `documents` 真的有一筆標了學制時才會出現 ——
+              沒有東西可以分的時候印一排按了沒反應的按鈕，正是 /courses 那組籤
+              被回報的問題。系辦在 /admin/links 把招生簡章拆成四筆、各標一個
+              學制（或在 /admin/documents 替招生檔案標學制）之後，這一區才會
+              長出篩選。
             */}
             <AdmissionResources
               lang={lang}
               resources={resources}
+              documents={documents}
+              documentsHeading={t.section4.documents.heading}
+              documentsDescription={t.section4.documents.description}
               // 籤的 value 是中文的學制名（links.program 比對的對象），
               // label 才跟著語言走 —— 與 /courses 的學制籤同一個約定。
               programs={cards.map((p) => ({ value: p.name_zh, label: p.name }))}

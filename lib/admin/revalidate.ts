@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { EN_PREFIX } from "@/lib/i18n";
+import { PROGRAM_SLUG_LIST } from "@/lib/program-slugs";
 
 /**
  * Which public routes go stale when a table changes.
@@ -107,6 +108,17 @@ export function revalidateFor(entity: RevalidateEntity, ...slugs: (string | null
     revalidatePath(`${EN_PREFIX}/courses/[program]`, "page");
     for (const slug of slugs) {
       if (!slug) continue;
+      for (const path of bothLanguages(`/courses/${slug}`)) revalidatePath(path);
+    }
+  }
+
+  if (entity === "documents") {
+    // 標了學制的檔案會出現在該學制的修業規定頁（/courses/[program]）底下。
+    // 一次存檔不知道它改前改後各標了哪個學制，四頁一起重新驗證最省事 ——
+    // 這幾頁本來就是 ISR，多驗證三頁的代價是幾次讀取。
+    revalidatePath("/courses/[program]", "page");
+    revalidatePath(`${EN_PREFIX}/courses/[program]`, "page");
+    for (const slug of PROGRAM_SLUG_LIST) {
       for (const path of bothLanguages(`/courses/${slug}`)) revalidatePath(path);
     }
   }

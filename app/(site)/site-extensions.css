@@ -1596,6 +1596,48 @@
 }
 
 /* ---------------------------------------------------------------------------
+ * 檔案下載卡的分組小標 — `.document-group`
+ *
+ * 系辦在後台替檔案填「分類」之後，SiteDocuments 會把同一分類的卡片排成一組、
+ * 組前印這一行（舊站的常用表格就是五組各一個小標）。它比 `.forms-subhead h3`
+ * 再低一階：那是整區的小標（21px），這是組與組之間的分隔（15px、金色左線）。
+ *
+ * 沒有分類的卡片不印這一行 —— 所以 `.forms-subhead` 後面可能直接接
+ * `.document-grid`（沒分類的那一組）再接 `.document-group`，也可能直接接
+ * `.document-group`；兩種都靠這裡的 margin 拉開，不靠外層。
+ * ------------------------------------------------------------------------ */
+.document-group {
+  color: var(--green-deep);
+  font: 600 15px / 1.5 var(--serif);
+  letter-spacing: 0.04em;
+  margin: 32px 0 12px;
+  padding-left: 12px;
+  border-left: 3px solid var(--gold);
+}
+
+/* ---------------------------------------------------------------------------
+ * 修業規定頁內文底下的檔案 — `.post-documents`
+ *
+ * /courses/[program] 用的是 `.post-*` 的 760px 閱讀寬度，不是區塊頁的 1200px
+ * 容器。`.document-grid` 在 site.css 是四欄，塞進 760px 一張卡只剩 170px、
+ * 21px 的標題會逐字斷行，所以這裡改兩欄；600px 以下跟 site.css 一樣收成一欄
+ * （site.css 那條是 `.document-grid` 單一 class，比這裡的選擇器弱，所以要
+ * 自己再寫一次，不然手機上會停在兩欄）。
+ * ------------------------------------------------------------------------ */
+.post-page .post-documents {
+  max-width: 760px;
+  margin-top: clamp(40px, 5vw, 64px);
+}
+.post-page .post-documents .document-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (max-width: 600px) {
+  .post-page .post-documents .document-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------------------------------------------------------------------------
  * 課表滑過時不要位移 — `.course-table > a:hover`
  *
  * site.css 原本的寫法是：

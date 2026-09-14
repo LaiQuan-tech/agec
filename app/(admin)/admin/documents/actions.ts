@@ -23,6 +23,9 @@ import { DOCUMENT_SECTIONS } from "./constants";
 
 type DocumentInput = {
   section: (typeof DOCUMENT_SECTIONS)[number];
+  category: string | null;
+  category_en: string | null;
+  program: string | null;
   label: string;
   label_en: string | null;
   description: string | null;
@@ -39,6 +42,11 @@ function parse(form: FormData): {
   // 全部欄位都先跑完再一次 collect，不 early-return —— 使用者一次看到所有
   // 錯誤，而不是修好一個才發現下一個。
   const section = oneOf(form, "section", "區塊", DOCUMENT_SECTIONS, { required: true });
+  // 分類與學制都是自由文字、不是 oneOf：分類是系辦自己開的清單，學制要比對
+  // programs.name 而那是可以改的顯示文字（與 /admin/links 同一個理由）。
+  const category = text(form, "category", "分類", { max: 40 });
+  const categoryEn = text(form, "category_en", "英文分類", { max: 80 });
+  const program = text(form, "program", "學制", { max: 50 });
   const label = text(form, "label", "檔案名稱", { required: true, max: 60 });
   const labelEn = text(form, "label_en", "英文表單名稱", { max: 120 });
   const description = text(form, "description", "說明", { max: 120 });
@@ -49,6 +57,9 @@ function parse(form: FormData): {
 
   const fieldErrors = collect({
     section: section.error,
+    category: category.error,
+    category_en: categoryEn.error,
+    program: program.error,
     label: label.error,
     label_en: labelEn.error,
     description: description.error,
@@ -62,6 +73,11 @@ function parse(form: FormData): {
   return {
     values: {
       section: section.value!,
+      category: category.value,
+      // 沒有分類就不該有英文分類：留著一個對不到中文的英文值，前台分組時
+      // 只會讓人困惑（分組鍵是中文原值）。
+      category_en: category.value ? categoryEn.value : null,
+      program: program.value,
       label: label.value!,
       // text() 把空字串回成 null。刻意的：讓「清空過」與「從沒填過」在資料庫
       // 裡長得一樣，否則會出現兩種都代表「沒填」的值。

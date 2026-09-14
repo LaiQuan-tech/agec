@@ -5,6 +5,7 @@ import type { ActionState } from "@/lib/admin/action-result";
 import { FormShell } from "@/components/admin/ui/FormShell";
 import { Field } from "@/components/admin/ui/Field";
 import { Input, Select } from "@/components/admin/ui/Input";
+import { ChoiceField } from "@/components/admin/ui/ChoiceField";
 import { DOCUMENT_SECTIONS, documentSectionLabel } from "./constants";
 import { UploadField } from "@/components/admin/ui/UploadField";
 
@@ -14,10 +15,20 @@ import { UploadField } from "@/components/admin/ui/UploadField";
  * 檔案走 UploadField：一個網址輸入框加一顆「上傳」。兩種用法都成立 ——
  * 上傳一份 PDF，或把已經放在別處（例如教務處）的網址貼進來。`nameField` 讓它
  * 順便把原始檔名寫進 hidden input，前台的副檔名徽章是從那裡推出來的。
+ *
+ * 「分類」與「學制」（migration 20260914100000）：
+ *  - 分類是自由文字，但用 ChoiceField 讓系辦從**已經用過的分類**挑，要開新的
+ *    才選「其他」自己打 —— 同一個分類打成兩種寫法（「碩博相關」「碩博相關 」）
+ *    前台就會拆成兩組，這是能擋掉大部分手滑的最便宜做法。清單是資料庫裡
+ *    現有的值（見 new/page.tsx），不是寫死的。
+ *  - 學制照 /admin/links 的做法：下拉、留空＝不限。
  */
 export type DocumentFormValues = {
   id?: number;
   section: string;
+  category: string;
+  category_en: string;
+  program: string;
   label: string;
   /** Empty string stands in for a null column, so the input stays uncontrolled. */
   label_en: string;
@@ -32,10 +43,16 @@ export function DocumentForm({
   action,
   initial,
   submitLabel,
+  categories,
+  programs,
 }: {
   action: (prev: ActionState, form: FormData) => Promise<ActionState>;
   initial: DocumentFormValues;
   submitLabel: string;
+  /** 資料庫裡已經用過的分類（中文原值、去重），給「分類」下拉當選項。 */
+  categories: string[];
+  /** 學制的中文名稱，順序同 /admin/programs。 */
+  programs: string[];
 }) {
   return (
     <FormShell
@@ -74,6 +91,69 @@ export function DocumentForm({
                   {documentSectionLabel(sec)}
                 </option>
               ))}
+            </Select>
+          </Field>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field
+              htmlFor="category"
+              label="分類"
+              error={state.fieldErrors?.category}
+              hint="前台會把同一分類的檔案排成一組、組前印分類名（舊站的常用表格分成：其他、國際碩士專班、碩博相關、招生相關、課程相關）。先從用過的分類挑，要開新分類再選「其他」自己打。留空＝不分類，會排在所有分組前面。"
+            >
+              <ChoiceField
+                id="category"
+                name="category"
+                options={categories}
+                defaultValue={initial.category}
+                allowOther
+                placeholder="不分類"
+                ariaInvalid={Boolean(state.fieldErrors?.category)}
+              />
+            </Field>
+
+            <Field
+              htmlFor="category_en"
+              label="分類 Category (English)"
+              error={state.fieldErrors?.category_en}
+              hint="留空的話英文版顯示中文。同一個分類只要在任何一筆填過英文，其他筆也請填一樣的，否則英文頁會一組印英文、一組印中文。"
+            >
+              <Input
+                id="category_en"
+                name="category_en"
+                defaultValue={initial.category_en}
+                maxLength={80}
+                lang="en"
+                aria-invalid={Boolean(state.fieldErrors?.category_en)}
+              />
+            </Field>
+          </div>
+
+          <Field
+            htmlFor="program"
+            label="學制"
+            error={state.fieldErrors?.program}
+            hint="標了學制的檔案，會多出現在該學制的修業規定頁（課程資訊 → 點學制）內文底下——修業規定的 PDF 正式版本放這裡最合適。招生資訊頁則會依這個欄位分學制篩選。留空＝不限學制。"
+          >
+            <Select
+              id="program"
+              name="program"
+              defaultValue={initial.program}
+              aria-invalid={Boolean(state.fieldErrors?.program)}
+            >
+              <option value="">不限學制</option>
+              {programs.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+              {/* 目前的值不在清單裡（學制改名或打錯字）時，仍然要選得到，
+                  否則一存檔就會被清成不限。 */}
+              {initial.program && !programs.includes(initial.program) && (
+                <option value={initial.program}>
+                  {initial.program}（已不在學制清單中）
+                </option>
+              )}
             </Select>
           </Field>
 

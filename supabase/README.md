@@ -39,6 +39,8 @@
 | 18 | `migrations/20260908160000_faculty_homepage.sql` | `faculty` 加 `homepage_url` 一欄（老師的個人／實驗室網頁，四種卡片版型都會印）。🔴 **必須在推程式碼之前跑** —— `FACULTY_COLUMNS` 是逐一列欄位的，欄位不存在會讓 /faculty 整頁空白 | ✅ 2026-09-08 |
 | 19 | `migrations/20260908170000_faculty_bio.sql` | `faculty` 加 `bio_html` / `bio_html_en` / `bio_json` / `bio_json_en` 四欄（站內個人頁的內文，形狀照 news 的內文）。🔴 **必須在推程式碼之前跑** —— `FACULTY_COLUMNS` 是逐一列欄位的 | ✅ 2026-09-08 |
 | 20 | `migrations/20260908180000_news_expires_at.sql` | `news` 加 `expires_at`（結束日期，含當天）與 `expires_effective`（generated，null 折成 infinity）＋索引。🔴 **必須在推程式碼之前跑** —— 前台九支查詢都會加上 `expires_effective >= 今天` | ✅ 2026-09-08 |
+| 21 | `migrations/20260911100000_program_requirements.sql` | `programs` 加 `requirements_html` / `_html_en` / `_json` / `_json_en` 四欄（各學制修業規定頁 /courses/[program] 的內文），並種入四個學制的中文原文。🔴 **必須在推程式碼之前跑** —— `PROGRAM_COLUMNS` 是逐一列欄位的 | ✅ 2026-09-11 |
+| 22 | `migrations/20260914100000_documents_category_program.sql` | `documents` 加 `category` / `category_en`（前台依分類分組、各組一個小標）與 `program`（標了學制的檔案出現在該學制的修業規定頁底下；招生檔案依它分學制篩選）三欄，都可為 null。🔴 **必須在推程式碼之前跑** —— `DOCUMENT_COLUMNS` 是逐一列欄位的，欄位不存在會讓 /courses 與 /admissions 的檔案區整個消失 | ✅ 2026-09-14 |
 | 9 | **人工步驟** | 清掉 `faculty` 原本的 8 筆佔位假資料。語句在第 8 支檔案末尾的註解區塊，**先跑 select 版本確認清單再改成 delete** | ✅ 2026-08-14 |
 
 第 7、8 支必須照順序跑（seed 依賴 extend 新增的兩個欄位）。兩支都在本機
@@ -50,6 +52,12 @@ PostgreSQL 18 上連跑兩次驗證過：第二次不會產生重複列，欄位
 對得上的佔位資料，對不上的會留在表上（實測 8 筆裡有 7 筆會留下），讓師資頁
 多出幾張沒照片、分類也對不上篩選標籤的卡片。刪除不可逆，且系辦若已自行在
 後台新增過真的師資也會被同一條 `where` 掃到，所以交給人工確認。
+
+## 2026-09-14 執行紀錄（第 22 步）
+
+`20260914100000_documents_category_program.sql` 經 Management API 執行，**在推程式碼之前**。
+驗收：`category | YES | text`、`category_en | YES | text`、`program | YES | text`；
+既有 2 列的三欄全部是 null（前台行為不變：沒有分組小標、學制頁沒有檔案）。
 
 ## 2026-09-08 執行紀錄（第 20 步）
 

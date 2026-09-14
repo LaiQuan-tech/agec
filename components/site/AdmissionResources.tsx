@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import type { SiteDocument } from "@/lib/data";
 import { translate, type Lang } from "@/lib/i18n";
 import { ADMISSIONS } from "@/lib/i18n/admissions";
 import { FilterTabs, type FilterTab } from "./FilterTabs";
 import { MaybeLink } from "./MaybeLink";
+import { SiteDocuments } from "./SiteDocuments";
 
 /**
  * `#section-4` 的 `.resource-row` ＋（有需要時才出現的）學制篩選籤。
@@ -31,27 +33,45 @@ import { MaybeLink } from "./MaybeLink";
  * `links.program` 是純文字、沒有 FK（見 migration 20260908140000）。系辦打錯
  * 字或改了學制名稱時，那一筆會對不到任何一個籤 —— 它仍然會在「全部」底下
  * 出現，所以錯字看得見。靜靜不見才是最難發現的壞法。
+ *
+ * ## 招生檔案也跟著同一排籤
+ *
+ * 系辦上傳的檔案（documents，section='admissions'）原本是獨立印在這排籤上面
+ * 的一區，籤只管底下那排連結。客戶要的是「招生簡章、書面資料、考古題點下去
+ * 分學制」，而那些東西最終會是檔案而不是外站連結（舊站上有 97 個下載檔），
+ * 所以 `documents.program` 與 `links.program` 用同一排籤、同一套規則篩：
+ * null = 共通、每個學制都看得到。兩邊只要有任何一筆標了學制，籤就出現。
  */
 const ALL = "全部";
 
 export function AdmissionResources({
   lang,
   resources,
+  documents,
+  documentsHeading,
+  documentsDescription,
   programs,
 }: {
   lang: Lang;
   /** getLinks('admissions')，或字典裡的備援 —— label 已經解析成當前語言。 */
   resources: { key: string; label: string; url: string | null; program: string | null }[];
+  /** getDocuments('admissions')。空陣列時那一區（含小標）不印。 */
+  documents: SiteDocument[];
+  documentsHeading: string;
+  documentsDescription: string;
   /** 學制的中文名與顯示名。順序同 getPrograms()。 */
   programs: { value: string; label: string }[];
 }) {
   const t = translate(ADMISSIONS, lang);
   const [filter, setFilter] = useState(ALL);
 
-  const tagged = resources.some((r) => r.program);
+  const tagged = resources.some((r) => r.program) || documents.some((d) => d.program);
   const shown = !tagged || filter === ALL
     ? resources
     : resources.filter((r) => !r.program || r.program === filter);
+  const shownDocuments = !tagged || filter === ALL
+    ? documents
+    : documents.filter((d) => !d.program || d.program === filter);
 
   // 「全部」的 value 兩種語言都維持中文：它是哨兵值，不是標籤（見 FilterTab）。
   const tabs: FilterTab[] = [
@@ -68,6 +88,15 @@ export function AdmissionResources({
           onChange={setFilter}
         />
       )}
+
+      {/* 系上自己的檔案先出現 —— 底下那排是別的單位維護的系統。
+          一個檔都沒有時整區不印，§4 維持原樣。 */}
+      <SiteDocuments
+        lang={lang}
+        documents={shownDocuments}
+        heading={documentsHeading}
+        description={documentsDescription}
+      />
 
       {/* Anchors, never <div>s — `.resource-row a` owns the cell border,
           the 120px min-height and the flex alignment. */}

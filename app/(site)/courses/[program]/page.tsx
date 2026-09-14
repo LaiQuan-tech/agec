@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProgramRequirements } from "@/components/site/ProgramRequirements";
-import { getProgramByName, getProgramsWithRequirements } from "@/lib/data";
+import { getDocumentsForProgram, getProgramByName, getProgramsWithRequirements } from "@/lib/data";
 import { programForSlug, slugForProgram } from "@/lib/program-slugs";
 import { articleMetadata } from "@/lib/site-routes";
 import { COURSES } from "@/lib/i18n/courses";
@@ -62,8 +62,13 @@ export default async function Page({
   const nameZh = programForSlug(slug);
   if (!nameZh) notFound();
 
-  const program = await getProgramByName(nameZh, "zh");
+  // 內文與檔案並行取：檔案沒有也沒關係（空陣列 → 那一區不印），但
+  // 沒有內文就 404，所以兩個都等完再判斷。
+  const [program, documents] = await Promise.all([
+    getProgramByName(nameZh, "zh"),
+    getDocumentsForProgram(nameZh, "zh"),
+  ]);
   if (!program) notFound();
 
-  return <ProgramRequirements lang="zh" program={program} />;
+  return <ProgramRequirements lang="zh" program={program} documents={documents} />;
 }

@@ -1,12 +1,13 @@
 import Link from "next/link";
 import sanitizeHtml from "sanitize-html";
-import type { Program } from "@/lib/data";
+import type { Program, SiteDocument } from "@/lib/data";
 import { localizePath, translate, type Lang } from "@/lib/i18n";
 import { COURSES } from "@/lib/i18n/courses";
 import { SHARED } from "@/lib/i18n/shared";
 import { RICH_TEXT_SANITIZE } from "@/lib/sanitize";
 import { SiteShell } from "./SiteShell";
 import { NextRoute } from "./NextRoute";
+import { SiteDocuments } from "./SiteDocuments";
 
 /**
  * 一個學制的修業規定 (/courses/[program])。
@@ -27,13 +28,23 @@ import { NextRoute } from "./NextRoute";
  * 存檔時已經過濾過了，這裡再一次是刻意的：Server Action 不是唯一能寫進這張表
  * 的路徑（SQL editor、帶 service-role key 的腳本），而這裡是 HTML 送進瀏覽器前
  * 的最後一關。同 NewsPost 與 FacultyProfile。
+ *
+ * ## 內文底下的檔案
+ *
+ * 系辦在 /admin/documents 上傳檔案時可以標上學制；標了這個學制的（section
+ * 為 courses）就列在內文後面 —— 修業規定的 PDF 正式版本、該學制專用的表單。
+ * 這是客戶 2026-09 的回饋：「網頁上有修業規定，但後台沒有 PDF 上傳的地方」。
+ * 一個檔都沒有時 SiteDocuments 整區不印，這一頁就跟只有內文時一樣。
  */
 export function ProgramRequirements({
   lang,
   program,
+  documents,
 }: {
   lang: Lang;
   program: Program;
+  /** getDocumentsForProgram(program.name_zh) —— 已依 sort_order 排好。 */
+  documents: SiteDocument[];
 }) {
   const t = translate(COURSES, lang);
   const shared = translate(SHARED, lang);
@@ -82,6 +93,20 @@ export function ProgramRequirements({
           className="container post-body"
           dangerouslySetInnerHTML={{ __html: html }}
         />
+
+        {/* 與內文同一個閱讀寬度（760px），卡片改成兩欄 —— 見 site-extensions.css
+            的 `.post-documents`。SiteDocuments 在陣列為空時回 null，這一層
+            wrapper 也就跟著不印。 */}
+        {documents.length > 0 ? (
+          <div className="container post-documents">
+            <SiteDocuments
+              lang={lang}
+              documents={documents}
+              heading={t.requirements.documentsHeading}
+              description={t.requirements.documentsDescription}
+            />
+          </div>
+        ) : null}
 
         <div className="container post-foot">
           <Link href={coursesPath}>{t.requirements.back}</Link>

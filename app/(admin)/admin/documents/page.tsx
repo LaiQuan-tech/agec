@@ -14,6 +14,8 @@ export const dynamic = "force-dynamic";
 type Row = {
   id: number;
   section: string;
+  category: string | null;
+  program: string | null;
   label: string;
   label_en: string | null;
   description: string | null;
@@ -29,7 +31,7 @@ export default async function SiteDocumentsListPage() {
   const { data, error } = await supabase
     .from("documents")
     .select(
-      "id, section, label, label_en, description, description_en, file_url, file_name, sort_order"
+      "id, section, category, program, label, label_en, description, description_en, file_url, file_name, sort_order"
     )
     .order("section", { ascending: true })
     .order("sort_order", { ascending: true })
@@ -56,6 +58,8 @@ export default async function SiteDocumentsListPage() {
           <p className="mt-1 text-[13px]" style={{ color: "var(--muted)" }}>
             系上自己的檔案，存在這個網站上。「課程資訊」的出現在課程資訊頁的「系上表單」，
             「招生資訊」的出現在招生資訊頁的「招生檔案」（招生簡章、書面資料格式、考古題）。
+            填了「分類」的檔案會依分類分組、各組一個小標；標了「學制」的檔案還會多出現在
+            該學制的修業規定頁底下（招生檔案則是依學制篩選）。
             某一個區塊一筆都沒有時，那一區不會出現在前台，旁邊那排外部連結不受影響。
           </p>
         </div>
@@ -110,6 +114,7 @@ export default async function SiteDocumentsListPage() {
         <Table>
           <THead>
             <TH className="w-[170px]">區塊</TH>
+            <TH className="w-[150px]">分類／學制</TH>
             <TH className="w-[70px]">排序</TH>
             <TH>檔案名稱</TH>
             <TH>檔案</TH>
@@ -135,6 +140,20 @@ export default async function SiteDocumentsListPage() {
                     >
                       {documentSectionLabel(row.section)}
                     </a>
+                  </TD>
+                  <TD className="text-[13px]">
+                    {/* 分類決定前台的分組小標，學制決定它會不會多出現在該學制的
+                        修業規定頁 —— 兩個都空白時印一個灰字，讓「還沒填」看得見。 */}
+                    {row.category || row.program ? (
+                      <>
+                        {row.category && <div>{row.category}</div>}
+                        {row.program && (
+                          <div style={{ color: "var(--muted)" }}>{row.program}</div>
+                        )}
+                      </>
+                    ) : (
+                      <span style={{ color: "var(--muted)" }}>—</span>
+                    )}
                   </TD>
                   <TD className="tabular-nums">{row.sort_order}</TD>
                   <TD>

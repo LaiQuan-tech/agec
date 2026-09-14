@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requireAdminOrRedirect } from "@/lib/admin/auth";
 import { DocumentForm } from "../DocumentForm";
 import { createDocument } from "../actions";
+import { loadDocumentFormOptions } from "../options";
 
 export const metadata: Metadata = { title: "新增檔案" };
 export const dynamic = "force-dynamic";
@@ -23,6 +24,8 @@ export default async function NewDocumentPage() {
   }
   const nextSortOrder = (data?.sort_order ?? 0) + 1;
 
+  const { categories, programs } = await loadDocumentFormOptions(supabase);
+
   return (
     <div className="flex flex-col gap-5">
       <h1 className="text-[22px] font-bold" style={{ color: "var(--brand-green)" }}>
@@ -31,9 +34,14 @@ export default async function NewDocumentPage() {
       <DocumentForm
         action={createDocument}
         submitLabel="新增"
+        categories={categories}
+        programs={programs}
         initial={{
           // 預設課程資訊：既有的用法是系上表單，招生檔案是後來加的。
           section: "courses",
+          category: "",
+          category_en: "",
+          program: "",
           label: "",
           label_en: "",
           description: "",

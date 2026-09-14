@@ -5,6 +5,7 @@ import { requireAdminOrRedirect } from "@/lib/admin/auth";
 import { DocumentForm } from "../DocumentForm";
 import { updateDocument } from "../actions";
 import { documentSectionPath } from "../constants";
+import { loadDocumentFormOptions } from "../options";
 
 export const metadata: Metadata = { title: "編輯檔案" };
 export const dynamic = "force-dynamic";
@@ -12,6 +13,9 @@ export const dynamic = "force-dynamic";
 type Row = {
   id: number;
   section: string;
+  category: string | null;
+  category_en: string | null;
+  program: string | null;
   label: string;
   label_en: string | null;
   description: string | null;
@@ -38,14 +42,18 @@ export default async function EditDocumentPage({
 
   const { data, error } = await supabase
     .from("documents")
+    // 🔴 update() 是整列覆寫：這裡少讀一個欄位，「打開再儲存」就會把它清掉。
+    //    parse() 產出的每一個 key 都要在這裡。
     .select(
-      "id, section, label, label_en, description, description_en, file_url, file_name, sort_order"
+      "id, section, category, category_en, program, label, label_en, description, description_en, file_url, file_name, sort_order"
     )
     .eq("id", numericId)
     .maybeSingle<Row>();
 
   if (error) console.error("[admin/documents] load failed:", error.message);
   if (!data) notFound();
+
+  const { categories, programs } = await loadDocumentFormOptions(supabase);
 
   return (
     <div className="flex flex-col gap-5">
@@ -72,9 +80,14 @@ export default async function EditDocumentPage({
       <DocumentForm
         action={updateDocument}
         submitLabel="儲存變更"
+        categories={categories}
+        programs={programs}
         initial={{
           id: data.id,
           section: data.section,
+          category: data.category ?? "",
+          category_en: data.category_en ?? "",
+          program: data.program ?? "",
           label: data.label,
           // null 轉空字串，讓 input 維持 uncontrolled。
           label_en: data.label_en ?? "",

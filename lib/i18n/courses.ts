@@ -49,6 +49,15 @@ export const COURSES = {
       zh: "",
       en: "The official text is maintained in Chinese and is reproduced below exactly as the department publishes it.",
     },
+    /**
+     * 內文底下「標了這個學制」的檔案（documents.program，由系辦在後台上傳）。
+     * 一個檔都沒有時整區不印，所以這兩行只在有檔案的學制頁出現。
+     */
+    documentsHeading: { zh: "相關檔案", en: "Documents" },
+    documentsDescription: {
+      zh: "修業規定的正式版本與相關表單，由系辦維護，點卡片即可下載。",
+      en: "Official copies of the requirements and related forms, maintained by the department office — select a card to download.",
+    },
   },
   hero: {
     lead: {
