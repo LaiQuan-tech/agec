@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { FilterLink } from "../_components/FilterLink";
 import Link from "next/link";
 import { requireManagerOrRedirect } from "@/lib/admin/auth";
 import {
@@ -136,30 +137,5 @@ export default async function LogsPage({
         系友報名，都不會出現在這裡。
       </p>
     </div>
-  );
-}
-
-function FilterLink({
-  label,
-  href,
-  active,
-}: {
-  label: string;
-  href: string;
-  active: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      aria-current={active ? "page" : undefined}
-      className="rounded-md px-3 py-1.5 text-[13px]"
-      style={
-        active
-          ? { background: "var(--brand-green)", color: "#fff" }
-          : { background: "#fff", color: "var(--ink)", border: "1px solid var(--hairline)" }
-      }
-    >
-      {label}
-    </Link>
   );
 }

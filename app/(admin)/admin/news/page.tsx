@@ -7,6 +7,7 @@ import { DeleteButton } from "@/components/admin/ui/DeleteButton";
 import { EnBadge, enProgress } from "../_components/EnBadge";
 import { deleteNews } from "./actions";
 import { hasEditorContent } from "./constants";
+import { AppearsOn } from "../_components/AppearsOn";
 
 export const metadata: Metadata = { title: "最新消息" };
 export const dynamic = "force-dynamic";
@@ -67,6 +68,7 @@ export default async function NewsListPage() {
           <h1 className="text-[22px] font-bold" style={{ color: "var(--brand-green)" }}>
             最新消息
           </h1>
+          <AppearsOn pathname="/admin/news" />
           <p className="mt-1 text-[13px]" style={{ color: "var(--muted)" }}>
             {/* 這裡原本寫「有內文的長文章請改用『部落格』」——部落格已於
                 197a953 全站移除，最新消息現在就是唯一的發布管道，內文編輯器、

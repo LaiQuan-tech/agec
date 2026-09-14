@@ -6,6 +6,7 @@ import { EmptyState, Table, TBody, TD, TH, THead, TR } from "@/components/admin/
 import { DeleteButton } from "@/components/admin/ui/DeleteButton";
 import { EnBadge, enProgress } from "../_components/EnBadge";
 import { deleteProgram } from "./actions";
+import { AppearsOn } from "../_components/AppearsOn";
 
 export const metadata: Metadata = { title: "招生學制" };
 export const dynamic = "force-dynamic";
@@ -49,6 +50,7 @@ export default async function ProgramsListPage() {
           <h1 className="text-[22px] font-bold" style={{ color: "var(--brand-green)" }}>
             招生學制
           </h1>
+          <AppearsOn pathname="/admin/programs" />
           <p className="mt-1 text-[13px]" style={{ color: "var(--muted)" }}>
             這裡的異動會同時影響「首頁」與「招生資訊」頁，兩邊顯示的是同一份資料。
           </p>

@@ -2,21 +2,31 @@ import type { Metadata } from "next";
 import { requireAdminOrRedirect } from "@/lib/admin/auth";
 import { LinkForm } from "../LinkForm";
 import { createLink } from "../actions";
+import { isEditableSection, type EditableSection } from "../constants";
 
 export const metadata: Metadata = { title: "新增連結卡片" };
 export const dynamic = "force-dynamic";
 
-export default async function NewLinkPage() {
+export default async function NewLinkPage({
+  searchParams,
+}: {
+  // 列表頁篩著哪一個區塊，「新增」就帶著它進來（`?section=admissions`），
+  // 表單的「區塊」預選好，排序也接在那一區的最後。不在清單裡的值當 students。
+  searchParams: Promise<{ section?: string }>;
+}) {
   const { supabase } = await requireAdminOrRedirect();
+  const { section: sectionParam } = await searchParams;
+  const section: EditableSection =
+    sectionParam && isEditableSection(sectionParam) ? sectionParam : "students";
 
-  // Default to the end of the 學生專區 list, matching /admin/faculty and
+  // Default to the end of that section's list, matching /admin/faculty and
   // /admin/programs. A plain 0 would give every new card the same sort_order,
   // and getLinks() only orders by that column — so the front-end order of the
   // tied cards would be whatever Postgres felt like returning.
   const { data, error } = await supabase
     .from("links")
     .select("sort_order")
-    .eq("section", "students")
+    .eq("section", section)
     .order("sort_order", { ascending: false })
     .limit(1)
     .maybeSingle<{ sort_order: number }>();
@@ -45,7 +55,7 @@ export default async function NewLinkPage() {
       <LinkForm
         action={createLink}
         submitLabel="新增"
-        initial={{ section: "students", label: "", label_en: "", url: "", program: "", sort_order: nextSortOrder }}
+        initial={{ section, label: "", label_en: "", url: "", program: "", sort_order: nextSortOrder }}
         programs={programs}
       />
     </div>

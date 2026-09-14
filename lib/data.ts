@@ -235,12 +235,14 @@ export type Program = {
 /**
  * `section` groups link cards by the page whose `.resource-row` renders them.
  * The column is plain text with no CHECK constraint, so this union is the only
- * thing keeping the four live values in step with the four pages that query
- * them — widen it here before seeding a fifth.
+ * thing keeping the live values in step with the pages that query them —
+ * widen it here before seeding a new one.
  *
- * 'journal' rows remain in the table from the original seed but no route reads
- * them any more: 農經期刊 was replaced by 學生專區 in the 2026 IA revision.
- * They stay listed in /admin/links so the office can clear them out.
+ * Only 'students' and 'admissions' are read by a page today
+ * (app/(admin)/admin/links/constants.ts LINK_SECTIONS). 'courses', 'alumni' and
+ * 'journal' stay in the union because rows with those values can still exist
+ * in the table (journal from the original seed, alumni from the port); they
+ * are listed in /admin/links as 未使用 so the office can clear them out.
  */
 export type LinkItem = {
   id: number;

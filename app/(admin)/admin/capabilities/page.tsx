@@ -6,6 +6,7 @@ import { EmptyState, Table, TBody, TD, TH, THead, TR } from "@/components/admin/
 import { DeleteButton } from "@/components/admin/ui/DeleteButton";
 import { EnBadge, enProgress } from "../_components/EnBadge";
 import { deleteCapability } from "./actions";
+import { AppearsOn } from "../_components/AppearsOn";
 
 export const metadata: Metadata = { title: "核心能力" };
 export const dynamic = "force-dynamic";
@@ -54,6 +55,7 @@ export default async function CapabilitiesListPage() {
           <h1 className="text-[22px] font-bold" style={{ color: "var(--brand-green)" }}>
             核心能力
           </h1>
+          <AppearsOn pathname="/admin/capabilities" />
           <p className="mt-1 text-[13px]" style={{ color: "var(--muted)" }}>
             「招生資訊」頁下方那一排圓角標籤。桌機單行大約放得下 10 個，超過會自動折到第二行。
           </p>

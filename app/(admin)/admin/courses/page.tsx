@@ -6,6 +6,7 @@ import { EmptyState, Table, TBody, TD, TH, THead, TR } from "@/components/admin/
 import { DeleteButton } from "@/components/admin/ui/DeleteButton";
 import { EnBadge, enProgress } from "../_components/EnBadge";
 import { deleteCourse } from "./actions";
+import { AppearsOn } from "../_components/AppearsOn";
 
 export const metadata: Metadata = { title: "課程資訊" };
 export const dynamic = "force-dynamic";
@@ -45,6 +46,7 @@ export default async function CoursesListPage() {
           <h1 className="text-[22px] font-bold" style={{ color: "var(--brand-green)" }}>
             課程資訊
           </h1>
+          <AppearsOn pathname="/admin/courses" />
           <p className="mt-1 text-[13px]" style={{ color: "var(--muted)" }}>
             前台會依「學制」自動分頁，同一學制內再依課號排序。
           </p>

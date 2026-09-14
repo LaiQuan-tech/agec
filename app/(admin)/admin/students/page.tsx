@@ -7,6 +7,7 @@ import {
 } from "@/lib/page-copy/students";
 import { StudentsCopyForm, type StudentsCopyValues } from "./StudentsCopyForm";
 import { saveStudentsCopy } from "./actions";
+import { AppearsOn } from "../_components/AppearsOn";
 
 export const metadata: Metadata = { title: "學生專區" };
 export const dynamic = "force-dynamic";
@@ -46,6 +47,7 @@ export default async function StudentsCopyPage() {
         <h1 className="text-[22px] font-bold" style={{ color: "var(--brand-green)" }}>
           學生專區
         </h1>
+        <AppearsOn pathname="/admin/students" />
         <p className="mt-1 text-[13px]" style={{ color: "var(--muted)" }}>
           前台「學生專區」頁三個區塊的文字：新生攻略、校園生活、系學會。每一區的小標與
           說明句是固定的；最下面「學習與發展資源」那排連結在「連結卡片」裡維護。

@@ -6,6 +6,7 @@ import { Button } from "@/components/admin/ui/Button";
 import { EmptyState, Table, TBody, TD, TH, THead, TR } from "@/components/admin/ui/Table";
 import { EVENT_STATUS_SHORT, toEventStatus } from "./constants";
 import { EnBadge, enProgress } from "../_components/EnBadge";
+import { AppearsOn } from "../_components/AppearsOn";
 
 export const metadata: Metadata = { title: "系友活動" };
 export const dynamic = "force-dynamic";
@@ -39,6 +40,7 @@ export default async function EventsListPage() {
           <h1 className="text-[22px] font-bold" style={{ color: "var(--brand-green)" }}>
             系友活動
           </h1>
+          <AppearsOn pathname="/admin/events" />
           <p className="mt-1 text-[13px]" style={{ color: "var(--muted)" }}>
             系友回娘家等活動的上架與報名管理。上架後會出現在前台的「系友專區」。
           </p>

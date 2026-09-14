@@ -7,6 +7,7 @@ import { DeleteButton } from "@/components/admin/ui/DeleteButton";
 import { EnBadge, enProgress } from "../_components/EnBadge";
 import { showsNameEn } from "./constants";
 import { deleteFaculty } from "./actions";
+import { AppearsOn } from "../_components/AppearsOn";
 
 export const metadata: Metadata = { title: "系所成員" };
 export const dynamic = "force-dynamic";
@@ -54,6 +55,7 @@ export default async function FacultyListPage() {
           <h1 className="text-[22px] font-bold" style={{ color: "var(--brand-green)" }}>
             系所成員
           </h1>
+          <AppearsOn pathname="/admin/faculty" />
           <p className="mt-1 text-[13px]" style={{ color: "var(--muted)" }}>
             前台「系所成員」頁的名單，依顯示順序由小到大排列。
           </p>

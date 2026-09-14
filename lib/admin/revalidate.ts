@@ -29,7 +29,7 @@ const AFFECTED_ROUTES = {
   // One entry per LinkItem["section"] that a page reads. Missing a route here
   // is the failure this file exists to prevent: the office saves a link, the
   // page keeps serving its ISR copy, and they save again.
-  links: ["/students", "/courses", "/admissions", "/alumni"],
+  links: ["/students", "/admissions"],
   // 系友活動：列表在 /alumni，詳情頁在下面用動態路徑一併處理。
   events: ["/alumni"],
   // 核心能力膠囊只出現在 /admissions §3。

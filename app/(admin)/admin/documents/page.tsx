@@ -5,8 +5,15 @@ import { Button } from "@/components/admin/ui/Button";
 import { EmptyState, Table, TBody, TD, TH, THead, TR } from "@/components/admin/ui/Table";
 import { DeleteButton } from "@/components/admin/ui/DeleteButton";
 import { EnBadge, enProgress } from "../_components/EnBadge";
+import { AppearsOn } from "../_components/AppearsOn";
+import { FilterLink } from "../_components/FilterLink";
 import { deleteDocument } from "./actions";
-import { documentSectionLabel, documentSectionPath } from "./constants";
+import {
+  DOCUMENT_SECTIONS,
+  documentSectionLabel,
+  documentSectionPath,
+  type DocumentSection,
+} from "./constants";
 
 export const metadata: Metadata = { title: "檔案下載" };
 export const dynamic = "force-dynamic";
@@ -25,23 +32,37 @@ type Row = {
   sort_order: number;
 };
 
-export default async function SiteDocumentsListPage() {
-  const { supabase } = await requireAdminOrRedirect();
+function isDocumentSection(value: string): value is DocumentSection {
+  return (DOCUMENT_SECTIONS as readonly string[]).includes(value);
+}
 
-  const { data, error } = await supabase
+export default async function SiteDocumentsListPage({
+  searchParams,
+}: {
+  // Next 16：searchParams 是 promise。`?section=` 是側欄「課程資訊 › 修業規定 ·
+  // 系上表單」這類入口帶進來的，讓列表先篩好那一頁的檔案；不在清單裡就當「全部」。
+  searchParams: Promise<{ section?: string }>;
+}) {
+  const { supabase } = await requireAdminOrRedirect();
+  const { section: sectionParam } = await searchParams;
+  const section = sectionParam && isDocumentSection(sectionParam) ? sectionParam : null;
+
+  let query = supabase
     .from("documents")
     .select(
       "id, section, category, program, label, label_en, description, description_en, file_url, file_name, sort_order"
     )
     .order("section", { ascending: true })
     .order("sort_order", { ascending: true })
-    .order("id", { ascending: true })
-    .returns<Row[]>();
+    .order("id", { ascending: true });
+  if (section) query = query.eq("section", section);
+  const { data, error } = await query.returns<Row[]>();
 
   if (error) {
     console.error("[admin/documents] list failed:", error.message);
   }
   const rows = data ?? [];
+  const newHref = section ? `/admin/documents/new?section=${section}` : "/admin/documents/new";
 
   // 資料表還沒建（migration 未執行）與「真的一筆都沒有」要分開講：兩種情況
   // 前台都不會印出這一區，但該做的事完全不同。
@@ -53,8 +74,9 @@ export default async function SiteDocumentsListPage() {
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-bold" style={{ color: "var(--brand-green)" }}>
-            檔案下載
+            檔案下載{section ? ` · ${documentSectionLabel(section)}` : ""}
           </h1>
+          <AppearsOn pathname="/admin/documents" section={section} />
           <p className="mt-1 text-[13px]" style={{ color: "var(--muted)" }}>
             系上自己的檔案，存在這個網站上。「課程資訊」的出現在課程資訊頁的「系上表單」，
             「招生資訊」的出現在招生資訊頁的「招生檔案」（招生簡章、書面資料格式、考古題）。
@@ -74,11 +96,23 @@ export default async function SiteDocumentsListPage() {
               招生 ↗︎
             </Button>
           </Link>
-          <Link href="/admin/documents/new">
+          <Link href={newHref}>
             <Button variant="primary">新增檔案</Button>
           </Link>
         </div>
       </header>
+
+      <nav className="flex flex-wrap gap-2" aria-label="依區塊篩選">
+        <FilterLink label="全部" href="/admin/documents" active={section === null} />
+        {DOCUMENT_SECTIONS.map((sec) => (
+          <FilterLink
+            key={sec}
+            label={documentSectionLabel(sec)}
+            href={`/admin/documents?section=${sec}`}
+            active={section === sec}
+          />
+        ))}
+      </nav>
 
       {tableMissing ? (
         <p role="alert" className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] text-amber-800">
@@ -101,9 +135,13 @@ export default async function SiteDocumentsListPage() {
 
       {rows.length === 0 && !error ? (
         <EmptyState
-          message="目前沒有任何檔案（前台的「系上表單」與「招生檔案」區塊都不會出現）"
+          message={
+            section
+              ? `「${documentSectionLabel(section)}」目前沒有任何檔案（那一區不會出現在前台）`
+              : "目前沒有任何檔案（前台的「系上表單」與「招生檔案」區塊都不會出現）"
+          }
           action={
-            <Link href="/admin/documents/new">
+            <Link href={newHref}>
               <Button variant="primary" size="sm">
                 新增第一個檔案
               </Button>
