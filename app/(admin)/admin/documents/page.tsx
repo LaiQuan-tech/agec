@@ -76,7 +76,7 @@ export default async function SiteDocumentsListPage({
           <h1 className="text-[22px] font-bold" style={{ color: "var(--brand-green)" }}>
             檔案下載{section ? ` · ${documentSectionLabel(section)}` : ""}
           </h1>
-          <AppearsOn pathname="/admin/documents" section={section} />
+          <AppearsOn pathname="/admin/documents" filters={{ section }} />
           <p className="mt-1 text-[13px]" style={{ color: "var(--muted)" }}>
             系上自己的檔案，存在這個網站上。「課程資訊」的出現在課程資訊頁的「系上表單」，
             「招生資訊」的出現在招生資訊頁的「招生檔案」（招生簡章、書面資料格式、考古題）。

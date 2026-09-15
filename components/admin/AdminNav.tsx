@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { ADMIN_SITE_MAP, ADMIN_SYSTEM, type AdminBlock } from "@/lib/admin/site-map";
+import { ADMIN_SITE_MAP, ADMIN_SYSTEM, activeAdminBlock, aliasTarget } from "@/lib/admin/site-map";
 
 /**
  * 後台側欄：照前台選單分組。
@@ -12,13 +12,15 @@ import { ADMIN_SITE_MAP, ADMIN_SYSTEM, type AdminBlock } from "@/lib/admin/site-
  * 先知道「招生資訊頁底下那排標籤在後台叫核心能力」—— 打開招生資訊那一組就
  * 看到它。最後一組「系統」是人員管理與操作日誌，只有管理員看得到。
  *
- * ## 「目前在哪」
+ * ## 「目前在哪」—— 永遠只亮一個
  *
  * AdminShell 是 Server Component，layout 在前端導覽時不會重新渲染，所以判斷
- * 目前頁面的邏輯放在這個 client 元件：`usePathname()` 配 `useSearchParams()`。
- * 帶 `?section=` 的項目（連結卡片、檔案下載）要 section 也一樣才算；沒帶參數
- * 時（列表在「全部」模式）該模組的每一個入口都亮 —— 一個模組供應三頁時三處
- * 都亮是事實，不做假的單選。
+ * 目前頁面的邏輯放在這個 client 元件：`usePathname()` 配 `useSearchParams()`
+ * 餵給 `activeAdminBlock()`。一個模組供應三頁（最新消息在首頁、最新消息、
+ * 招生資訊都有入口），第一版三處一起亮，系辦看到的是「壞掉了」。現在的規則：
+ * 網址參數對得上的入口亮（`?section=students`、`?category=admissions`），
+ * 對不上就亮那個模組標了 `primary` 的入口；其餘沒參數的入口是捷徑，旁邊印
+ * 「→ 最新消息」告訴人點下去會落在哪一組。
  *
  * ## lg 以下
  *
@@ -27,19 +29,10 @@ import { ADMIN_SITE_MAP, ADMIN_SYSTEM, type AdminBlock } from "@/lib/admin/site-
  * 直向清單。沒有 JS 狀態，也不用處理點外面關閉。
  */
 
-function blockIsActive(block: AdminBlock, pathname: string, section: string | null): boolean {
-  const [path, query] = block.href.split("?");
-  const samePath = pathname === path || pathname.startsWith(`${path}/`);
-  if (!samePath) return false;
-  const blockSection = query ? new URLSearchParams(query).get("section") : null;
-  if (!blockSection || !section) return true;
-  return blockSection === section;
-}
-
 export function AdminNav({ isManager }: { isManager: boolean }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const section = searchParams.get("section");
+  const current = activeAdminBlock(pathname, searchParams);
 
   const groups = [
     ...ADMIN_SITE_MAP.map((p) => ({
@@ -54,15 +47,9 @@ export function AdminNav({ isManager }: { isManager: boolean }) {
       : []),
   ];
 
-  // 收合狀態的摘要：第一個亮著的項目。
-  let current: string | null = null;
-  for (const g of groups) {
-    const hit = g.blocks.find((b) => blockIsActive(b, pathname, section));
-    if (hit) {
-      current = `${g.label} › ${hit.label}`;
-      break;
-    }
-  }
+  // 收合狀態的摘要：亮著的那一項（只會有一個）。
+  const currentGroup = current ? groups.find((g) => g.blocks.includes(current)) : undefined;
+  const summary = current && currentGroup ? `${currentGroup.label} › ${current.label}` : null;
 
   // 組與組之間 28px：大標（頁名）與上一組最後一個項目要明顯分開，
   // 否則「招生資訊」看起來像「系所成員」那組的第二個項目。
@@ -99,20 +86,27 @@ export function AdminNav({ isManager }: { isManager: boolean }) {
           ) : (
             <ul className="mt-1.5 flex flex-col gap-0.5">
               {g.blocks.map((b) => {
-                const active = blockIsActive(b, pathname, section);
+                const active = b === current;
+                const alias = aliasTarget(b);
                 return (
                   <li key={b.href}>
                     <Link
                       href={b.href}
                       aria-current={active ? "page" : undefined}
-                      className="block rounded-md px-3 py-1.5 text-[14px] leading-snug hover:bg-neutral-100"
+                      className="flex items-baseline justify-between gap-2 rounded-md px-3 py-1.5 text-[14px] leading-snug hover:bg-neutral-100"
                       style={
                         active
                           ? { background: "var(--cream)", color: "var(--gold-ink)", fontWeight: 600 }
                           : { color: "var(--ink)" }
                       }
+                      title={alias ? `這裡的內容在「${alias}」維護，點下去會到那一組` : undefined}
                     >
-                      {b.label}
+                      <span>{b.label}</span>
+                      {alias ? (
+                        <span className="shrink-0 text-[11px]" style={{ color: "var(--muted)" }}>
+                          → {alias}
+                        </span>
+                      ) : null}
                     </Link>
                   </li>
                 );
@@ -138,9 +132,9 @@ export function AdminNav({ isManager }: { isManager: boolean }) {
           style={{ color: "var(--ink)" }}
         >
           選單
-          {current ? (
+          {summary ? (
             <span className="ml-2 text-[12px]" style={{ color: "var(--muted)" }}>
-              目前：{current}
+              目前：{summary}
             </span>
           ) : null}
         </summary>

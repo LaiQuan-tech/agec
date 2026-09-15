@@ -3,13 +3,22 @@ import { requireAdminOrRedirect } from "@/lib/admin/auth";
 import { NewsForm } from "../NewsForm";
 import { createNews } from "../actions";
 import { loadProgramNames } from "../programs";
+import { adminCategoryForSlug } from "../constants";
 
 export const metadata: Metadata = { title: "新增消息" };
 export const dynamic = "force-dynamic";
 
-export default async function NewNewsPage() {
+export default async function NewNewsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}) {
   const { supabase } = await requireAdminOrRedirect();
   const programs = await loadProgramNames(supabase);
+  // 從篩好的列表（例如側欄的「各學制招生頁 · 招生公告」）進來時分類先選好；
+  // 不認得的值退回預設，不報錯。
+  const { category: categoryParam } = await searchParams;
+  const presetCategory = adminCategoryForSlug(categoryParam) ?? "最新公告";
 
   // Default to today — new announcements are almost always dated today, and a
   // blank date field is one more thing to fill in.
@@ -34,7 +43,7 @@ export default async function NewNewsPage() {
           published_at: today,
           // 預設不設結束日期 —— 多數公告本來就該一直在。
           expires_at: "",
-          category: "最新公告",
+          category: presetCategory,
           category_en: "",
           program: "",
           title: "",

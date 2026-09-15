@@ -9,6 +9,33 @@
  */
 export { NEWS_CATEGORY_CHOICES as NEWS_CATEGORIES } from "@/lib/news-categories";
 
+import {
+  NEWS_CATEGORY_CHOICES,
+  TALKS_CATEGORY,
+  TALKS_SLUG,
+  slugForCategory,
+} from "@/lib/news-categories";
+
+/**
+ * 列表頁的分類籤（`/admin/news?category=<slug>`）。
+ *
+ * slug 與前台分類頁同一套（`/news/category/admissions` ↔ `?category=admissions`），
+ * 所以側欄「招生資訊 › 各學制招生頁 · 招生公告」那個入口的網址可以寫死在
+ * lib/admin/site-map.ts。演講公告前台沒有分類頁（它有自己的 /news/talks），
+ * 但後台 256 則一定要能篩出來，所以這裡用 TALKS_SLUG 補上。順序照下拉選單。
+ */
+export const NEWS_ADMIN_FILTERS: readonly { slug: string; category: string }[] =
+  NEWS_CATEGORY_CHOICES.flatMap((category) => {
+    const slug = category === TALKS_CATEGORY ? TALKS_SLUG : slugForCategory(category);
+    return slug ? [{ slug, category }] : [];
+  });
+
+/** `?category=` 的 slug → 中文分類；不認得的值當成沒篩（不報錯，列表印全部）。 */
+export function adminCategoryForSlug(slug: string | undefined): string | null {
+  if (!slug) return null;
+  return NEWS_ADMIN_FILTERS.find((f) => f.slug === slug)?.category ?? null;
+}
+
 /**
  * 「這個編輯器內文裡有東西嗎？」
  *

@@ -6,8 +6,9 @@ import { EmptyState, Table, TBody, TD, TH, THead, TR } from "@/components/admin/
 import { DeleteButton } from "@/components/admin/ui/DeleteButton";
 import { EnBadge, enProgress } from "../_components/EnBadge";
 import { deleteNews } from "./actions";
-import { hasEditorContent } from "./constants";
+import { NEWS_ADMIN_FILTERS, adminCategoryForSlug, hasEditorContent } from "./constants";
 import { AppearsOn } from "../_components/AppearsOn";
+import { FilterLink } from "../_components/FilterLink";
 
 export const metadata: Metadata = { title: "最新消息" };
 export const dynamic = "force-dynamic";
@@ -33,8 +34,17 @@ function todayInTaipei(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Taipei" });
 }
 
-export default async function NewsListPage() {
+export default async function NewsListPage({
+  searchParams,
+}: {
+  // Next 16：searchParams 是 promise。`?category=` 是側欄「招生資訊 › 各學制
+  // 招生頁 · 招生公告」帶進來的（slug，見 constants.ts 的 NEWS_ADMIN_FILTERS）。
+  searchParams: Promise<{ category?: string }>;
+}) {
   const { supabase } = await requireAdminOrRedirect();
+  const { category: categoryParam } = await searchParams;
+  const category = adminCategoryForSlug(categoryParam);
+  const categorySlug = category ? categoryParam! : null;
 
   // Same ordering the public page uses, so what the staff see here matches the
   // site: pinned first, then newest.
@@ -46,29 +56,32 @@ export default async function NewsListPage() {
   // the fix is a news_admin_list view exposing the two flags, not dropping 內文
   // from the score and letting the badge call a row fully translated while its
   // body is still in Chinese.
-  const { data, error } = await supabase
+  let query = supabase
     .from("news")
     .select(
       "id, published_at, expires_at, category, category_en, title, title_en, " +
         "body, body_en, content_html, content_html_en, is_pinned, status"
     )
     .order("is_pinned", { ascending: false })
-    .order("published_at", { ascending: false })
-    .returns<Row[]>();
+    .order("published_at", { ascending: false });
+  if (category) query = query.eq("category", category);
+  const { data, error } = await query.returns<Row[]>();
 
   if (error) {
     console.error("[admin/news] list failed:", error.message);
   }
   const rows = data ?? [];
+  // 從篩好的列表按「新增」，分類就先選好 —— 招生公告是最常從側欄那個入口來的。
+  const newHref = categorySlug ? `/admin/news/new?category=${categorySlug}` : "/admin/news/new";
 
   return (
     <div className="flex flex-col gap-5">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-bold" style={{ color: "var(--brand-green)" }}>
-            最新消息
+            最新消息{category ? ` · ${category}` : ""}
           </h1>
-          <AppearsOn pathname="/admin/news" />
+          <AppearsOn pathname="/admin/news" filters={{ category: categorySlug }} />
           <p className="mt-1 text-[13px]" style={{ color: "var(--muted)" }}>
             {/* 這裡原本寫「有內文的長文章請改用『部落格』」——部落格已於
                 197a953 全站移除，最新消息現在就是唯一的發布管道，內文編輯器、
@@ -76,10 +89,22 @@ export default async function NewsListPage() {
             公告、演講、招生、徵才都發在這裡。可以放內文、封面圖與可下載的附件。
           </p>
         </div>
-        <Link href="/admin/news/new">
+        <Link href={newHref}>
           <Button variant="primary">新增消息</Button>
         </Link>
       </header>
+
+      <nav className="flex flex-wrap gap-2" aria-label="依分類篩選">
+        <FilterLink label="全部" href="/admin/news" active={category === null} />
+        {NEWS_ADMIN_FILTERS.map((f) => (
+          <FilterLink
+            key={f.slug}
+            label={f.category}
+            href={`/admin/news?category=${f.slug}`}
+            active={categorySlug === f.slug}
+          />
+        ))}
+      </nav>
 
       {error && (
         <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[13px] text-red-700">
@@ -89,9 +114,9 @@ export default async function NewsListPage() {
 
       {rows.length === 0 && !error ? (
         <EmptyState
-          message="目前沒有任何消息"
+          message={category ? `「${category}」目前沒有任何消息` : "目前沒有任何消息"}
           action={
-            <Link href="/admin/news/new">
+            <Link href={newHref}>
               <Button variant="primary" size="sm">
                 新增第一則消息
               </Button>

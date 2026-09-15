@@ -62,7 +62,7 @@ export default async function LinksListPage({
           <h1 className="text-[22px] font-bold" style={{ color: "var(--brand-green)" }}>
             連結卡片{section ? ` · ${sectionLabel(section)}` : ""}
           </h1>
-          <AppearsOn pathname="/admin/links" section={section} />
+          <AppearsOn pathname="/admin/links" filters={{ section }} />
           <p className="mt-1 text-[13px]" style={{ color: "var(--muted)" }}>
             一張卡片一條連結，「區塊」欄決定它出現在哪一頁；招生資訊的卡片還可以標學制。
           </p>
