@@ -66,7 +66,7 @@ export default async function Page({
   // 沒有內文就 404，所以兩個都等完再判斷。
   const [program, documents] = await Promise.all([
     getProgramByName(nameZh, "zh"),
-    getDocumentsForProgram(nameZh, "zh"),
+    getDocumentsForProgram("courses", nameZh, "zh"),
   ]);
   if (!program) notFound();
 

@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import { requireAdminOrRedirect } from "@/lib/admin/auth";
 import { NewsForm } from "../NewsForm";
 import { createNews } from "../actions";
+import { loadProgramNames } from "../programs";
 
 export const metadata: Metadata = { title: "新增消息" };
 export const dynamic = "force-dynamic";
 
 export default async function NewNewsPage() {
-  await requireAdminOrRedirect();
+  const { supabase } = await requireAdminOrRedirect();
+  const programs = await loadProgramNames(supabase);
 
   // Default to today — new announcements are almost always dated today, and a
   // blank date field is one more thing to fill in.
@@ -27,12 +29,14 @@ export default async function NewNewsPage() {
       <NewsForm
         action={createNews}
         submitLabel="新增"
+        programs={programs}
         initial={{
           published_at: today,
           // 預設不設結束日期 —— 多數公告本來就該一直在。
           expires_at: "",
           category: "最新公告",
           category_en: "",
+          program: "",
           title: "",
           title_en: "",
           body: "",

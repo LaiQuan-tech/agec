@@ -31,6 +31,7 @@ type NewsInput = {
   expires_at: string | null;
   category: string;
   category_en: string | null;
+  program: string | null;
   title: string;
   title_en: string | null;
   body: string | null;
@@ -197,6 +198,9 @@ function parse(form: FormData): { values?: NewsInput; fieldErrors?: Record<strin
   const expiresAt = date(form, "expires_at", "結束日期");
   const category = text(form, "category", "分類", { required: true, max: 20 });
   const categoryEn = text(form, "category_en", "英文分類", { max: 40 });
+  // 學制：自由文字不是 oneOf，值要比對 programs.name（系辦可以改的顯示文字，
+  // 與 links / documents 同一個理由）。null = 不分學制。
+  const program = text(form, "program", "學制", { max: 50 });
   const title = text(form, "title", "標題", { required: true, max: 200 });
   const titleEn = text(form, "title_en", "英文標題", { max: 300 });
   const body = text(form, "body", "摘要", { max: 300 });
@@ -220,6 +224,7 @@ function parse(form: FormData): { values?: NewsInput; fieldErrors?: Record<strin
     expires_at: expiresAt.error,
     category: category.error,
     category_en: categoryEn.error,
+    program: program.error,
     title: title.error,
     title_en: titleEn.error,
     body: body.error,
@@ -245,6 +250,8 @@ function parse(form: FormData): { values?: NewsInput; fieldErrors?: Record<strin
       // 會在每次存檔時把系辦設好的結束日期清成 null。
       expires_at: expiresAt.value,
       category: category.value!,
+      // 🔴 同 expires_at：update 是全欄覆蓋，漏掉就會把學制清掉。
+      program: program.value,
       title: title.value!,
       body: body.value,
       cover_url: coverUrl.value,

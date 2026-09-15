@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { LANGS, localizePath } from "@/lib/i18n";
 import { getProgramsWithRequirements, getFacultyPageIds, getNewsIds, getNewsYears } from "@/lib/data";
 import { NEWS_CATEGORIES } from "@/lib/news-categories";
-import { slugForProgram } from "@/lib/program-slugs";
+import { PROGRAM_SLUG_LIST, slugForProgram } from "@/lib/program-slugs";
 import { SITE_ORIGIN } from "@/lib/site-routes";
 
 const ROUTES = [
@@ -57,6 +57,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .map((name) => slugForProgram(name))
     .filter((slug): slug is string => Boolean(slug))
     .map((slug) => `/courses/${slug}`);
+  // 各學制的招生頁：四頁一定存在（每個學制都有招生公告可以列），直接列白名單。
+  const admissions = PROGRAM_SLUG_LIST.map((slug) => `/admissions/${slug}`);
 
   /*
    * 年份頁。這些是真正的封存索引 —— 十一年的消息，年份是讀者實際會用來找東西
@@ -73,6 +75,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...ROUTES,
     ...yearRoutes,
     ...requirements,
+    ...admissions,
     ...profiles,
     ...articles,
   ].flatMap((route) =>

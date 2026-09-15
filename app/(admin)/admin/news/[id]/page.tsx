@@ -5,6 +5,7 @@ import { requireAdminOrRedirect } from "@/lib/admin/auth";
 import { localizePath } from "@/lib/i18n";
 import type { NewsAttachment } from "@/lib/data";
 import { NewsForm } from "../NewsForm";
+import { loadProgramNames } from "../programs";
 import { updateNews } from "../actions";
 
 export const metadata: Metadata = { title: "編輯消息" };
@@ -16,6 +17,7 @@ type Row = {
   expires_at: string | null;
   category: string;
   category_en: string | null;
+  program: string | null;
   title: string;
   title_en: string | null;
   body: string | null;
@@ -80,7 +82,8 @@ export default async function EditNewsPage({
   const { data, error } = await supabase
     .from("news")
     .select(
-      "id, published_at, expires_at, category, category_en, title, title_en, " +
+      // 🔴 update 是整列覆寫：這裡少讀一個欄位，「打開再儲存」就會把它清掉。
+      "id, published_at, expires_at, category, category_en, program, title, title_en, " +
         "body, body_en, content_html, content_json, content_html_en, content_json_en, " +
         "cover_url, is_pinned, status, attachments, speaker, speaker_en, " +
         "venue, venue_en, event_at"
@@ -101,6 +104,8 @@ export default async function EditNewsPage({
   // /news/[id] 404 and nothing for an isPostLive()-style guard to test. The id
   // is a bigint from the database and needs no escaping.
   const publicPath = `/news/${data.id}`;
+
+  const programs = await loadProgramNames(supabase);
 
   return (
     <div className="flex flex-col gap-5">
@@ -146,6 +151,7 @@ export default async function EditNewsPage({
       )}
 
       <NewsForm
+        programs={programs}
         action={updateNews}
         submitLabel="儲存變更"
         initial={{
@@ -155,6 +161,7 @@ export default async function EditNewsPage({
           expires_at: data.expires_at?.slice(0, 10) ?? "",
           category: data.category,
           category_en: data.category_en ?? "",
+          program: data.program ?? "",
           title: data.title,
           title_en: data.title_en ?? "",
           body: data.body ?? "",

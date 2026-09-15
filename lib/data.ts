@@ -36,6 +36,11 @@ export type NewsItem = {
    * row is rendered must read this instead.
    */
   category_zh: string;
+  /**
+   * 學制標記（programs.name 的中文原值，不翻譯；與 links / documents 同一套）。
+   * 招生消息用它決定出現在哪個學制的招生頁；null = 不分學制。
+   */
+  program: string | null;
   title: string;
   /**
    * Plain-text standfirst, shown under the title on the feature card.
@@ -371,8 +376,10 @@ type DocumentRow = Omit<SiteDocument, "category_zh"> & {
  */
 export { TALKS_CATEGORY } from "@/lib/news-categories";
 
+// 🔴 逐一列欄位：program 來自 migration 20260915100000，沒跑的話每一支 news
+//    getter 都會回空 —— 首頁與 /news 整個空掉。
 const NEWS_COLUMNS =
-  "id, published_at, category, title, body, content_html, cover_url, is_pinned, attachments, speaker, venue, event_at, title_en, body_en, category_en, content_html_en, speaker_en, venue_en";
+  "id, published_at, category, title, body, content_html, cover_url, is_pinned, attachments, speaker, venue, event_at, title_en, body_en, category_en, content_html_en, speaker_en, venue_en, program";
 
 /**
  * Every news getter filters on this, and every one of them has to do it itself.
@@ -473,6 +480,7 @@ function toNews(row: NewsRow, lang: Lang): NewsItem {
     published_at: row.published_at,
     category: pick(row.category, row.category_en, lang),
     category_zh: row.category,
+    program: row.program,
     title: pick(row.title, row.title_en, lang),
     body: pickNullable(row.body, row.body_en, lang),
     content_html: pickNullable(row.content_html, row.content_html_en, lang),
@@ -861,13 +869,17 @@ export async function getDocuments(
 }
 
 /**
- * 標了某個學制的檔案（/courses/[program] 修業規定頁底下那一區）。
+ * 標了某個學制的檔案。
  *
- * 只取 section='courses'：招生檔案就算標了學制，也是招生資訊頁的事。
+ *   section='courses'     /courses/[program] 修業規定頁底下那一區
+ *   section='admissions'  /admissions/[program] 招生頁的「招生檔案」
+ *
  * `nameZh` 是 programs.name 的中文原值（路由已經用 programForSlug 白名單過），
- * 與 documents.program 逐字比對。
+ * 與 documents.program 逐字比對。只取標了**這個**學制的，不含 program 為 null
+ * 的共通檔案 —— 共通的留在各自的總覽頁（/courses §2、/admissions §4）。
  */
 export async function getDocumentsForProgram(
+  section: SiteDocument["section"],
   nameZh: string,
   lang: Lang
 ): Promise<SiteDocument[]> {
@@ -875,17 +887,76 @@ export async function getDocumentsForProgram(
   const { data, error } = await supabase
     .from("documents")
     .select(DOCUMENT_COLUMNS)
-    .eq("section", "courses")
+    .eq("section", section)
     .eq("program", nameZh)
     .order("sort_order", { ascending: true })
     .order("id", { ascending: true })
     .returns<DocumentRow[]>();
 
   if (error) {
-    console.error(`[lib/data] getDocumentsForProgram(${nameZh}) failed:`, error.message);
+    console.error(`[lib/data] getDocumentsForProgram(${section}, ${nameZh}) failed:`, error.message);
     return [];
   }
   return (data ?? []).map((row) => toDocument(row, lang));
+}
+
+/** 標了某個學制的連結卡（/admissions/[program] 的「相關連結」）。同上，不含共通的。 */
+export async function getLinksForProgram(
+  section: LinkItem["section"],
+  nameZh: string,
+  lang: Lang
+): Promise<LinkItem[]> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("links")
+    .select(LINK_COLUMNS)
+    .eq("section", section)
+    .eq("program", nameZh)
+    .order("sort_order", { ascending: true })
+    .order("id", { ascending: true })
+    .returns<LinkRow[]>();
+
+  if (error) {
+    console.error(`[lib/data] getLinksForProgram(${section}, ${nameZh}) failed:`, error.message);
+    return [];
+  }
+  return (data ?? []).map((row) => toLink(row, lang));
+}
+
+/** `news.category` 的招生那一類 —— 與 lib/news-categories.ts 的值相同。 */
+const ADMISSIONS_CATEGORY = "招生";
+
+/**
+ * 某個學制的招生公告（/admissions/[program]）：category='招生' 且 program=該學制，
+ * 已發布、未過期，置頂優先、新的在前。
+ *
+ * 不分頁：舊站四頁各 20–55 則，一次列完比翻頁好找；真的超過 `limit` 再說。
+ * 與 getNewsPage 同一組過濾條件（status、expires_effective），漏一個草稿就上
+ * 公開網路。
+ */
+export async function getAdmissionsNews(
+  nameZh: string,
+  lang: Lang,
+  limit = 80
+): Promise<NewsItem[]> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("news")
+    .select(NEWS_COLUMNS)
+    .eq("status", PUBLISHED)
+    .gte(EXPIRES_COLUMN, todayInTaipei())
+    .eq("category", ADMISSIONS_CATEGORY)
+    .eq("program", nameZh)
+    .order("is_pinned", { ascending: false })
+    .order("published_at", { ascending: false })
+    .limit(limit)
+    .returns<NewsRow[]>();
+
+  if (error) {
+    console.error(`[lib/data] getAdmissionsNews(${nameZh}) failed:`, error.message);
+    return [];
+  }
+  return (data ?? []).map((row) => toNews(row, lang));
 }
 
 /**

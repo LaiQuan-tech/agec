@@ -1658,6 +1658,95 @@
 }
 
 /* ---------------------------------------------------------------------------
+ * 各學制招生頁 — `.post-section`、`.program-*`（/admissions/[program]）
+ *
+ * 與修業規定頁同一套 `.post-*`，多的是：標題底下的招生方式一行、官方簡章按鈕、
+ * 每一區（公告／檔案／連結）的 760px 容器，以及頁尾「其他學制」。
+ * 公告清單直接用 /news 的 `.inner-news-list`（site.css），檔案卡用上面的
+ * `.post-documents`。
+ * ------------------------------------------------------------------------ */
+.post-page .post-section {
+  max-width: 760px;
+  margin-top: clamp(40px, 5vw, 64px);
+}
+.post-page .program-methods {
+  color: var(--green);
+  font: 700 12px var(--sans);
+  letter-spacing: 0.08em;
+  margin: 10px 0 0;
+}
+.post-page .program-official {
+  margin: 28px 0 0;
+}
+.post-page .post-foot .program-others {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 18px 0 0;
+}
+.post-page .post-foot .program-others a {
+  color: var(--green);
+}
+.post-page .post-foot .program-others a:hover {
+  color: var(--gold);
+}
+/* 招生公告清單裡的分類籤在這一頁全都是「招生」，留著是為了跟 /news 的格線
+   一致（四欄：日期／分類／標題／箭頭）。 */
+
+/* ---------------------------------------------------------------------------
+ * /admissions §4 的三張學制入口卡 — `.admission-kinds`
+ *
+ * 仿 `.resource-row a` 的邊框、留白與 hover（site.css），但一張卡裡是標題、
+ * 一句說明、再四條學制連結，所以是 <article> 不是 <a>。三欄 → 1180px 以下
+ * 仍三欄（卡片夠窄）→ 860px 以下一欄；與 `.resource-row` 一樣用外框＋每格
+ * 右下邊框畫格線。
+ * ------------------------------------------------------------------------ */
+.admission-kinds {
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: clamp(28px, 3vw, 40px);
+}
+.admission-kinds article {
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 24px;
+}
+.admission-kinds h3 {
+  font: 500 18px / 1.4 var(--serif);
+  margin: 0;
+}
+.admission-kinds p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 8px 0 16px;
+}
+.admission-kinds ul {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.admission-kinds li a {
+  color: var(--green);
+  display: block;
+  font: 700 12px var(--sans);
+  letter-spacing: 0.04em;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+}
+.admission-kinds li a:hover {
+  color: var(--gold);
+}
+@media (max-width: 860px) {
+  .admission-kinds {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------------------------------------------------------------------------
  * 課表滑過時不要位移 — `.course-table > a:hover`
  *
  * site.css 原本的寫法是：

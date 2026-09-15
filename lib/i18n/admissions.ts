@@ -208,33 +208,87 @@ export const ADMISSIONS = {
         en: "Guidelines, document formats and past examination papers — maintained by the department office.",
       },
     },
-    /**
-     * §4 的學制篩選籤。只有在 `links` 真的有一筆標了學制時才會印出來 ——
-     * 見 components/site/AdmissionResources.tsx 的檔頭。所以這三條字串平常
-     * 看不到，不是死字串。
-     */
-    filterLabel: { zh: "依學制篩選申請資訊", en: "Filter application resources by program" },
-    /** 不篩選的那一籤。它的 **value** 在兩種語言都是中文的「全部」（哨兵值）。 */
-    filterAll: { zh: "全部", en: "All" },
-    filterEmpty: {
-      zh: "這個學制目前沒有專屬的申請資訊。",
-      en: "No program-specific application resources yet.",
-    },
     heading: {
       zh: "開始申請前，先找到你需要的資訊",
       en: "Find what you need before you apply",
     },
     /**
+     * §4 的三張學制入口卡（components/site/AdmissionKinds.tsx）：每一張底下列
+     * 四個學制，點哪個學制就到那個學制招生頁的對應區塊。這三種東西在舊站
+     * 都是「按學制分開」的（recruit1–4 的公告、link5 的考古題四組），所以是
+     * 程式裡的固定結構，不是 links 表的資料 —— 客戶要的是點下去就分學制，
+     * 不能等系辦先建好資料才長出篩選。
+     *
+     * `anchor` 對應 ProgramAdmissions.tsx 裡的區塊 id。
+     */
+    kinds: [
+      {
+        anchor: "#notices",
+        label: { zh: "當年度招生簡章", en: "Current admission guidelines" },
+        description: {
+          zh: "各學制當年度的簡章與招生公告。",
+          en: "Each program's current guidelines and admission notices.",
+        },
+      },
+      {
+        anchor: "#files",
+        label: { zh: "書面資料格式", en: "Application document formats" },
+        description: {
+          zh: "各學制申請時要繳交的表格與格式。",
+          en: "The forms and formats each program asks applicants to submit.",
+        },
+      },
+      {
+        anchor: "#files",
+        label: { zh: "考古題專區", en: "Past examination papers" },
+        description: {
+          zh: "各學制歷年的入學考試題目。",
+          en: "Past entrance examination papers, by program.",
+        },
+      },
+    ],
+    /** 三張入口卡上「大學部 ›」這種學制連結的無障礙前綴。 */
+    kindsLabel: { zh: "依學制查看", en: "By program" },
+    /**
      * `.resource-row` fallback, used only while `links.section='admissions'`
      * has no rows. Rows that do come from the DB are already in the right
      * language and must not be translated again here. Like the reference
-     * site, the last entry points at the footer contact block.
+     * site, the entry points at the footer contact block.
      */
     resourcesFallback: [
-      { url: "#", label: { zh: "當年度招生簡章", en: "Current admission guidelines" } },
-      { url: "#", label: { zh: "書面資料格式", en: "Application document formats" } },
-      { url: "#", label: { zh: "考古題專區", en: "Past examination papers" } },
       { url: "#contact", label: { zh: "聯絡系辦", en: "Contact the department office" } },
     ],
+  },
+  /**
+   * 各學制的招生頁（/admissions/[program]）。與舊站的 recruit1–4 對應：
+   * 該學制的招生公告清單，加上系辦標了學制的檔案與連結。
+   */
+  programPage: {
+    /** `.post-byline`，印在學制名上面。 */
+    kicker: { zh: "招生資訊", en: "Admissions" },
+    /** h1：中文「大學部招生」，英文 "Undergraduate Admissions"。 */
+    titleSuffix: { zh: "招生", en: " Admissions" },
+    official: { zh: "官方簡章／報名系統 ↗︎", en: "Official guidelines / application system ↗︎" },
+    notices: {
+      heading: { zh: "招生公告", en: "Admission notices" },
+      description: {
+        zh: "簡章、書面資料下載、筆試與口試時間，依日期排列，最新的在前。",
+        en: "Guidelines, document downloads and examination schedules, newest first.",
+      },
+      empty: {
+        zh: "目前沒有這個學制的招生公告。",
+        en: "No admission notices for this program yet.",
+      },
+    },
+    files: {
+      heading: { zh: "招生檔案", en: "Admission documents" },
+      description: {
+        zh: "這個學制專屬的簡章、書面資料格式與考古題，由系辦維護，點卡片即可下載。",
+        en: "Guidelines, document formats and past papers specific to this program — maintained by the department office.",
+      },
+    },
+    links: { heading: { zh: "相關連結", en: "Related links" } },
+    back: { zh: "← 回到招生資訊", en: "← Back to Admissions" },
+    otherPrograms: { zh: "其他學制", en: "Other programs" },
   },
 } satisfies Dict;

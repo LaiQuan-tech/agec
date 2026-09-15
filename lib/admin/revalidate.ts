@@ -125,6 +125,17 @@ export function revalidateFor(entity: RevalidateEntity, ...slugs: (string | null
     }
   }
 
+  if (entity === "news" || entity === "documents" || entity === "links" || entity === "programs") {
+    // 各學制的招生頁（/admissions/[program]）讀四張表：招生消息、標了學制的
+    // 檔案與連結、學制本身（名稱、簡介、官方簡章網址）。一次存檔不知道它改
+    // 前改後各標了哪個學制，四頁一起重新驗證。
+    revalidatePath("/admissions/[program]", "page");
+    revalidatePath(`${EN_PREFIX}/admissions/[program]`, "page");
+    for (const slug of PROGRAM_SLUG_LIST) {
+      for (const path of bothLanguages(`/admissions/${slug}`)) revalidatePath(path);
+    }
+  }
+
   if (entity === "events") {
     // 活動詳情頁。slugs 帶舊值與新值兩個 —— 改了 slug 而只重新驗證新的，
     // 舊網址會繼續供應快取內容。

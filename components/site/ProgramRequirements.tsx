@@ -43,7 +43,7 @@ export function ProgramRequirements({
 }: {
   lang: Lang;
   program: Program;
-  /** getDocumentsForProgram(program.name_zh) —— 已依 sort_order 排好。 */
+  /** getDocumentsForProgram("courses", program.name_zh) —— 已依 sort_order 排好。 */
   documents: SiteDocument[];
 }) {
   const t = translate(COURSES, lang);

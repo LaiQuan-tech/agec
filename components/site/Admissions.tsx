@@ -2,14 +2,17 @@ import type { CapabilityItem, LinkItem, Program, SiteDocument } from "@/lib/data
 import { translate, type Lang } from "@/lib/i18n";
 import { ADMISSIONS } from "@/lib/i18n/admissions";
 import { EYEBROWS } from "@/lib/i18n/eyebrows";
-import { newsPath } from "@/lib/news-categories";
+import { localizePath } from "@/lib/i18n";
+import { slugForProgram } from "@/lib/program-slugs";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
 import { SectionTitle } from "./SectionTitle";
 import { NextRoute } from "./NextRoute";
-import { AdmissionResources } from "./AdmissionResources";
+import { AdmissionKinds } from "./AdmissionKinds";
+import { SiteDocuments } from "./SiteDocuments";
 import { MaybeLink } from "./MaybeLink";
+import Link from "next/link";
 import { padNo } from "./nav";
 
 /**
@@ -91,23 +94,26 @@ export function Admissions({
     url: string | null;
     program: string | null;
   }[] = links.length
-    ? links.map((link) => ({
-        // key 用 id：兩張卡同名是合法的，用文字當 key 會讓 React 在其中一張
-        // 被刪掉時更新錯的節點。
-        key: `db-${link.id}`,
-        label: link.label,
-        url: link.url,
-        program: link.program,
-      }))
-    // The fallback rows exist so the four-column grid never renders empty when
-    // the `links` table has nothing for this section. Three of the four carry
-    // a literal "#" and MaybeLink treats that as no destination; the fourth is
-    // the real in-page anchor to the footer's contact block.
+    ? links
+        // 標了學制的連結屬於那個學制的招生頁（/admissions/[program]）；
+        // 總覽頁只印共通的。
+        .filter((link) => !link.program)
+        .map((link) => ({
+          // key 用 id：兩張卡同名是合法的，用文字當 key 會讓 React 在其中一張
+          // 被刪掉時更新錯的節點。
+          key: `db-${link.id}`,
+          label: link.label,
+          url: link.url,
+          program: link.program,
+        }))
+    // The fallback row exists so the grid never renders empty when the `links`
+    // table has nothing for this section: the in-page anchor to the footer's
+    // contact block. 簡章／書面資料／考古題三張卡已經是程式裡的固定結構
+    //（AdmissionKinds），不再需要備援。
     : t.section4.resourcesFallback.map((row, i) => ({
         key: `fallback-${i}`,
         label: row.label,
         url: row.url,
-        // 備援清單是硬編的四條共通連結，沒有學制之分 —— 所以籤也不會出現。
         program: null,
       }));
 
@@ -158,32 +164,25 @@ export function Admissions({
                     <h4>{copy?.tagline ?? program.description}</h4>
                     <p>{copy?.methods ?? program.description}</p>
                     {/*
-                      去處的優先序：學制自己的 `admission_url`，沒填才退回
-                      /news/category/admissions。
+                      各學制自己的招生頁（/admissions/<代稱>）：該學制的招生
+                      公告、檔案與連結都在那一頁；系辦在 /admin/programs 填的
+                      官方簡章／報名系統網址也印在那一頁最上面，不再在這裡當
+                      去處 —— 卡片連到站內頁，讀者一律先看到本系整理的資訊。
 
-                      四張卡本來全部指向後者。那在「站內的招生消息」這個範圍
-                      內是對的 —— 消息沒有「屬於哪個學制」的欄位，學制只寫在
-                      標題裡，用關鍵字猜著篩、篩錯還沒人會發現。但讀者要的是
-                      各自對應的招生頁（教務處的大學部招生、註冊組的碩博士班
-                      招生、在職專班自己的網站），那不是站內消息能給的答案，
-                      所以改成由系辦在 /admin/programs 逐一指定。
-
-                      退路刻意保留：欄位是空的時候行為與今天完全一樣，所以這一
-                      版上線當下畫面不會有任何改變，系辦填一個就換一個。
-
-                      走 newsPath() 而不是自己拼字串：消息的網址只能有一個產生
-                      處，否則哪天路由改了，這裡會變成一個沒人記得要改的死連結。
-
-                      用 MaybeLink 而不是 <Link>：系辦填進來的多半是站外網址，
-                      它會自動補上 target="_blank" 與 rel="noopener noreferrer"。
-                      箭頭跟著目的地換（站內 →、站外 ↗︎），而且兩者都是完整的
-                      字串而不是拼出來的節點 —— 見 lib/i18n/admissions.ts。
+                      2026-09 之前四張卡全部連到最新消息的招生區塊（消息沒有
+                      學制欄位）；客戶回饋無法區分學制，所以做了學制頁。
+                      沒有代稱的學制（不在 lib/program-slugs.ts）沒有頁，
+                      退回招生區塊 —— 現在四個都有，這條退路實務上走不到。
                     */}
-                    <MaybeLink href={program.admission_url ?? newsPath(1, lang, "admissions")}>
-                      {program.admission_url && /^https?:\/\//.test(program.admission_url)
-                        ? t.section1.ctaExternal
-                        : t.section1.cta}
-                    </MaybeLink>
+                    {slugForProgram(program.name_zh) ? (
+                      <Link href={localizePath(`/admissions/${slugForProgram(program.name_zh)}`, lang)}>
+                        {t.section1.cta}
+                      </Link>
+                    ) : (
+                      <Link href={localizePath("/news/category/admissions", lang)}>
+                        {t.section1.cta}
+                      </Link>
+                    )}
                   </article>
                 );
               })}
@@ -233,25 +232,28 @@ export function Admissions({
               eyebrow={eb.needHelp}
               heading={t.section4.heading}
             />
-            {/*
-              籤、檔案卡與連結卡一起交給 client 元件 —— 三者共用同一排學制籤。
+            {/* 三張學制入口卡：當年度招生簡章／書面資料格式／考古題專區，
+                每張底下四個學制，點進去是該學制招生頁的對應區塊。 */}
+            <AdmissionKinds lang={lang} programs={cards} />
 
-              籤只有在 `links` 或 `documents` 真的有一筆標了學制時才會出現 ——
-              沒有東西可以分的時候印一排按了沒反應的按鈕，正是 /courses 那組籤
-              被回報的問題。系辦在 /admin/links 把招生簡章拆成四筆、各標一個
-              學制（或在 /admin/documents 替招生檔案標學制）之後，這一區才會
-              長出篩選。
-            */}
-            <AdmissionResources
+            {/* 系辦上傳的共通檔案（沒標學制的）。標了學制的在各學制頁。
+                一個檔都沒有時整區不印。 */}
+            <SiteDocuments
               lang={lang}
-              resources={resources}
-              documents={documents}
-              documentsHeading={t.section4.documents.heading}
-              documentsDescription={t.section4.documents.description}
-              // 籤的 value 是中文的學制名（links.program 比對的對象），
-              // label 才跟著語言走 —— 與 /courses 的學制籤同一個約定。
-              programs={cards.map((p) => ({ value: p.name_zh, label: p.name }))}
+              documents={documents.filter((doc) => !doc.program)}
+              heading={t.section4.documents.heading}
+              description={t.section4.documents.description}
             />
+
+            {/* 共通的連結（聯絡系辦…）。Anchors, never <div>s — `.resource-row a`
+                owns the cell border, the 120px min-height and the flex alignment. */}
+            <div className="resource-row">
+              {resources.map((resource) => (
+                <MaybeLink href={resource.url} key={resource.key} arrow={<span> ↗︎</span>}>
+                  {resource.label}
+                </MaybeLink>
+              ))}
+            </div>
           </div>
         </section>
       </div>

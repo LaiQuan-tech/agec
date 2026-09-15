@@ -121,6 +121,13 @@ export const ADMIN_SITE_MAP: AdminPage[] = [
         label: section(ADMISSIONS.nav.items, "#section-1"),
         href: "/admin/programs",
         publicHref: "/admissions#section-1",
+        note: "學制卡；每個學制的「官方簡章／報名系統」網址也在這裡填",
+      },
+      {
+        label: "各學制招生頁 · 招生公告",
+        href: "/admin/news",
+        publicHref: "/admissions/undergraduate#notices",
+        note: "分類選「招生」、再選學制，就會出現在該學制的招生頁",
       },
       {
         label: section(ADMISSIONS.nav.items, "#section-3"),

@@ -35,6 +35,8 @@ export type NewsFormValues = {
   category: string;
   /** Empty string stands in for a null column, so the inputs stay uncontrolled. */
   category_en: string;
+  /** 學制（招生消息用）；空字串 = 不分學制。值同 programs.name。 */
+  program: string;
   title: string;
   title_en: string;
   /** Plain-text standfirst for the feature card — not the article body. */
@@ -62,10 +64,13 @@ export function NewsForm({
   action,
   initial,
   submitLabel,
+  programs,
 }: {
   action: (prev: ActionState, form: FormData) => Promise<ActionState>;
   initial: NewsFormValues;
   submitLabel: string;
+  /** 學制的中文名稱，順序同 /admin/programs（給「學制」下拉）。 */
+  programs: string[];
 }) {
   return (
     <FormShell
@@ -183,6 +188,32 @@ export function NewsForm({
               lang="en"
               aria-invalid={Boolean(state.fieldErrors?.category_en)}
             />
+          </Field>
+
+          <Field
+            htmlFor="program"
+            label="學制（招生消息用）"
+            error={state.fieldErrors?.program}
+            hint="分類是「招生」時才有作用：選了學制，這則消息會出現在「招生資訊」頁該學制的招生頁（例如碩士班招生）；「招生資訊」§4 的簡章／書面資料／考古題入口也是照這個欄位分學制。不分學制的招生消息留空，其他分類請留空。"
+          >
+            <Select
+              id="program"
+              name="program"
+              defaultValue={initial.program}
+              aria-invalid={Boolean(state.fieldErrors?.program)}
+            >
+              <option value="">不分學制</option>
+              {programs.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+              {/* 目前的值不在清單裡（例如舊站搬來的「國際專班」）時仍然要選得到，
+                  否則一存檔就會被清成不分學制。 */}
+              {initial.program && !programs.includes(initial.program) && (
+                <option value={initial.program}>{initial.program}（已不在學制清單中）</option>
+              )}
+            </Select>
           </Field>
 
           {/* A <textarea>, not an editor, and the two are not interchangeable:
