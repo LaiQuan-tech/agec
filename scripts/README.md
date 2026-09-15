@@ -17,6 +17,13 @@ npx tsx scripts/import-news.ts --write --append --only 招生   # 5' 只新增�
 python3 scripts/shrink-oversized.py                     # 6  縮掉過大的圖（選用）
 ```
 
+另有一支 `scripts/import-forms.py`（2026-09-15，一次性）：把舊站「常用表格」
+`/zh_tw/link/link4` 的 39 份表單連檔案搬進 `documents` 表（section=courses、五組
+分類照舊站順序）。`--dry` 只下載＋印清單，`--write` 上傳 Storage `attachments/forms/<舊站 id>.<ext>`
+（x-upsert，可重跑）並以 `file_url` 判斷已匯入就跳過；舊站標題裡用底線代替斜線與
+括號的那幾筆是人工給定的標籤（`LABEL_OVERRIDES`）。已執行：上傳 37、寫列 37、
+既有 2 列補分類。⚠️ 走 service role，這批不進稽核日誌。
+
 另有一支獨立的 `scripts/build-logos.py`（從客戶的識別母檔產 logo SVG），與消息
 搬運無關，說明在檔案開頭。
 

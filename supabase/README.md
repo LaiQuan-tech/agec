@@ -54,6 +54,14 @@ PostgreSQL 18 上連跑兩次驗證過：第二次不會產生重複列，欄位
 多出幾張沒照片、分類也對不上篩選標籤的卡片。刪除不可逆，且系辦若已自行在
 後台新增過真的師資也會被同一條 `where` 掃到，所以交給人工確認。
 
+## 2026-09-15 資料匯入（不是 migration）
+
+`scripts/import-forms.py --write`：舊站常用表格 39 份 → `documents`（section=courses，
+分類 其他 8／國際碩士專班 9／碩博相關 11／招生相關 9／課程相關 2），檔案在
+Storage `attachments/forms/`。⚠️ 用 service role 直接寫，`log_admin_change` 對
+`auth.uid()` 為 null 的寫入不記錄，所以操作日誌裡看不到這 39 筆（同 2026-08-31 的
+消息搬運）。系辦之後在後台改這些列時會正常記錄。
+
 ## 2026-09-14 執行紀錄（第 23 步）
 
 `20260914110000_page_copy_students.sql` 經 Management API 執行，**在推程式碼之前**，
