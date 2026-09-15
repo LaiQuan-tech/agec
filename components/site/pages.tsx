@@ -26,6 +26,7 @@ import { News } from "./News";
 import { Talks } from "./Talks";
 import { NewsPost } from "./NewsPost";
 import { About } from "./About";
+import { resolveAboutCopy, ABOUT_PAGE } from "@/lib/page-copy/about";
 import { Faculty } from "./Faculty";
 import { Admissions } from "./Admissions";
 import { Courses } from "./Courses";
@@ -187,12 +188,12 @@ export async function NewsItemRoute({
 /** Re-exported so the route files can build their static params. */
 export { getNewsIds };
 
-/**
- * Fully static: every block on this page is editorial copy, no DB reads.
- * Both languages come from lib/i18n/about.ts.
- */
-export function AboutRoute({ lang }: { lang: Lang }) {
-  return <About lang={lang} />;
+export async function AboutRoute({ lang }: { lang: Lang }) {
+  // 整頁的文字走 page_copy（後台 /admin/about），與學生專區同一套：表還沒建、
+  // 還沒有 about 的列、或缺 key 時 resolver 退回 lib/i18n/about.ts 的字典，所以
+  // 這裡不必判斷。頁面家具（標題、頁內導覽、eyebrow、圖片）仍直接讀字典。
+  const copyRows = await getPageCopy(ABOUT_PAGE);
+  return <About lang={lang} copy={resolveAboutCopy(copyRows, lang)} />;
 }
 
 export async function FacultyRoute({ lang }: { lang: Lang }) {

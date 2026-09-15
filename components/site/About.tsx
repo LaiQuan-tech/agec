@@ -5,18 +5,24 @@ import { SectionTitle } from "./SectionTitle";
 import { NextRoute } from "./NextRoute";
 import { translate, type Lang } from "@/lib/i18n";
 import { ABOUT } from "@/lib/i18n/about";
+import type { AboutCopy } from "@/lib/page-copy/about";
 import { EYEBROWS } from "@/lib/i18n/eyebrows";
 
 /**
  * 本系簡介 (/about) — route 03 / 08.
  *
- * Every block on this page is A-class static copy: the reference site has no
- * data source behind any of it, and PORT-REPORT §2.4 lists `ol.timeline`,
- * `.principle-grid`, `.honor-grid` and `.about-photo-grid` as B-class-but-no-getter
- * (no table, no DDL). The copy therefore lives in lib/i18n/about.ts — hard-coded
- * in both languages, on purpose — because site.css pins each grid's borders with
- * positional selectors, so a 5th entry breaks the layout at the 1180px / 860px
- * breakpoints while still looking correct on desktop.
+ * The words come from `copy` (the `page_copy` table, edited at /admin/about;
+ * anything the table lacks falls back to lib/i18n/about.ts — see
+ * lib/page-copy/about.ts). The page furniture — title, nav labels, section
+ * eyebrows, images and their alt text, the 01–04 ordinals — is still read
+ * straight from the dictionary.
+ *
+ * What is editable is the *text in each slot*, never the number of slots. The
+ * reference site has no data source behind any of this, and PORT-REPORT §2.4
+ * lists `ol.timeline`, `.principle-grid`, `.honor-grid` and `.about-photo-grid`
+ * as B-class-but-no-getter (no table, no DDL) — because site.css pins each
+ * grid's borders with positional selectors, so a 5th entry breaks the layout at
+ * the 1180px / 860px breakpoints while still looking correct on desktop.
  *
  *   .principle-grid   — 4 items; `article:nth-child(3){border-left}` +
  *                       `article:last-child{border-right}` assume exactly 4.
@@ -28,9 +34,11 @@ import { EYEBROWS } from "@/lib/i18n/eyebrows";
  *                       `.about-photo-wide{grid-column:1/-1}`.
  *
  * Those four counts are a property of the stylesheet, not of the language, so
- * the two dictionaries must stay the same length as each other as well.
+ * the two dictionaries must stay the same length as each other as well — and
+ * `resolveAboutCopy` builds its lists from the dictionary's, so `copy` can
+ * never be a different length either.
  */
-export function About({ lang }: { lang: Lang }) {
+export function About({ lang, copy }: { lang: Lang; copy: AboutCopy }) {
   const t = translate(ABOUT, lang);
   const eb = translate(EYEBROWS, lang);
 
@@ -45,7 +53,7 @@ export function About({ lang }: { lang: Lang }) {
         titleZh={ABOUT.title.zh}
         titleEn={ABOUT.title.en}
         routeNo="03"
-        lead={t.lead}
+        lead={copy.lead}
         imageAlt={t.heroImageAlt}
       />
 
@@ -61,8 +69,8 @@ export function About({ lang }: { lang: Lang }) {
             <SectionTitle
               no="01"
               eyebrow={eb.ourHistory}
-              heading={t.history.heading}
-              description={t.history.description}
+              heading={copy.history.heading}
+              description={copy.history.description}
             />
             <div className="history-layout">
               {/* `.history-image` is a bare <div>, and its caption is a direct
@@ -72,13 +80,14 @@ export function About({ lang }: { lang: Lang }) {
                   src="/images/about/building-exterior.jpg"
                   alt={t.history.imageAlt}
                 />
-                <p>{t.history.imageCaption}</p>
+                <p>{copy.history.imageCaption}</p>
               </div>
               {/* <ol><li><strong> + <div> is load-bearing: `.timeline li` is a
-                  100px/1fr grid whose first column is the <strong>. */}
+                  100px/1fr grid whose first column is the <strong>. Keyed by
+                  position: the year is editable, so two rows could share one. */}
               <ol className="timeline">
-                {t.history.milestones.map((item) => (
-                  <li key={item.year}>
+                {copy.history.milestones.map((item, i) => (
+                  <li key={i}>
                     <strong>{item.year}</strong>
                     <div>
                       <h3>{item.title}</h3>
@@ -96,14 +105,14 @@ export function About({ lang }: { lang: Lang }) {
             <SectionTitle
               no="02"
               eyebrow={eb.missionVision}
-              heading={t.mission.heading}
+              heading={copy.mission.heading}
             />
-            <blockquote className="mission-quote">{t.mission.quote}</blockquote>
+            <blockquote className="mission-quote">{copy.mission.quote}</blockquote>
             {/* Cards must be <article>: `.principle-grid article` carries the
                 border / min-height / padding, and the divider fix-ups are
                 :nth-child(3) and :last-child. */}
             <div className="principle-grid">
-              {t.mission.principles.map((item) => (
+              {copy.mission.principles.map((item) => (
                 <article key={item.no}>
                   <span>{item.no}</span>
                   <h3>{item.title}</h3>
@@ -119,11 +128,12 @@ export function About({ lang }: { lang: Lang }) {
             <SectionTitle
               no="03"
               eyebrow={eb.honors}
-              heading={t.honors.heading}
+              heading={copy.honors.heading}
             />
+            {/* Keyed by position: the badge text is editable. */}
             <div className="honor-grid">
-              {t.honors.items.map((item) => (
-                <article key={item.label}>
+              {copy.honors.items.map((item, i) => (
+                <article key={i}>
                   <strong>{item.label}</strong>
                   <p>{item.body}</p>
                 </article>
@@ -137,12 +147,12 @@ export function About({ lang }: { lang: Lang }) {
             <SectionTitle
               no="04"
               eyebrow={eb.environment}
-              heading={t.environment.heading}
+              heading={copy.environment.heading}
             />
             {/* <figure>/<figcaption> can't be swapped for <div>s —
                 `.about-photo-grid figure/img/figcaption` is the only hook. */}
             <div className="about-photo-grid">
-              {t.environment.photos.map((photo) => (
+              {copy.environment.photos.map((photo) => (
                 <figure
                   key={photo.src}
                   className={photo.wide ? "about-photo-wide" : undefined}

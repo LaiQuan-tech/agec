@@ -101,3 +101,14 @@ false）、手工填的英文欄、所有草稿（`id=gt.0` 連草稿一起刪�
 **附件檔名在標記裡是不完整的**。舊站 `title` 屬性給的檔名有一半沒有副檔名
 （「課程講義」「公文1150034053」）。真正的檔名要從下載時的 `Content-Disposition` 拿，
 `fetch-assets.py` 就是為此把 header 一起存下來。
+
+## page-copy-seed.ts — 頁面文案的 migration 種子
+
+```bash
+npx tsx --tsconfig tsconfig.json scripts/page-copy-seed.ts about      # 或 students
+```
+
+把某一頁 `page_copy` 的全部格位印成 `insert … on conflict (page, name) do nothing` 的
+SQL（stdout），值逐字取自 `lib/page-copy/<page>.ts` 的 `*_COPY_DEFAULTS`（也就是字典），
+貼進 migration 即可；檔頭說明另外手寫。新增一頁：在腳本的 `PAGES` 加一筆。
+20260916100000_page_copy_about.sql 的 42 列就是它印的。

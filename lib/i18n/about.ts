@@ -3,14 +3,26 @@ import type { Msg } from "@/lib/i18n";
 /**
  * Copy for 本系簡介 (/about).
  *
- * The whole page is editorial: it has no getter and no table (see the block
- * comment at the top of components/site/About.tsx), so this file is the only
- * place its text exists in either language.
+ * Two kinds of string live here:
+ *
+ *  - page furniture (title, nav labels, image alt text) — still hard-coded,
+ *    read straight from this file;
+ *  - **the editable slots** — the hero lead; §1's heading, description,
+ *    photo caption and five milestones (year / title / body); §2's heading,
+ *    quote and four cards; §3's heading and four badges; §4's heading and
+ *    three photo captions. Those are the `page_copy` table's business
+ *    (lib/page-copy/about.ts; edited at /admin/about). The values kept here
+ *    are the seed migration 20260916100000 copied into the table and the
+ *    fallback the page prints when the table has no row for a key. So
+ *    changing a value here changes nothing on the live site once the row
+ *    exists — edit it in the admin instead.
  *
  * Rows keep their non-text fields — a milestone's year, a principle's ordinal,
  * a figure's `src` and `wide` flag — beside the copy they belong to, so one
  * entry stays one row. Hoisting them back into the component would mean
- * zipping two arrays by index and trusting the two orders never drift.
+ * zipping two arrays by index and trusting the two orders never drift. The
+ * resolver in lib/page-copy/about.ts keeps that rule: it builds each list from
+ * this file's arrays and hands the component complete rows.
  *
  * The section `eyebrow`s (OUR HISTORY, MISSION & VISION, HONORS, ENVIRONMENT)
  * are deliberately *not* here. They are Latin-caps typographic devices that

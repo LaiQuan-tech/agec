@@ -1,5 +1,6 @@
 import { navItems } from "@/lib/nav";
 import { SITEMAP } from "@/lib/i18n/sitemap";
+import { ABOUT } from "@/lib/i18n/about";
 import { FACULTY } from "@/lib/i18n/faculty";
 import { ADMISSIONS } from "@/lib/i18n/admissions";
 import { COURSES } from "@/lib/i18n/courses";
@@ -63,7 +64,10 @@ export type AdminPage = {
   href: string;
   label: string;
   blocks: AdminBlock[];
-  /** 沒有任何可編輯區塊的頁面印這一句，例如本系簡介。 */
+  /**
+   * 沒有任何可編輯區塊的頁面印這一句。本系簡介接上 page_copy 之後目前沒有這種
+   * 頁，欄位留著給下一個純靜態的頁。
+   */
   note?: string;
 };
 
@@ -113,8 +117,14 @@ export const ADMIN_SITE_MAP: AdminPage[] = [
   {
     href: "/about",
     label: page["/about"],
-    blocks: [],
-    note: "這一頁目前是固定文案，沒有可編輯的內容。",
+    blocks: [
+      {
+        label: "全頁文案",
+        href: "/admin/about",
+        publicHref: "/about",
+        note: `頁首導言，加${section(ABOUT.nav.items, "#section-1")}到${section(ABOUT.nav.items, "#section-4")}四區的標題與內文；圖片與各區上方的英文大寫字固定`,
+      },
+    ],
   },
   {
     href: "/faculty",

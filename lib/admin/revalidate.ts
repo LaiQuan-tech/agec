@@ -38,8 +38,9 @@ const AFFECTED_ROUTES = {
   // 改了哪一列、不知道它是否換過區塊（例如從 courses 改成 admissions ——
   // 那會同時讓兩頁失效），所以兩頁一起重新驗證。
   documents: ["/courses", "/admissions"],
-  // 頁面文案格位（page_copy）。目前只有 /students 用它；下一頁接上時在這裡加。
-  page_copy: ["/students"],
+  // 頁面文案格位（page_copy）。學生專區與本系簡介各存自己的 page，但一次存檔
+  // 兩頁一起重新驗證（多驗證一頁的代價是幾次讀取；下一頁接上時在這裡加）。
+  page_copy: ["/students", "/about"],
 } as const;
 
 export type RevalidateEntity = keyof typeof AFFECTED_ROUTES;

@@ -960,12 +960,12 @@ export async function getAdmissionsNews(
 }
 
 /**
- * 某一頁的可編輯文案格位（`page_copy` 表；目前只有 'students'）。
+ * 某一頁的可編輯文案格位（`page_copy` 表；目前是 'students' 與 'about'）。
  *
  * 回的是原始列（name / zh / en），語言的挑選與退回字典交給該頁的 resolver
- * （lib/page-copy/students.ts 的 resolveStudentsCopy）—— 這裡不知道每個 key
- * 的預設值是什麼。表還沒建時走 error 那一條回空陣列，resolver 會全部退回
- * 字典，前台與沒有這張表時一模一樣。
+ * （lib/page-copy/students.ts 的 resolveStudentsCopy、about.ts 的
+ * resolveAboutCopy）—— 這裡不知道每個 key 的預設值是什麼。表還沒建時走 error
+ * 那一條回空陣列，resolver 會全部退回字典，前台與沒有這張表時一模一樣。
  */
 export async function getPageCopy(
   page: string
