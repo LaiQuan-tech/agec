@@ -52,7 +52,7 @@
   display: grid;
   /* portrait | text | field beside the chip, then filler */
   grid-template-columns: auto auto minmax(0, 1fr);
-  grid-template-rows: repeat(7, auto); /* see the warning above */
+  grid-template-rows: repeat(8, auto); /* see the warning above */
   align-content: center;
   justify-items: start;
   text-align: left; /* the portrait card centres; the banner does not */
@@ -98,28 +98,39 @@
    (It was briefly parked against the banner's right edge to fill the row; the
    client asked for it back under the details, so the whole right-hand column
    is now just breathing room.) */
-/* 第 5 列是分機、第 6 列個人網頁、第 7 列才是 email。上面的
-   `repeat(7, auto)` 必須跟著這三條一起改：2026-09 加分機時從 5 改成 6，
-   加個人網頁時再改成 7。沒填的那一列沒有內容，auto 軌道會收成 0
-   （只留 2px 的 row-gap）。
+/* 第 5 列是分機、第 6 列站內個人網頁、第 7 列站外個人網站、第 8 列才是
+   email。上面的 `repeat(8, auto)` 必須跟著這幾條一起改：2026-09 加分機時從
+   5 改成 6，加個人網頁時改成 7，站內／站外拆成兩行時改成 8。沒填的那一列
+   沒有內容，auto 軌道會收成 0（只留 2px 的 row-gap）。
 
-   ⚠️ `> a.faculty-home` 的特異度 (0,3,1) 高於下面那條 `> a` (0,2,1)，所以
-   它自己的 grid-area 會贏 —— 這正是要的。但也因此下面 600px 那個
-   `> *` 的重置（同樣 (0,2,1)）**吃不掉它**，媒體查詢裡必須另外再寫一次。 */
+   ⚠️ `> a.faculty-profile-link` 等的特異度 (0,3,1) 高於下面那條 `> a` (0,2,1)，
+   所以它們自己的 grid-area 會贏 —— 這正是要的。但也因此下面 600px 那個
+   `> *` 的重置（同樣 (0,2,1)）**吃不掉它們**，媒體查詢裡必須另外再寫一次。 */
 .faculty-grid article.faculty-chair > .faculty-ext {
   grid-area: 5 / 2 / 6 / 4;
   justify-self: start;
   margin-top: 14px;
 }
-.faculty-grid article.faculty-chair > a.faculty-home {
+.faculty-grid article.faculty-chair > a.faculty-profile-link {
   grid-area: 6 / 2 / 7 / 4;
   justify-self: start;
   margin-top: 14px;
+  /* 下面 `> a` 會把橫幅裡的錨點改成 relative；站內這一條必須維持 static，
+     它的 ::after 才會以整張橫幅（而不是自己）為定位基準。 */
+  position: static;
 }
-.faculty-grid article.faculty-chair > a {
+.faculty-grid article.faculty-chair > a.faculty-site-link {
   grid-area: 7 / 2 / 8 / 4;
   justify-self: start;
-  position: static;
+  margin-top: 6px;
+}
+.faculty-grid article.faculty-chair > a {
+  grid-area: 8 / 2 / 9 / 4;
+  justify-self: start;
+  /* relative 而不是 static：回到文件流，同時保住 z-index，讓 mailto 浮在
+     站內連結那片撐滿橫幅的 ::after 上面（點得到）。 */
+  position: relative;
+  z-index: 1;
   inset: auto;
   margin-top: 18px;
 }
@@ -136,7 +147,14 @@
     justify-items: center;
     padding: 24px 24px 70px;
   }
-  .faculty-grid article.faculty-chair > * {
+  /* ⚠️ 不能寫成 `> *`：那是 (0,2,0)，輸給上面每一條指定欄位的規則
+     （`> p` 是 (0,2,2)、`> .faculty-portrait` 是 (0,3,1)），結果所有子元素
+     仍然留在第 2–3 欄、瀏覽器替它們長出隱含欄位，600px 以下照片旁邊還是
+     擠著文字（2026-09 之前一直是這樣，當時記成「已知的手機版怪象」）。
+     `:is()` 取清單裡最高的特異度，整條變成 (0,3,1)，與最強的那條打平、
+     靠後面的來源順序贏。 */
+  .faculty-grid article.faculty-chair
+    > :is(.faculty-portrait, p, p.faculty-english-name, h3, span, a) {
     grid-area: auto / 1 / auto / 2;
   }
   .faculty-grid article.faculty-chair > .faculty-portrait {
@@ -150,9 +168,11 @@
     justify-self: center;
     margin-top: 18px;
   }
-  /* `> *` 的重置追不到 `> a.faculty-home`（特異度低一級），所以這裡重寫一次，
-     否則窄螢幕上它會留在第 6 列、疊到別的東西上。 */
-  .faculty-grid article.faculty-chair > a.faculty-home {
+  /* `> *` 的重置追不到 `> a.faculty-profile-link` / `> a.faculty-site-link`
+     （特異度低一級），所以這裡重寫一次，否則窄螢幕上它們會留在第 6、7 列、
+     疊到別的東西上。 */
+  .faculty-grid article.faculty-chair > a.faculty-profile-link,
+  .faculty-grid article.faculty-chair > a.faculty-site-link {
     grid-area: auto / 1 / auto / 2;
     justify-self: center;
     margin-top: 14px;
@@ -1775,6 +1795,54 @@
   font-size: 11px;
   font-weight: 700;
 }
+/* 站內／站外各一行時，第二行不必再空 10px。 */
+.faculty-grid a.faculty-home + a.faculty-home {
+  margin-top: 4px;
+}
+
+/* ---------------------------------------------------------------------------
+ * 整張卡都可以點 — `.faculty-profile-link::after`（stretched link）
+ *
+ * 客戶要「每位教授點選進去就是個人網頁」。把照片與姓名各包一層 <a> 會撞到
+ * site.css 的位置定址（`.faculty-grid article>p`、系主任橫幅的 `> .faculty-portrait`
+ * / `> h3` grid placement），所以 DOM 一個字不動：站內那一條連結的 ::after
+ * 撐滿整張卡（`.faculty-grid article` 本來就是 position:relative），讀者點
+ * 照片、姓名、空白處都會進個人頁。
+ *
+ * 代價是卡上其他連結會被蓋住 —— mailto（絕對定位）與站外個人網站要抬到上面
+ * （z-index），否則點不到。
+ * ------------------------------------------------------------------------ */
+.faculty-grid a.faculty-profile-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.faculty-grid article > a:not(.faculty-home) {
+  z-index: 1; /* mailto：已是 position:absolute，z-index 直接生效 */
+}
+.faculty-grid a.faculty-site-link {
+  position: relative;
+  z-index: 1;
+}
+/* 滑過卡片任一處時姓名變綠，讓「整張可點」看得出來。:has() 是加分不是
+   必要 —— 不支援的瀏覽器只是沒有這個提示，連結照常可點。 */
+.faculty-grid article:has(> a.faculty-profile-link:hover) h3 {
+  color: var(--green);
+}
+
+/* 名譽／退休與客座版型的姓名也連到個人頁。`.legacy-resume-list a` 會把任何
+   <a> 染成 9px 灰字（那是給第三欄 mailto 的），這裡拉回 h4 自己的字。 */
+.legacy-person-name h4 a,
+.visiting-profile-list h4 a {
+  font: inherit;
+  color: inherit;
+  padding-top: 0;
+  text-decoration: none;
+}
+.legacy-person-name h4 a:hover,
+.visiting-profile-list h4 a:hover {
+  color: var(--green);
+}
 
 /* `.legacy-career` 與 `.admin-grid` 裡包住連結的那一行。段落本身不需要間距
    以外的東西 —— 顏色與字級都在 <a> 上。 */
@@ -1827,6 +1895,22 @@
   height: 120px;
   object-fit: cover;
   width: 120px;
+}
+/* 沒照片時的綠底姓氏首字 —— 與卡片的 `.faculty-portrait.no-photo` 同一個處理，
+   縮成頭像的尺寸。 */
+.profile-portrait-initial {
+  background: var(--green);
+  color: #fff;
+  display: grid;
+  font: 500 40px var(--serif);
+  place-items: center;
+}
+/* 名譽／退休的重要經歷是一整段，與其他一行式的值不同：字級與行高照
+   `.legacy-career p`（11px / 1.75）放大一號給頁面用。 */
+.profile-facts dd.profile-experience {
+  font-size: 13px;
+  line-height: 1.85;
+  white-space: pre-line;
 }
 
 /* `<dl>` 本體。105px 的標籤欄與客座版型同寬，兩頁的節奏一致。 */

@@ -24,12 +24,11 @@ import { NextRoute } from "./NextRoute";
  *
  * ## 誰有這一頁
  *
- * 🔴 只有 `bio_html` 非空的老師。這個條件同時決定三件事，而且**只有一個
- * 判斷點**（lib/data.ts 的 getFacultyById 直接回 null）：
- *   1. 卡片上那條連結指向站內還是站外
- *   2. generateStaticParams 產生哪些頁
- *   3. 這條路由對其他 id 的回應（404）
- * 分散成三份條件的話，遲早會出現「卡片連過去卻 404」或「有頁面但沒有入口」。
+ * 🔴 行政同仁以外**每一位**（2026-09-15 客戶要求：每位教授保留個人網頁的空間，
+ * 點進去看得到相關資訊）。判斷只在一個地方（lib/data.ts 的 getFacultyById），
+ * 卡片的連結、generateStaticParams、sitemap 與這條路由的 404 都跟著它。
+ * 有沒有寫介紹只決定頁上有沒有內文：沒有的頁印基本資料（照片或姓氏首字、
+ * 職稱、領域、分機、信箱、個人網站、名譽／退休的重要經歷）。
  *
  * ## 版型
  *
@@ -55,9 +54,12 @@ export function FacultyProfile({
   const names = namePair(member, lang);
   const listPath = localizePath("/faculty", lang);
 
-  // getFacultyById 保證 bio_html 非空，但型別上仍是 nullable —— 這裡的 ?? ""
-  // 是型別窄化，不是防禦。
-  const html = sanitizeHtml(member.bio_html ?? "", RICH_TEXT_SANITIZE);
+  // 沒寫介紹的老師 bio_html 是 null：不印 .post-body，不印「尚未填寫」。
+  const html = member.bio_html ? sanitizeHtml(member.bio_html, RICH_TEXT_SANITIZE) : null;
+  // 類別 · 職稱：讀者從列表的某一區點進來，頁首要對得上那一區的名字。
+  // 名譽教授／退休師資的職稱本身就是類別名，不印成「名譽教授 · 名譽教授」。
+  const category = categoryLabel(member.category, lang);
+  const byline = member.title.includes(category) ? member.title : `${category} · ${member.title}`;
 
   return (
     <SiteShell lang={lang} variant="interior">
@@ -71,9 +73,9 @@ export function FacultyProfile({
             <span>{names.heading}</span>
           </div>
 
-          {/* 職稱在名字上面，與卡片的順序一致 —— 讀者從卡片點進來，第一眼要
-              對得上他剛剛看到的東西。 */}
-          <p className="post-byline">{member.title}</p>
+          {/* 類別與職稱在名字上面，與卡片的順序一致 —— 讀者從卡片點進來，
+              第一眼要對得上他剛剛看到的東西。 */}
+          <p className="post-byline">{byline}</p>
           <h1>{names.heading}</h1>
           {names.kicker ? (
             <p className="post-standfirst">{names.kicker}</p>
@@ -94,10 +96,21 @@ export function FacultyProfile({
                   title: member.title,
                 })}
               />
-            ) : null}
+            ) : (
+              /* 沒照片（名譽／退休 11 位都沒有）：與卡片同款的綠底姓氏首字，
+                 而不是空一塊。首字維持中文，理由同 FacultyCard。 */
+              <span className="profile-portrait profile-portrait-initial" aria-hidden="true">
+                {member.name.slice(0, 1)}
+              </span>
+            )}
             <div>
-              <dt>{t.legacy.fieldsLabel}</dt>
-              <dd>{member.fields ?? categoryLabel(member.category, lang)}</dd>
+              {/* 領域沒填就整組不印：類別已經在 byline 上，不再拿它當領域的替身。 */}
+              {member.fields ? (
+                <>
+                  <dt>{t.legacy.fieldsLabel}</dt>
+                  <dd>{member.fields}</dd>
+                </>
+              ) : null}
               {member.extension ? (
                 <>
                   <dt>{t.extensionLabel}</dt>
@@ -112,8 +125,8 @@ export function FacultyProfile({
                   </dd>
                 </>
               ) : null}
-              {/* 站外的個人網頁與這一頁**並存**：系辦寫了站內介紹，不代表老師
-                  的實驗室網頁就該消失。卡片上只放得下一條連結，這一頁放得下兩條。 */}
+              {/* 站外的個人網站與這一頁**並存**：系辦寫了站內介紹，不代表老師
+                  的實驗室網頁就該消失。 */}
               {member.homepage_url ? (
                 <>
                   <dt>{t.homepageLabel}</dt>
@@ -128,14 +141,23 @@ export function FacultyProfile({
                   </dd>
                 </>
               ) : null}
+              {/* 名譽／退休的重要經歷：卡片列表上就有，這一頁不該比列表少。 */}
+              {member.experience ? (
+                <>
+                  <dt>{t.legacy.experienceLabel}</dt>
+                  <dd className="profile-experience">{member.experience}</dd>
+                </>
+              ) : null}
             </div>
           </dl>
         </div>
 
-        <div
-          className="container post-body"
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
+        {html ? (
+          <div
+            className="container post-body"
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
+        ) : null}
 
         <div className="container post-foot">
           <Link href={listPath}>{t.backToList}</Link>

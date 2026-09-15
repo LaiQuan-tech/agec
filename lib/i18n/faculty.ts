@@ -64,9 +64,15 @@ type FacultyDict = {
    */
   extensionLabel: Msg;
   /**
-   * 個人網頁那一行的字。四種卡片版型共用，所以只有一條。
+   * 站內個人頁那一行的字（→ /faculty/<id>）。四種卡片版型共用，所以只有一條。
+   * 行政同仁以外每一位都有這一行 —— 每位師資都有頁（見 lib/data.ts getFacultyById）。
+   */
+  profileLabel: Msg;
+  /**
+   * 站外個人網站那一行的字（`homepage_url`，新分頁開）。與站內頁分成兩行，
+   * 不再搶同一個位置。
    *
-   * 是「個人網頁」而不是印出網址本身：email 印出來是因為它同時是可複製的
+   * 是「個人網站」而不是印出網址本身：email 印出來是因為它同時是可複製的
    * 資訊，網址不是 —— 一長串 https:// 在 9px 的卡片底部只會換行三次。
    */
   homepageLabel: Msg;
@@ -144,7 +150,8 @@ export const FACULTY = {
     en: "Portrait of {name}, {category}",
   },
   extensionLabel: { zh: "分機", en: "Ext." },
-  homepageLabel: { zh: "個人網頁", en: "Personal page" },
+  profileLabel: { zh: "個人網頁", en: "Profile" },
+  homepageLabel: { zh: "個人網站", en: "Website" },
   backToList: { zh: "← 回到系所成員", en: "← Back to Faculty & Staff" },
 } satisfies FacultyDict;
 

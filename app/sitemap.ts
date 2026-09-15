@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { LANGS, localizePath } from "@/lib/i18n";
-import { getProgramsWithRequirements, getFacultyBioIds, getNewsIds, getNewsYears } from "@/lib/data";
+import { getProgramsWithRequirements, getFacultyPageIds, getNewsIds, getNewsYears } from "@/lib/data";
 import { NEWS_CATEGORIES } from "@/lib/news-categories";
 import { slugForProgram } from "@/lib/program-slugs";
 import { SITE_ORIGIN } from "@/lib/site-routes";
@@ -44,12 +44,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [newsIds, years, facultyIds, programNames] = await Promise.all([
     getNewsIds(),
     getNewsYears(),
-    getFacultyBioIds(),
+    getFacultyPageIds(),
     getProgramsWithRequirements(),
   ]);
   const articles = newsIds.map((id) => `/news/${id}`);
-  // 老師的站內個人頁。只有真的寫了介紹的才有頁面，所以這裡列的就是全部 ——
-  // 不會出現一個會 404 的網址。
+  // 師資的站內個人頁：行政同仁以外每一位都有（getFacultyPageIds 與
+  // getFacultyById 同一個條件），所以這裡列的就是全部，不會出現會 404 的網址。
   const profiles = facultyIds.map((id) => `/faculty/${id}`);
   // 各學制的修業規定頁。同上：只有真的有內文的學制才有頁面，而且代稱來自
   // 程式碼裡的白名單，所以這裡不會列出會 404 的網址。

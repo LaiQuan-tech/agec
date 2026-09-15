@@ -139,9 +139,9 @@ export type Faculty = {
   /**
    * 站內個人頁的內文（已過濾的 HTML）。
    *
-   * 🔴 這一欄是不是 null，決定這位老師**有沒有** /faculty/<id> 這一頁 ——
-   * 卡片的連結、generateStaticParams、以及那條路由自己的 notFound() 都看它。
-   * null 是正常狀態，多數老師不會有內文。
+   * null 是正常狀態，多數老師還沒有內文 —— 那一頁照樣存在，只印基本資料。
+   * 頁面存不存在看的是類別（FACULTY_NO_PAGE_CATEGORY），不是這一欄；
+   * 2026-09-15 之前是反過來的，改掉的原因見 getFacultyById。
    *
    * 與 news.content_html 同一個模式：Tiptap 的 json 只給後台回填，前台永遠
    * 不讀，所以它不在這個型別上。
@@ -621,15 +621,20 @@ export async function getFaculty(lang: Lang): Promise<Faculty[]> {
   return (data ?? []).map((row) => toFaculty(row, lang));
 }
 
+/** 沒有站內個人頁的類別：行政同仁的卡片只有姓名、職稱與聯絡方式，沒有頁可以點。 */
+export const FACULTY_NO_PAGE_CATEGORY = "行政同仁";
+
 /**
  * 一位老師，給 /faculty/[id] 用。
  *
- * 沒有 `bio_html` 就回 null —— 那位老師沒有站內頁面，路由據此 404。這一層
- * 就擋掉，而不是讓路由自己判斷：卡片的連結、generateStaticParams 與這裡用的
- * 是同一個條件，分散在三處遲早會不一致。
+ * **每一位師資都有頁**（2026-09-15 客戶要求：「每位教授保留個人網頁的空間，
+ * 點進去看得到相關資訊」）—— 不再看 `bio_html` 有沒有內容。唯一沒有頁的是
+ * 行政同仁（FACULTY_NO_PAGE_CATEGORY），這裡回 null、路由據此 404。這一層就
+ * 擋掉，而不是讓路由自己判斷：卡片的連結、generateStaticParams、sitemap 與這裡
+ * 用的是同一個條件，分散在四處遲早會不一致。
  *
- * ⚠️ 用的是 `toFaculty` 解析後的 `bio_html`（已經套過 pickNullable），所以
- * 英文頁在英文內文空著時會退回中文 —— 與 /news/[id] 的行為一致。
+ * `bio_html` 現在只是「頁上有沒有內文」：null 的頁只印基本資料（照片、職稱、
+ * 領域、分機、信箱、個人網站、經歷）。英文頁在英文內文空著時退回中文（pickNullable）。
  */
 export async function getFacultyById(
   id: number,
@@ -646,29 +651,27 @@ export async function getFacultyById(
     console.error(`[lib/data] getFacultyById(${id}) failed:`, error.message);
     return null;
   }
-  if (!data) return null;
-
-  const member = toFaculty(data, lang);
-  return member.bio_html ? member : null;
+  if (!data || data.category === FACULTY_NO_PAGE_CATEGORY) return null;
+  return toFaculty(data, lang);
 }
 
 /**
- * 有站內個人頁的老師 id，給 generateStaticParams 與 sitemap.xml 用。
- *
- * 只挑中文內文非空的：英文那一欄空著會退回中文，所以「有沒有頁面」由中文那
- * 一欄決定。只有英文、沒有中文的情況在後台是做不出來的（英文欄是選填的翻譯）。
+ * 有站內個人頁的師資 id（= 行政同仁以外的每一位），給 generateStaticParams 與
+ * sitemap.xml 用。與 getFacultyById 的條件必須一致：這裡多列一個 id，就多一個
+ * 會 404 的網址；少列一個，那一頁要等第一次被打到才產生。
  */
-export async function getFacultyBioIds(): Promise<number[]> {
+export async function getFacultyPageIds(): Promise<number[]> {
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from("faculty")
     .select("id")
-    .not("bio_html", "is", null)
+    .neq("category", FACULTY_NO_PAGE_CATEGORY)
     .order("sort_order", { ascending: true })
+    .order("id", { ascending: true })
     .returns<{ id: number }[]>();
 
   if (error) {
-    console.error("[lib/data] getFacultyBioIds failed:", error.message);
+    console.error("[lib/data] getFacultyPageIds failed:", error.message);
     return [];
   }
   return (data ?? []).map((row) => row.id);

@@ -9,7 +9,7 @@ import { InteriorHero } from "./InteriorHero";
 import { LocalNav } from "./LocalNav";
 import { SectionTitle } from "./SectionTitle";
 import { NextRoute } from "./NextRoute";
-import { FacultyCard } from "./FacultyCard";
+import { FacultyCard, ProfileLinks } from "./FacultyCard";
 
 /**
  * 系所成員 (/faculty) — route 04 / 08. The most layout-heavy of the eight
@@ -74,45 +74,6 @@ const ADMINISTRATION = "行政同仁";
  */
 const AFFILIATED = ["合聘師資", "兼任師資"];
 
-/**
- * 「個人網頁」那一行該連去哪，四種卡片版型共用。
- *
- * 站內優先：有 `bio_html` 就是 /faculty/<id>（內部連結，箭頭 →），
- * 否則退回站外的 `homepage_url`（新分頁，箭頭 ↗︎），兩者都沒有就整行不印。
- *
- * 寫成一個元件而不是各自 if：四個落點的判斷一旦分家，日後只會改到其中三個。
- */
-function HomepageLink({
-  lang,
-  member,
-  label,
-}: {
-  lang: Lang;
-  member: FacultyMember;
-  label: string;
-}) {
-  if (member.bio_html) {
-    return (
-      <Link className="faculty-home" href={localizePath(`/faculty/${member.id}`, lang)}>
-        {label} →
-      </Link>
-    );
-  }
-  if (member.homepage_url) {
-    return (
-      <a
-        className="faculty-home"
-        href={member.homepage_url}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {label} ↗︎
-      </a>
-    );
-  }
-  return null;
-}
-
 /** `details.legacy-group` — native disclosure, no JS anywhere in the port.
  *
  * site.css depends on the real element: `.legacy-group[open]>.legacy-group-title i`
@@ -157,13 +118,11 @@ function LegacyResumeList({
   members,
   experienceLabel,
   extensionLabel,
-  homepageLabel,
 }: {
   lang: Lang;
   members: FacultyMember[];
   experienceLabel: string;
   extensionLabel: string;
-  homepageLabel: string;
 }) {
   return (
     <div className="legacy-resume-list">
@@ -178,7 +137,14 @@ function LegacyResumeList({
             {namePair(member, lang).kicker ? (
               <p>{namePair(member, lang).kicker}</p>
             ) : null}
-            <h4>{namePair(member, lang).heading}</h4>
+            {/* 姓名連到個人頁：`.legacy-resume-list a` 會把任何 <a> 染成 9px 灰字
+                （那是給第三欄 mailto 的），所以 site-extensions.css 有一條
+                `.legacy-person-name h4 a` 把字級與顏色拉回 h4 的。 */}
+            <h4>
+              <Link href={localizePath(`/faculty/${member.id}`, lang)}>
+                {namePair(member, lang).heading}
+              </Link>
+            </h4>
           </div>
           {/*
             ⚠️ 分機放在 .legacy-career **裡面**，不是當第四個直接子元素。
@@ -199,14 +165,12 @@ function LegacyResumeList({
                 {extensionLabel} {member.extension}
               </p>
             ) : null}
-            {/* 個人網頁也放在 .legacy-career 裡面，理由與分機同一條：
-                `.legacy-resume-list article` 是三欄 grid，多一個直接子元素
-                會掉到第二列第一欄。 */}
-            {member.bio_html || member.homepage_url ? (
-              <p className="faculty-home-row">
-                <HomepageLink lang={lang} member={member} label={homepageLabel} />
-              </p>
-            ) : null}
+            {/* 個人網頁（站內，常駐）與個人網站也放在 .legacy-career 裡面，
+                理由與分機同一條：`.legacy-resume-list article` 是三欄 grid，
+                多一個直接子元素會掉到第二列第一欄。 */}
+            <p className="faculty-home-row">
+              <ProfileLinks lang={lang} member={member} />
+            </p>
           </div>
           {member.email ? (
             <a href={`mailto:${member.email}`}>{member.email} ↗︎</a>
@@ -384,16 +348,17 @@ export function Faculty({
                         {namePair(member, lang).kicker ? (
                           <p>{namePair(member, lang).kicker}</p>
                         ) : null}
-                        <h4>{namePair(member, lang).heading}</h4>
+                        <h4>
+                          <Link href={localizePath(`/faculty/${member.id}`, lang)}>
+                            {namePair(member, lang).heading}
+                          </Link>
+                        </h4>
                         <small>{member.title}</small>
-                        {/* 一個 <dl> 裝兩組，而不是各自一個 —— 定義清單本來
+                        {/* 一個 <dl> 裝幾組，而不是各自一個 —— 定義清單本來
                             就是為「標籤 + 值」設計的，而這個版型已經有一個。
-                            條件是「兩者任一有值」，不是只看 fields：只有分機
-                            沒有領域時仍然要印得出來。 */}
-                        {member.fields ||
-                        member.extension ||
-                        member.bio_html ||
-                        member.homepage_url ? (
+                            「個人網頁」那一組常駐（每位師資都有頁），所以這個
+                            <dl> 永遠會印。 */}
+                        {(
                           <dl>
                             {member.fields ? (
                               <>
@@ -407,20 +372,32 @@ export function Faculty({
                                 <dd>{member.extension}</dd>
                               </>
                             ) : null}
-                            {member.bio_html || member.homepage_url ? (
+                            <dt>{t.profileLabel}</dt>
+                            <dd>
+                              <Link
+                                className="faculty-home"
+                                href={localizePath(`/faculty/${member.id}`, lang)}
+                              >
+                                {t.profileLabel} →
+                              </Link>
+                            </dd>
+                            {member.homepage_url ? (
                               <>
                                 <dt>{t.homepageLabel}</dt>
                                 <dd>
-                                  <HomepageLink
-                                    lang={lang}
-                                    member={member}
-                                    label={t.homepageLabel}
-                                  />
+                                  <a
+                                    className="faculty-home"
+                                    href={member.homepage_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    {t.homepageLabel} ↗︎
+                                  </a>
                                 </dd>
                               </>
                             ) : null}
                           </dl>
-                        ) : null}
+                        )}
                       </div>
                     </article>
                   ))}
@@ -434,7 +411,6 @@ export function Faculty({
                   members={emeritus}
                   experienceLabel={t.legacy.experienceLabel}
                   extensionLabel={t.extensionLabel}
-                  homepageLabel={t.homepageLabel}
                 />
               </LegacyGroup>
             ) : null}
@@ -445,7 +421,6 @@ export function Faculty({
                   members={retired}
                   experienceLabel={t.legacy.experienceLabel}
                   extensionLabel={t.extensionLabel}
-                  homepageLabel={t.homepageLabel}
                 />
               </LegacyGroup>
             ) : null}
@@ -476,11 +451,12 @@ export function Faculty({
                       {t.extensionLabel} {member.extension}
                     </p>
                   ) : null}
-                  {/* 行政同仁通常沒有個人網頁，但欄位是整張表共用的 ——
+                  {/* 行政同仁沒有站內個人頁（FACULTY_NO_PAGE_CATEGORY），
+                      ProfileLinks 只會印站外的個人網站 —— 欄位是整張表共用的，
                       系辦真的填了就要看得到，靜靜吞掉才是壞的那種。 */}
-                  {member.bio_html || member.homepage_url ? (
+                  {member.homepage_url ? (
                     <p className="faculty-home-row">
-                      <HomepageLink lang={lang} member={member} label={t.homepageLabel} />
+                      <ProfileLinks lang={lang} member={member} />
                     </p>
                   ) : null}
                   {member.email ? (

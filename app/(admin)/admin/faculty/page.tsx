@@ -6,6 +6,7 @@ import { EmptyState, Table, TBody, TD, TH, THead, TR } from "@/components/admin/
 import { DeleteButton } from "@/components/admin/ui/DeleteButton";
 import { EnBadge, enProgress } from "../_components/EnBadge";
 import { showsNameEn } from "./constants";
+import { FACULTY_NO_PAGE_CATEGORY } from "@/lib/data";
 import { deleteFaculty } from "./actions";
 import { AppearsOn } from "../_components/AppearsOn";
 
@@ -26,6 +27,8 @@ type Row = {
   experience: string | null;
   experience_en: string | null;
   sort_order: number;
+  bio_html: string | null;
+  photo_url: string | null;
 };
 
 export default async function FacultyListPage() {
@@ -37,7 +40,7 @@ export default async function FacultyListPage() {
   const { data, error } = await supabase
     .from("faculty")
     .select(
-      "id, name, name_en, title, title_en, category, fields, fields_en, email, extension, experience, experience_en, sort_order"
+      "id, name, name_en, title, title_en, category, fields, fields_en, email, extension, experience, experience_en, sort_order, bio_html, photo_url"
     )
     .order("sort_order", { ascending: true })
     .order("id", { ascending: true })
@@ -93,6 +96,9 @@ export default async function FacultyListPage() {
             {/* 分機是這一版新加的欄位，37 個人要一筆一筆填 —— 列表上看得到
                 誰還沒填，才不用一個一個點進去確認。 */}
             <TH className="w-[90px]">分機</TH>
+            {/* 每位老師都有個人頁（行政同仁除外）。這一欄讓系辦看得到誰的頁
+                還只有基本資料、誰還沒有照片，不必一個一個點進去。 */}
+            <TH className="w-[120px]">個人頁</TH>
             <TH className="w-[80px]">英文</TH>
             <TH className="w-[130px]">操作</TH>
           </THead>
@@ -148,6 +154,26 @@ export default async function FacultyListPage() {
                       <span className="text-[12px]" style={{ color: "var(--muted)" }}>
                         未填
                       </span>
+                    )}
+                  </TD>
+                  <TD className="text-[12px]">
+                    {row.category === FACULTY_NO_PAGE_CATEGORY ? (
+                      <span style={{ color: "var(--muted)" }}>—</span>
+                    ) : (
+                      <div className="flex flex-col gap-0.5">
+                        <a
+                          href={`/faculty/${row.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline underline-offset-2"
+                          title="在新分頁開啟這位老師的個人頁"
+                        >
+                          {row.bio_html ? "有內文" : "只有基本資料"} ↗︎
+                        </a>
+                        {!row.photo_url && (
+                          <span style={{ color: "var(--muted)" }}>沒有照片</span>
+                        )}
+                      </div>
                     )}
                   </TD>
                   <TD>

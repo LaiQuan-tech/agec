@@ -1,20 +1,21 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { FacultyProfile } from "@/components/site/FacultyProfile";
-import { getFacultyBioIds, getFacultyById } from "@/lib/data";
+import { getFacultyPageIds, getFacultyById } from "@/lib/data";
 import { articleMetadata } from "@/lib/site-routes";
 
 export const revalidate = 300;
 
 /**
- * ⚠️ true，不是 false。系辦在後台寫完一位老師的介紹之後，那一頁必須立刻能
- * 開 —— false 的話要等下一次 build。代價是任何數字都會被路由接住，所以
- * getFacultyById 對「沒有內文」與「不存在」都回 null，下面一律 404。
+ * ⚠️ true，不是 false。系辦在後台新增一位老師之後，那一頁必須立刻能開 ——
+ * false 的話要等下一次 build。代價是任何數字都會被路由接住，所以
+ * getFacultyById 對「行政同仁」與「不存在」都回 null，下面一律 404。
+ * 每一位師資都有頁，有沒有寫介紹只決定頁上有沒有內文。
  */
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
-  return (await getFacultyBioIds()).map((id) => ({ id: String(id) }));
+  return (await getFacultyPageIds()).map((id) => ({ id: String(id) }));
 }
 
 export async function generateMetadata({

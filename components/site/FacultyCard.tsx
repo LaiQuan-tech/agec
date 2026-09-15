@@ -1,4 +1,4 @@
-import type { Faculty } from "@/lib/data";
+import { FACULTY_NO_PAGE_CATEGORY, type Faculty } from "@/lib/data";
 import Link from "next/link";
 import { localizePath, translate, type Lang } from "@/lib/i18n";
 import {
@@ -8,6 +8,60 @@ import {
   namePair,
   FACULTY,
 } from "@/lib/i18n/faculty";
+
+/**
+ * 卡片底部的兩條連結，五種版型共用：
+ *
+ *   個人網頁 →   站內 /faculty/<id>。行政同仁以外**每一位都有**（每位師資都有頁，
+ *                見 lib/data.ts getFacultyById），與有沒有寫介紹無關。
+ *   個人網站 ↗︎  站外 `homepage_url`，有填才印，新分頁開。
+ *
+ * 2026-09-15 之前兩者搶同一個位置（有介紹連站內、否則連站外）；客戶要的是
+ * 「每位教授點選進去都有個人網頁」，所以站內那一條變成常駐，站外另成一行。
+ *
+ * 寫成一個元件而不是各自 if：五個落點的判斷一旦分家，日後只會改到其中四個。
+ * 每一條都是平行的 <a>、不包 wrapper —— `.faculty-grid` 底下的元素被 site.css
+ * 按位置定址，多一個兄弟元素沒問題，多一層包裝才會掉樣式。
+ *
+ * `profileClassName`：標準卡與系主任橫幅上，站內那一條還帶 `faculty-profile-link`
+ * —— site-extensions.css 用它的 ::after 把整張卡撐成可點的區域（stretched link），
+ * 讀者點照片或姓名都會進個人頁，而 DOM 一個字不用動。
+ */
+export function ProfileLinks({
+  lang,
+  member,
+  stretch = false,
+}: {
+  lang: Lang;
+  member: Faculty;
+  /** 標準卡／系主任橫幅：站內連結撐滿整張卡。列表版型不要（會蓋住 mailto）。 */
+  stretch?: boolean;
+}) {
+  const t = translate(FACULTY, lang);
+  const hasPage = member.category !== FACULTY_NO_PAGE_CATEGORY;
+  return (
+    <>
+      {hasPage ? (
+        <Link
+          className={stretch ? "faculty-home faculty-profile-link" : "faculty-home"}
+          href={localizePath(`/faculty/${member.id}`, lang)}
+        >
+          {t.profileLabel} →
+        </Link>
+      ) : null}
+      {member.homepage_url ? (
+        <a
+          className="faculty-home faculty-site-link"
+          href={member.homepage_url}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {t.homepageLabel} ↗︎
+        </a>
+      ) : null}
+    </>
+  );
+}
 
 /**
  * `.faculty-grid article` — the standard portrait card, used by `#section-1`
@@ -117,36 +171,14 @@ export function FacultyCard({
         </span>
       ) : null}
       {/*
-        個人網頁。
+        個人網頁（站內，常駐）與個人網站（站外，有填才印）—— 見上面 ProfileLinks。
 
         ⚠️ `.faculty-grid a` 是 `position:absolute` 釘在卡片底部的（卡片的
-        padding-bottom:70px 就是為那一條 mailto 留的），所以這一條**必須**
-        用 `.faculty-home` 把定位改回 static，否則兩條連結會疊在同一個位置。
-        規則在 site-extensions.css。
-
-        平行的 <a>，不包 wrapper —— 與分機同一份合約（見上面第 19-27 行）：
-        多一個兄弟元素沒問題，多一層包裝才會掉樣式。
-
-        站外連結，target/rel 自己給：這裡不用 MaybeLink，因為它會把沒有網址
-        的情況渲染成一個沒有 href 的 <a>，而這張卡的規則是「沒填就不印」。
+        padding-bottom:70px 就是為那一條 mailto 留的），所以這兩條**必須**
+        用 `.faculty-home` 把定位改回 static，否則會疊在同一個位置。
+        規則在 site-extensions.css；同一處還有把整張卡撐成可點區域的 ::after。
       */}
-      {member.bio_html ? (
-        // 站內優先：系辦寫了介紹就連到 /faculty/<id>，那一頁裡面還會再列出
-        // 站外的個人網頁（兩者並存，卡片上只放得下一條）。
-        // 內部連結用 <Link> 且箭頭是 →，站外才是 ↗︎ —— 全站的約定。
-        <Link className="faculty-home" href={localizePath(`/faculty/${member.id}`, lang)}>
-          {t.homepageLabel} →
-        </Link>
-      ) : member.homepage_url ? (
-        <a
-          className="faculty-home"
-          href={member.homepage_url}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {t.homepageLabel} ↗︎
-        </a>
-      ) : null}
+      <ProfileLinks lang={lang} member={member} stretch />
       {member.email ? (
         <a href={`mailto:${member.email}`}>{member.email} ↗︎</a>
       ) : null}

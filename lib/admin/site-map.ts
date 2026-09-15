@@ -109,7 +109,7 @@ export const ADMIN_SITE_MAP: AdminPage[] = [
         label: "師資與行政同仁",
         href: "/admin/faculty",
         publicHref: "/faculty",
-        note: `${section(FACULTY.nav.items, "#section-1")}到${section(FACULTY.nav.items, "#section-4")}四區都在這裡，用「分類」欄位決定落在哪一區`,
+        note: `${section(FACULTY.nav.items, "#section-1")}到${section(FACULTY.nav.items, "#section-4")}四區都在這裡，用「分類」欄位決定落在哪一區；每位老師的個人頁內文也在各自的編輯頁`,
       },
     ],
   },

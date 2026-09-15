@@ -6,6 +6,7 @@ import { Editor } from "@/components/admin/ui/Editor";
 import { FormShell } from "@/components/admin/ui/FormShell";
 import { Field } from "@/components/admin/ui/Field";
 import { Input, Textarea } from "@/components/admin/ui/Input";
+import { UploadField } from "@/components/admin/ui/UploadField";
 import { FACULTY_CATEGORIES } from "./constants";
 import { ChoiceField } from "@/components/admin/ui/ChoiceField";
 
@@ -324,10 +325,10 @@ export function FacultyForm({
               ariaLabel="老師個人頁內容編輯區"
             />
             <p className="text-[12px]" style={{ color: "var(--muted)" }}>
-              寫了內容之後，這位老師在「系所成員」頁上的「個人網頁」就會連到本站的個人頁（網址是
-              /faculty/編號），而不是上面那個外部網址；上面的外部網址仍然會列在個人頁裡，兩個並存。
-              留空就沒有站內頁面，連結維持指向上面的外部網址；兩個都空就整行不顯示。
-              圖片請先上傳到別處，再用「插入圖片」貼上網址。工具列以外的格式（例如底線、顏色）儲存時會被移除。
+              行政同仁以外，每一位老師都有自己的個人網頁（網址是 /faculty/編號），前台的卡片點下去就會到。
+              這裡是那一頁的內文：留空的話那一頁只顯示照片、職稱、領域、分機、信箱、個人網站與經歷；
+              寫了就接在那些資料下面。上面的外部網址（個人網站）會另外列在個人頁裡，兩個並存。
+              工具列可以插入圖片（會直接上傳）；工具列以外的格式（例如底線、顏色）儲存時會被移除。
             </p>
           </div>
 
@@ -350,16 +351,17 @@ export function FacultyForm({
 
           <Field
             htmlFor="photo_url"
-            label="照片網址"
+            label="照片"
             error={state.fieldErrors?.photo_url}
-            hint="完整網址，可貼 Supabase Storage 的公開連結或外部網址；留空會顯示預設人像"
+            hint="按「上傳」選擇照片（JPG／PNG／WebP，最大 10MB），或直接貼上網址。卡片與個人頁都用這一張；留空會顯示姓氏首字的綠色圓形。正方形或直式、臉在上半部的照片最合適。"
           >
-            <Input
+            <UploadField
               id="photo_url"
               name="photo_url"
+              bucket="photos"
               defaultValue={initial.photo_url}
-              maxLength={500}
-              aria-invalid={Boolean(state.fieldErrors?.photo_url)}
+              placeholder="https://…"
+              invalid={Boolean(state.fieldErrors?.photo_url)}
             />
           </Field>
         </>
