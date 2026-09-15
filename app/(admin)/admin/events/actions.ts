@@ -65,7 +65,7 @@ function parse(form: FormData): {
   const address = text(form, "address", "地址", { max: 200 });
   const capacity = number(form, "capacity", "名額上限", { min: 0, max: 100000 });
   const closesAt = datetimeLocal(form, "registration_closes_at", "報名截止時間");
-  const coverUrl = text(form, "cover_url", "封面圖網址", { max: 500 });
+  const coverUrl = text(form, "cover_url", "封面圖片", { max: 500 });
   const contact = text(form, "contact", "聯絡窗口", { max: 200 });
   const status = oneOf(form, "status", "狀態", EVENT_STATUSES, { required: true });
 

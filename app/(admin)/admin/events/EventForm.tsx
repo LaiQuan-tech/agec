@@ -5,6 +5,7 @@ import type { ActionState } from "@/lib/admin/action-result";
 import { FormShell } from "@/components/admin/ui/FormShell";
 import { Field } from "@/components/admin/ui/Field";
 import { Input, Select, Textarea } from "@/components/admin/ui/Input";
+import { UploadField } from "@/components/admin/ui/UploadField";
 import { EVENT_STATUSES, EVENT_STATUS_LABEL } from "./constants";
 
 export type EventFormValues = {
@@ -301,11 +302,17 @@ export function EventForm({
 
           <Field
             htmlFor="cover_url"
-            label="封面圖網址"
+            label="封面圖片"
             error={state.fieldErrors?.cover_url}
-            hint="選填。可以先到「最新消息」上傳圖片後複製網址過來。"
+            hint="選填。按「上傳圖片」從電腦選圖（JPG／PNG／WebP，最大 10MB）。留空時活動卡片不放圖。"
           >
-            <Input id="cover_url" name="cover_url" defaultValue={initial.cover_url} maxLength={500} />
+            <UploadField
+              id="cover_url"
+              name="cover_url"
+              bucket="posters"
+              defaultValue={initial.cover_url}
+              invalid={Boolean(state.fieldErrors?.cover_url)}
+            />
           </Field>
         </>
       )}

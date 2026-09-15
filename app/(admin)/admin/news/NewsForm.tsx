@@ -270,7 +270,7 @@ export function NewsForm({
             />
             <p className="text-[12px]" style={{ color: "var(--muted)" }}>
               點進單則消息後看到的內容。留空也沒關係——只有一行的公告本來就不需要內文，該頁會改顯示「這則公告沒有進一步的內容。」，不會是一片空白。
-              圖片請先上傳到別處，再用「插入圖片」貼上網址。工具列以外的格式（例如底線、顏色）儲存時會被移除。
+              要放圖片就按工具列的「插入圖片」從電腦選圖，會直接上傳並插進游標的位置。工具列以外的格式（例如底線、顏色）儲存時會被移除。
             </p>
           </div>
 
@@ -296,14 +296,13 @@ export function NewsForm({
             htmlFor="cover_url"
             label="封面圖片"
             error={state.fieldErrors?.cover_url}
-            hint="選填。按「上傳」從電腦選圖，或直接貼上網址。每一則消息點進去都會顯示這張圖，排最前面的那一則還會拿它當列表最上方大卡片的背景圖（留空時卡片改用預設的院景照片）。"
+            hint="選填。按「上傳圖片」從電腦選圖（JPG／PNG／WebP，最大 10MB）。每一則消息點進去都會顯示這張圖，排最前面的那一則還會拿它當列表最上方大卡片的背景圖（留空時卡片改用預設的院景照片）。"
           >
             <UploadField
               id="cover_url"
               name="cover_url"
               bucket="posters"
               defaultValue={initial.cover_url}
-              placeholder="https://…"
               invalid={Boolean(state.fieldErrors?.cover_url)}
             />
           </Field>

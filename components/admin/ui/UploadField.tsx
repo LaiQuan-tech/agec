@@ -7,15 +7,22 @@ import { writeField } from "./native-value";
 import { uploadFile, type UploadBucket } from "./upload";
 
 /**
- * A URL text field with an upload button beside it.
+ * 上傳欄位。兩種模式，由 `accept` 決定：
  *
- * The text field stays, and stays editable. Every existing cover image on the
- * site is a URL somebody pasted, some of them pointing outside Supabase
- * entirely; replacing the input with a file picker would strand those rows and
- * remove the only way to reuse an image already uploaded for something else.
- * Uploading just fills the box in.
+ *   圖片（`accept` 以 `image/` 開頭，預設值）—— **只有上傳，沒有網址輸入框。**
+ *   畫面是縮圖（有值時）＋「上傳圖片」／「更換圖片」＋「移除」；值放在
+ *   hidden input 裡。系辦 2026-09-16 的指示：「後台所有的圖片功能，都要是直接
+ *   上傳，不要再貼網址」—— 之前系友活動的封面圖是純文字框，提示還叫人先去
+ *   最新消息上傳再把網址複製過來。
  *
- * The value is posted by the text input's own `name`, so the surrounding form
+ *   檔案（documents 的 PDF/DOCX，`accept` 是副檔名清單）—— 網址輸入框＋
+ *   「上傳」，維持原樣：教務處那類放在別處的 PDF 貼網址是正當用法。
+ *
+ * 既有資料不會被弄丟：news.cover_url、faculty.photo_url、events.cover_url 裡
+ * 有些是系辦以前貼的外站網址，圖片模式下它們照樣在 hidden input 裡原樣送回，
+ * 縮圖也照常顯示；要換就按「更換圖片」上傳一張蓋過去。
+ *
+ * The value is posted by an input carrying `name`, so the surrounding form
  * needs no knowledge of this component. It is written through writeField() —
  * assigning `.value` directly would leave FormShell's unsaved-changes guard
  * thinking nothing had been touched.
@@ -55,6 +62,7 @@ export function UploadField({
   /** Render the thumbnail. Off for non-image buckets. */
   preview?: boolean;
 }) {
+  const imageMode = accept.startsWith("image/");
   const inputRef = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -62,6 +70,13 @@ export function UploadField({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const errorId = useId();
+
+  function clear() {
+    writeField(inputRef.current, "");
+    writeField(nameRef.current, "");
+    setPreview("");
+    setError(null);
+  }
 
   async function handlePick(file: File) {
     setBusy(true);
@@ -79,6 +94,77 @@ export function UploadField({
       // onChange — after a failed upload that is exactly what someone will do.
       if (fileRef.current) fileRef.current.value = "";
     }
+  }
+
+  // 兩種模式共用的隱藏檔案選擇器與原始檔名欄位。
+  const picker = (
+    <>
+      {nameField && (
+        <input ref={nameRef} type="hidden" name={nameField} defaultValue={defaultFileName ?? ""} />
+      )}
+      {/* The real control is the hidden file input; the button is what gets
+          styled and labelled. A bare <input type="file"> cannot be restyled
+          consistently across browsers. */}
+      <input
+        ref={fileRef}
+        type="file"
+        accept={accept}
+        hidden
+        onChange={(e) => {
+          const file = e.currentTarget.files?.[0];
+          if (file) void handlePick(file);
+        }}
+      />
+    </>
+  );
+
+  const errorLine = error && (
+    <p id={errorId} role="alert" className="text-[13px] text-red-700">
+      {error}
+    </p>
+  );
+
+  if (imageMode) {
+    return (
+      <div className="flex flex-col gap-2">
+        {/* 值只在這裡：沒有可見的網址框。`id` 給按鈕而不是 hidden input，
+            <Field> 的 <label for> 才有東西可以指 —— 點欄位標題就開檔案選擇。 */}
+        <input ref={inputRef} type="hidden" name={name} defaultValue={defaultValue} />
+        {picker}
+        {preview && (
+          // eslint-disable-next-line @next/next/no-img-element -- 系辦以前貼的
+          // 外站網址也要顯示；next/image 得先把每個網域列進 remotePatterns。
+          <img
+            src={preview}
+            alt=""
+            className="h-32 w-auto rounded border object-contain"
+            style={{ borderColor: "var(--hairline)" }}
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+          />
+        )}
+        <div className="flex gap-2">
+          <Button
+            id={id}
+            type="button"
+            size="sm"
+            disabled={busy}
+            aria-invalid={invalid || undefined}
+            aria-describedby={error ? errorId : undefined}
+            onClick={() => fileRef.current?.click()}
+          >
+            {busy ? "上傳中…" : preview ? "更換圖片" : "上傳圖片"}
+          </Button>
+          {preview && !busy && (
+            <Button type="button" size="sm" variant="ghost" onClick={clear}>
+              移除
+            </Button>
+          )}
+        </div>
+        {errorLine}
+      </div>
+    );
   }
 
   return (
@@ -100,27 +186,7 @@ export function UploadField({
             writeField(nameRef.current, "");
           }}
         />
-        {nameField && (
-          <input
-            ref={nameRef}
-            type="hidden"
-            name={nameField}
-            defaultValue={defaultFileName ?? ""}
-          />
-        )}
-        {/* The real control is the hidden file input; the button is what gets
-            styled and labelled. A bare <input type="file"> cannot be restyled
-            consistently across browsers. */}
-        <input
-          ref={fileRef}
-          type="file"
-          accept={accept}
-          hidden
-          onChange={(e) => {
-            const file = e.currentTarget.files?.[0];
-            if (file) void handlePick(file);
-          }}
-        />
+        {picker}
         <Button
           type="button"
           size="sm"
@@ -132,11 +198,7 @@ export function UploadField({
         </Button>
       </div>
 
-      {error && (
-        <p id={errorId} role="alert" className="text-[13px] text-red-700">
-          {error}
-        </p>
-      )}
+      {errorLine}
 
       {showPreview && preview && (
         // eslint-disable-next-line @next/next/no-img-element -- an arbitrary

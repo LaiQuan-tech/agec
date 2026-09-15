@@ -353,14 +353,13 @@ export function FacultyForm({
             htmlFor="photo_url"
             label="照片"
             error={state.fieldErrors?.photo_url}
-            hint="按「上傳」選擇照片（JPG／PNG／WebP，最大 10MB），或直接貼上網址。卡片與個人頁都用這一張；留空會顯示姓氏首字的綠色圓形。正方形或直式、臉在上半部的照片最合適。"
+            hint="按「上傳圖片」選擇照片（JPG／PNG／WebP，最大 10MB）。卡片與個人頁都用這一張；留空會顯示姓氏首字的綠色圓形。正方形或直式、臉在上半部的照片最合適。"
           >
             <UploadField
               id="photo_url"
               name="photo_url"
               bucket="photos"
               defaultValue={initial.photo_url}
-              placeholder="https://…"
               invalid={Boolean(state.fieldErrors?.photo_url)}
             />
           </Field>
