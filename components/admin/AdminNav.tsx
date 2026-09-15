@@ -64,11 +64,16 @@ export function AdminNav({ isManager }: { isManager: boolean }) {
     }
   }
 
+  // 組與組之間 28px：大標（頁名）與上一組最後一個項目要明顯分開，
+  // 否則「招生資訊」看起來像「系所成員」那組的第二個項目。
   const list = (
-    <ul className="flex flex-col gap-4">
+    <ul className="flex flex-col gap-7">
       {groups.map((g) => (
         <li key={g.key}>
-          <div className="flex items-baseline justify-between gap-2 px-3">
+          <div
+            className="flex items-baseline justify-between gap-2 border-t px-3 pt-3"
+            style={{ borderColor: "var(--hairline)" }}
+          >
             <span
               className="text-[12px] font-semibold tracking-wide"
               style={{ color: "var(--muted)" }}
@@ -92,7 +97,7 @@ export function AdminNav({ isManager }: { isManager: boolean }) {
               {g.note}
             </p>
           ) : (
-            <ul className="mt-1 flex flex-col gap-0.5">
+            <ul className="mt-1.5 flex flex-col gap-0.5">
               {g.blocks.map((b) => {
                 const active = blockIsActive(b, pathname, section);
                 return (
