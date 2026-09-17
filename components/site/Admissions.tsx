@@ -1,4 +1,10 @@
-import type { CapabilityItem, LinkItem, Program, SiteDocument } from "@/lib/data";
+import type {
+  AdmissionsPostRef,
+  CapabilityItem,
+  LinkItem,
+  Program,
+  SiteDocument,
+} from "@/lib/data";
 import { translate, type Lang } from "@/lib/i18n";
 import { ADMISSIONS } from "@/lib/i18n/admissions";
 import { EYEBROWS } from "@/lib/i18n/eyebrows";
@@ -54,6 +60,7 @@ export function Admissions({
   links,
   capabilities,
   documents,
+  posts,
 }: {
   lang: Lang;
   /** getPrograms() — 4 學制, in sort_order. */
@@ -66,10 +73,16 @@ export function Admissions({
    */
   capabilities: CapabilityItem[];
   /**
-   * getDocuments('admissions') —— §4 的招生檔案。空陣列時整區不印，§4 就是
-   * 原本那排連結卡而已。
+   * getDocuments('admissions') —— §4 的招生檔案。共通的（沒標學制）印成下載卡，
+   * 空陣列時整區不印；標了學制的不在這一頁印，但三張入口卡要靠它們判斷哪些
+   * 學制有考古題。
    */
   documents: SiteDocument[];
+  /**
+   * getAdmissionsPostIndex() —— 全部招生公告的索引。三張入口卡的簡章／書面
+   * 資料連結落在各學制最新一則相關公告上（AdmissionKinds）。
+   */
+  posts: AdmissionsPostRef[];
 }) {
   const t = translate(ADMISSIONS, lang);
   const eb = translate(EYEBROWS, lang);
@@ -232,9 +245,10 @@ export function Admissions({
               eyebrow={eb.needHelp}
               heading={t.section4.heading}
             />
-            {/* 三張學制入口卡：當年度招生簡章／書面資料格式／考古題專區，
-                每張底下四個學制，點進去是該學制招生頁的對應區塊。 */}
-            <AdmissionKinds lang={lang} programs={cards} />
+            {/* 三張學制入口卡：當年度招生簡章／書面資料格式／考古題專區。
+                簡章與書面資料落在各學制最新一則相關公告（/news/<id>），考古題
+                落在學制招生頁的 #exams —— 判斷在 lib/admissions-kinds.ts。 */}
+            <AdmissionKinds lang={lang} programs={cards} posts={posts} documents={documents} />
 
             {/* 系辦上傳的共通檔案（沒標學制的）。標了學制的在各學制頁。
                 一個檔都沒有時整區不印。 */}

@@ -9,6 +9,8 @@ import { SiteShell } from "./SiteShell";
 import { NextRoute } from "./NextRoute";
 import { MaybeLink } from "./MaybeLink";
 import { SiteDocuments } from "./SiteDocuments";
+import { ExamPapers } from "./ExamPapers";
+import { EXAM_CATEGORY } from "@/lib/admissions-kinds";
 
 /**
  * 一個學制的招生頁 (/admissions/[program])。
@@ -18,11 +20,16 @@ import { SiteDocuments } from "./SiteDocuments";
  * 系辦標了學制的檔案與連結：
  *
  *   #notices  招生公告  —— news，category='招生' 且 program=這個學制
- *   #files    招生檔案  —— documents，section='admissions' 且 program=這個學制
- *             （依分類分組：簡章／書面資料／考古題由系辦自己開分類）
+ *   #files    招生檔案  —— documents，section='admissions' 且 program=這個學制，
+ *             **不含**分類「考古題」的列（依其餘分類分組）；一個都沒有整區不印
+ *   #exams    考古題    —— documents 同上但分類＝「考古題」（EXAM_CATEGORY），
+ *             一年度一列、科目並排（ExamPapers）；沒有考古題的學制（大學部）
+ *             整區不印
  *   （相關連結）        —— links，section='admissions' 且 program=這個學制
  *
- * §4 三張入口卡的學制連結帶著 `#notices` / `#files` 進來（AdmissionKinds）。
+ * §4 三張入口卡（AdmissionKinds）：考古題卡帶著 `#exams` 進來；簡章／書面資料
+ * 卡直接落在該學制最新一則相關公告 `/news/<id>`，只有找不到公告時才退回
+ * `#notices` / `#files`。
  *
  * ## 版型
  *
@@ -60,6 +67,10 @@ export function ProgramAdmissions({
     .filter((other) => other.id !== program.id)
     .map((other) => ({ other, slug: slugForProgram(other.name_zh) }))
     .filter((x): x is { other: Program; slug: string } => Boolean(x.slug));
+  // 考古題與其他檔案分家：比對 category_zh（中文原值），/en 的分類英文有沒有
+  // 填都不影響。兩邊各自維持 getDocumentsForProgram 的 sort_order。
+  const exams = documents.filter((doc) => doc.category_zh === EXAM_CATEGORY);
+  const files = documents.filter((doc) => doc.category_zh !== EXAM_CATEGORY);
 
   return (
     <SiteShell lang={lang} variant="interior">
@@ -112,17 +123,27 @@ export function ProgramAdmissions({
           )}
         </section>
 
-        {/* 檔案與連結：一個都沒有時整區不印（SiteDocuments 自己會判斷；連結
-            這裡判斷）—— 系辦在 /admin/documents、/admin/links 標了這個學制
-            才會長出來。 */}
-        {documents.length > 0 ? (
+        {/* 檔案、考古題與連結：一個都沒有時整區不印（SiteDocuments 自己會
+            判斷；考古題與連結這裡判斷）—— 系辦在 /admin/documents、
+            /admin/links 標了這個學制才會長出來。 */}
+        {files.length > 0 ? (
           <section className="container post-section post-documents" id="files">
             <SiteDocuments
               lang={lang}
-              documents={documents}
+              documents={files}
               heading={p.files.heading}
               description={p.files.description}
             />
+          </section>
+        ) : null}
+
+        {exams.length > 0 ? (
+          <section className="container post-section" id="exams">
+            <div className="forms-subhead">
+              <h3>{p.exams.heading}</h3>
+              <p>{p.exams.description}</p>
+            </div>
+            <ExamPapers lang={lang} documents={exams} />
           </section>
         ) : null}
 

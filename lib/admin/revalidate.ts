@@ -19,7 +19,9 @@ import { PROGRAM_SLUG_LIST } from "@/lib/program-slugs";
  * just harder to notice because nobody on staff reads /en day to day.
  */
 const AFFECTED_ROUTES = {
-  news: ["/", "/news"],
+  // /admissions 也在：§4 三張入口卡的簡章／書面資料連結落在各學制**最新一則**
+  // 相關公告（lib/admissions-kinds.ts），系辦發了新簡章、卡片就該指到新的。
+  news: ["/", "/news", "/admissions"],
   faculty: ["/faculty"],
   courses: ["/courses"],
   // /courses too, though no course row changed: getCourses() joins against

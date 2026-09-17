@@ -218,7 +218,7 @@ export function DocumentForm({
             htmlFor="description"
             label="說明"
             error={state.fieldErrors?.description}
-            hint="卡片標題下面那一行小字，一句話就好。留空的話卡片只顯示標題。"
+            hint="卡片標題下面那一行小字，一句話就好。留空的話卡片只顯示標題。考古題例外：這一格填年度標題（例如「111碩士班招生考題」），同一年度標題的科目會排成一列。"
           >
             <Input
               id="description"

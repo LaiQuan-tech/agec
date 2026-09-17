@@ -2,6 +2,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import type { AlumniEvent } from "@/lib/alumni-events";
 import { TALKS_CATEGORY } from "@/lib/news-categories";
 import { pick, pickNullable, type Lang } from "@/lib/i18n";
+import type { AdmissionsPostRef } from "@/lib/admissions-kinds";
 
 /**
  * Typed data-access layer for the site's Supabase content tables.
@@ -415,9 +416,9 @@ function todayInTaipei(): string {
  *     .gte("expires_effective", todayInTaipei())
  *
  * 少了上面那行會漏出草稿，少了下面這行會讓早該下架的公告繼續掛著 —— 兩種都
- * 是靜默的，沒有錯誤也沒有警告。目前有八支：getNewsHome、getNewsPage、
- * getNewsYears、getTalks、getTalksPage、countTalks、getNewsById、getNewsIds，
- * 外加 lib/search.ts 一支。
+ * 是靜默的，沒有錯誤也沒有警告。目前有十支：getNewsHome、getNewsPage、
+ * getNewsYears、getTalks、getTalksPage、countTalks、getNewsById、getNewsIds、
+ * getAdmissionsNews、getAdmissionsPostIndex，外加 lib/search.ts 一支。
  *
  * ## 為什麼是 expires_effective 而不是 `.or(expires_at.is.null,…)`
  *
@@ -957,6 +958,41 @@ export async function getAdmissionsNews(
     return [];
   }
   return (data ?? []).map((row) => toNews(row, lang));
+}
+
+export type { AdmissionsPostRef } from "@/lib/admissions-kinds";
+
+/**
+ * 全部招生公告的索引（/admissions §4 三張入口卡用）：已發布、未過期、
+ * category='招生'，只取決定落點需要的四欄，新的在前。
+ *
+ * 一個查詢，不是四個學制各查一次：卡片要的是「每個學制最新一則含某關鍵字
+ * 的公告」，關鍵字比對在程式裡做（lib/admissions-kinds.ts 的
+ * latestAdmissionsPost），PostgREST 的 ilike 反而要八個查詢（四學制 × 兩種卡）。
+ * 156 列 × 四欄很小。
+ *
+ * 不經 toNews()：這裡不需要翻譯（卡片印學制名與年度，不印標題），也不需要
+ * NEWS_COLUMNS 那 19 欄 —— 但 status 與 expires_effective 兩條過濾與其他 news
+ * getter 完全一樣，少一條就漏草稿。
+ */
+export async function getAdmissionsPostIndex(): Promise<AdmissionsPostRef[]> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("news")
+    .select("id, title, program, published_at")
+    .eq("status", PUBLISHED)
+    .gte(EXPIRES_COLUMN, todayInTaipei())
+    .eq("category", ADMISSIONS_CATEGORY)
+    .order("published_at", { ascending: false })
+    // 同日平手以 id 為準，與 latestAdmissionsPost() 的規則一致。
+    .order("id", { ascending: false })
+    .returns<AdmissionsPostRef[]>();
+
+  if (error) {
+    console.error("[lib/data] getAdmissionsPostIndex failed:", error.message);
+    return [];
+  }
+  return data ?? [];
 }
 
 /**

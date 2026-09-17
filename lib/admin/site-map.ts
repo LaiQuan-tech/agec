@@ -162,9 +162,10 @@ export const ADMIN_SITE_MAP: AdminPage[] = [
         publicHref: "/admissions#section-3",
       },
       {
-        label: `${section(ADMISSIONS.nav.items, "#section-4")} · 招生檔案`,
+        label: `${section(ADMISSIONS.nav.items, "#section-4")} · 招生檔案與考古題`,
         href: "/admin/documents?section=admissions",
         publicHref: "/admissions#section-4",
+        note: "沒標學制的檔案印在招生資訊頁最下方；標了學制的印在該學制的招生頁。考古題：分類填「考古題」、**一定要選學制**、標籤填科目、說明填年度標題（例如 111碩士班招生考題），同一年度標題會排成一列；沒選學制的考古題會掉到共用檔案區",
       },
       {
         label: `${section(ADMISSIONS.nav.items, "#section-4")} · 資源連結`,

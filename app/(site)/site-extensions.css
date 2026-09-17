@@ -1745,6 +1745,103 @@
     grid-template-columns: 1fr;
   }
 }
+/* 學制連結後面的學年度小字（「大學部 → 115 學年度」）。連結本身是 12px 粗體
+   加字距的綠字，年度退一階：中等字重、灰、正常字距，hover 時跟著整條變金色
+   （不另外指定顏色，繼承 <a>）。 */
+.admission-kinds .admission-kind-year {
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: 0;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+.admission-kinds li a:hover .admission-kind-year {
+  color: inherit;
+}
+/* 考古題卡一個學制都沒有時（documents 還沒匯入）—— 與 `.admission-kinds p`
+   同一種灰字，但上面補一條線，占住原本 <ul> 的位置。 */
+.admission-kinds .admission-kinds-empty {
+  border-top: 1px solid var(--line);
+  margin: 0;
+  padding: 8px 0 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * 學制招生頁的考古題 — `.exam-papers`（/admissions/[program]#exams）
+ *
+ * 一個年度一列：左邊 h4 是年度標題（documents.description）、右邊是該年度的
+ * 科目連結並排（ExamPapers.tsx）。舊站 link5 是一張表，這裡照那個形狀；不用
+ * `.document-grid` 卡片是因為在職專班 43 個檔會是 22 列的牆（見 ExamPapers.tsx
+ * 檔頭）。
+ *
+ * 顏色全部沿用 `.document-grid`（site.css）：白底卡、金色徽章（`.document-grid
+ * >a>span` 的 12px serif）、綠字；hover 同 `.resource-row a`（白字綠底）；
+ * 年度標題同 `.document-group` 的 15px serif 深綠。沒有新顏色。
+ *
+ * ≥860px 年度與科目同一列（200px + 1fr，`.post-section` 是 760px 寬）；
+ * 860px 以下年度在上、科目在下 —— 與 `.admission-kinds` 同一個斷點。
+ * ------------------------------------------------------------------------ */
+.exam-papers {
+  border-top: 1px solid var(--line);
+}
+.exam-papers .exam-year {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 10px 24px;
+  align-items: start;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+.exam-papers h4 {
+  /* Preflight 把 h4 重設成 inherit，字級要自己給；與 .document-group 同級。 */
+  color: var(--green-deep);
+  font: 600 15px / 1.5 var(--serif);
+  letter-spacing: 0.04em;
+  margin: 0;
+  /* 對齊右邊科目小卡的第一行文字（小卡 padding 8px）。 */
+  padding-top: 7px;
+}
+.exam-papers ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.exam-papers li a,
+.exam-papers li .exam-pending {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--green);
+  display: inline-flex;
+  font: 500 14px / 1.4 var(--serif);
+  gap: 8px;
+  padding: 7px 12px;
+}
+.exam-papers li a span {
+  color: var(--gold);
+  font: 500 11px var(--serif);
+  letter-spacing: 0.06em;
+}
+.exam-papers li a:hover {
+  background: var(--green);
+  color: #fff;
+}
+/* 還沒上傳檔案的科目：灰字、不可點（ExamPapers 印的是 <span> 不是 <a>）。 */
+.exam-papers li .exam-pending {
+  color: var(--muted);
+}
+@media (max-width: 860px) {
+  .exam-papers .exam-year {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .exam-papers h4 {
+    padding-top: 0;
+  }
+}
 
 /* ---------------------------------------------------------------------------
  * 課表滑過時不要位移 — `.course-table > a:hover`

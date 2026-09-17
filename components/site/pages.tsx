@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import {
   countTalks,
+  getAdmissionsPostIndex,
   getAlumniEventBySlug,
   getAlumniEvents,
   getCapabilities,
@@ -209,12 +210,16 @@ export async function FacultyRoute({ lang }: { lang: Lang }) {
  * 只剩重要時程還是硬編的 static copy（沒有對應的資料表）。
  */
 export async function AdmissionsRoute({ lang }: { lang: Lang }) {
-  const [programs, links, capabilities, documents] = await Promise.all([
+  const [programs, links, capabilities, documents, posts] = await Promise.all([
     getPrograms(lang),
     getLinks("admissions", lang),
     getCapabilities(lang),
-    // 招生檔案（簡章、書面資料格式、考古題）。表是空的時候 §4 不印這一區。
+    // 招生檔案（書面資料格式、考古題…）。共通的印成下載卡，表是空的時候 §4
+    // 不印那一區；標了學制的只用來判斷考古題卡要列哪些學制。
     getDocuments("admissions", lang),
+    // 招生公告索引：三張入口卡的簡章／書面資料連結要落在各學制最新一則
+    // 相關公告上。
+    getAdmissionsPostIndex(),
   ]);
 
   return (
@@ -224,6 +229,7 @@ export async function AdmissionsRoute({ lang }: { lang: Lang }) {
       links={links}
       capabilities={capabilities}
       documents={documents}
+      posts={posts}
     />
   );
 }

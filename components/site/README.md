@@ -100,6 +100,7 @@ VS15 強制走文字字體，是唯一在各家瀏覽器都可靠的做法（CSS
 - `nav.ts` — 由 `lib/nav.ts` 導出 `DESKTOP_NAV`(7) / `MENU_ITEMS`(8) / `FOOTER_COLUMNS`(4+3) / `routeNumber()` / `padNo()` / `ROUTE_TOTAL`
 - `sitemap-tree.ts` + `SitemapPage.tsx` — 網站導覽 `/sitemap`（機構列那條「網站導覽」的去處）。整棵樹從 `lib/nav.ts` 與各頁字典的 `nav.items` 推導，**不要在那裡另外抄一份標籤**：改了某一頁的區塊名，網站導覽會自己跟著改
 - `format.ts` — `formatNewsDate()`，純字串切片避免時區 hydration 不一致
+- `AdmissionKinds.tsx` + `ExamPapers.tsx` + `lib/admissions-kinds.ts` — /admissions §4 三張入口卡與各學制招生頁的考古題區。約定：簡章／書面資料卡落在該學制**最新一則**標題含關鍵字的招生公告 `/news/<id>`（找不到才退回 `/admissions/<slug>#notices`／`#files`）；考古題卡連 `/admissions/<slug>#exams`，只列 `documents` 裡 `category_zh='考古題'` 有列的學制。`#exams` 依 `description`（年度標題）分組、一年度一列，`label`＝科目；`#files` **不含**考古題。判斷全在 `lib/admissions-kinds.ts` 的純函式，改關鍵字或分組規則去那裡
 - `Home.tsx` / `HomeHero.tsx` — 首頁（已完成，可當範例）
 
 ---

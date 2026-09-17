@@ -204,8 +204,8 @@ export const ADMISSIONS = {
     documents: {
       heading: { zh: "招生檔案", en: "Admission documents" },
       description: {
-        zh: "簡章、書面資料格式與歷年考古題，由系辦維護，點卡片即可下載。",
-        en: "Guidelines, document formats and past examination papers — maintained by the department office.",
+        zh: "各學制共用的招生檔案，由系辦維護，點卡片即可下載。",
+        en: "Admission documents shared by all programs — maintained by the department office.",
       },
     },
     heading: {
@@ -214,23 +214,34 @@ export const ADMISSIONS = {
     },
     /**
      * §4 的三張學制入口卡（components/site/AdmissionKinds.tsx）：每一張底下列
-     * 四個學制，點哪個學制就到那個學制招生頁的對應區塊。這三種東西在舊站
-     * 都是「按學制分開」的（recruit1–4 的公告、link5 的考古題四組），所以是
-     * 程式裡的固定結構，不是 links 表的資料 —— 客戶要的是點下去就分學制，
-     * 不能等系辦先建好資料才長出篩選。
+     * 四個學制，點哪個學制就落在**那個學制真正對應的資料**上。這三種東西在
+     * 舊站都是「按學制分開」的（recruit1–4 的公告、link5 的考古題四組），所以
+     * 是程式裡的固定結構，不是 links 表的資料。
+     *
+     * `key` 決定落點怎麼算（lib/admissions-kinds.ts）：
+     *
+     *   guide / forms  該學制最新一則標題含關鍵字的招生公告 `/news/<id>`；
+     *                  找不到公告才退回 `anchor`（學制招生頁的公告區／檔案區）
+     *   exams          學制招生頁的考古題區 `anchor`（#exams），只列有考古題的學制
+     *
+     * 客戶回饋：「每個點進去都是招生資訊，點進去應該要是對應的資料檔才對。」
+     * 2026-09 之前四條全部連到 `/admissions/<slug>#notices`，讀者要自己在整頁
+     * 公告裡找簡章。
      *
      * `anchor` 對應 ProgramAdmissions.tsx 裡的區塊 id。
      */
     kinds: [
       {
+        key: "guide" as const,
         anchor: "#notices",
         label: { zh: "當年度招生簡章", en: "Current admission guidelines" },
         description: {
-          zh: "各學制當年度的簡章與招生公告。",
-          en: "Each program's current guidelines and admission notices.",
+          zh: "各學制最新一期的招生簡章公告。",
+          en: "Each program's most recent admission guidelines.",
         },
       },
       {
+        key: "forms" as const,
         anchor: "#files",
         label: { zh: "書面資料格式", en: "Application document formats" },
         description: {
@@ -239,7 +250,8 @@ export const ADMISSIONS = {
         },
       },
       {
-        anchor: "#files",
+        key: "exams" as const,
+        anchor: "#exams",
         label: { zh: "考古題專區", en: "Past examination papers" },
         description: {
           zh: "各學制歷年的入學考試題目。",
@@ -249,6 +261,14 @@ export const ADMISSIONS = {
     ],
     /** 三張入口卡上「大學部 ›」這種學制連結的無障礙前綴。 */
     kindsLabel: { zh: "依學制查看", en: "By program" },
+    /**
+     * 學制連結後面那個小字的學年度，`{year}` 由 AdmissionKinds 換成標題抓到的
+     * 數字（「115」）。中文是民國學年度，英文用 AY（academic year）—— 不加
+     * 「R.O.C.」，英文讀者看的是 /news/<id> 那一頁的日期。
+     */
+    kindsYear: { zh: "{year} 學年度", en: "AY {year}" },
+    /** 考古題卡一個學制都沒有時（documents 還沒匯入）印這一行，不印空的 <ul>。 */
+    kindsEmpty: { zh: "尚無資料", en: "Nothing yet" },
     /**
      * `.resource-row` fallback, used only while `links.section='admissions'`
      * has no rows. Rows that do come from the DB are already in the right
@@ -283,9 +303,22 @@ export const ADMISSIONS = {
     files: {
       heading: { zh: "招生檔案", en: "Admission documents" },
       description: {
-        zh: "這個學制專屬的簡章、書面資料格式與考古題，由系辦維護，點卡片即可下載。",
-        en: "Guidelines, document formats and past papers specific to this program — maintained by the department office.",
+        zh: "這個學制專屬的簡章與書面資料格式，由系辦維護，點卡片即可下載。",
+        en: "Guidelines and document formats specific to this program — maintained by the department office.",
       },
+    },
+    /**
+     * `#exams`（components/site/ExamPapers.tsx）：documents 裡 category='考古題'
+     * 的列，依年度標題（description）一列一年、科目並排。`other` 是沒填年度
+     * 標題那一組的標題，排在最後。
+     */
+    exams: {
+      heading: { zh: "考古題", en: "Past exam papers" },
+      description: {
+        zh: "歷年入學考試題目，依年度整理。",
+        en: "Past entrance examination papers by academic year.",
+      },
+      other: { zh: "其他", en: "Other" },
     },
     links: { heading: { zh: "相關連結", en: "Related links" } },
     back: { zh: "← 回到招生資訊", en: "← Back to Admissions" },

@@ -3,6 +3,7 @@ import type { SiteDocument } from "@/lib/data";
 import { translate, type Lang } from "@/lib/i18n";
 import { SHARED } from "@/lib/i18n/shared";
 import { MaybeLink } from "./MaybeLink";
+import { badgeFor } from "./document-badge";
 
 /**
  * 檔案下載卡 —— 目前有兩個落點：/courses §3「常用表格」底下的系上表單，
@@ -71,32 +72,6 @@ function groupByCategory(documents: SiteDocument[]): Group[] {
   return [...loose, ...named];
 }
 
-/**
- * 卡片左上角的徽章文字。
- *
- * 從檔名推導而不是多開一個欄位讓系辦填：他們上傳的就是那個檔，副檔名是檔案
- * 自己的事實，多一格只是多一個可以填錯的地方。`file_name` 是上傳時的原始
- * 檔名（見 app/(admin)/admin/api/upload/route.ts —— 存進 Storage 的 key 是
- * uuid，原始檔名只活在資料列裡），沒有它就退回從網址猜，再不行就印「檔案」。
- *
- * ⚠️ 用 lastIndexOf 而不是 split(".").pop()：「農經系_實習同意書.v2.pdf」
- * 這種檔名很常見，split 之後要取哪一段還是得判斷，直接找最後一個點更短。
- */
-function badgeFor(form: SiteDocument, fallback: string): string {
-  const source = form.file_name ?? form.file_url;
-  if (!source) return fallback;
-
-  // 網址可能帶 ?token=… 或 #page=2，副檔名在那之前。
-  const clean = source.split(/[?#]/)[0];
-  const dot = clean.lastIndexOf(".");
-  if (dot === -1 || dot === clean.length - 1) return fallback;
-
-  const ext = clean.slice(dot + 1);
-  // 8 個字以上的「副檔名」不是副檔名，是檔名裡剛好有個點。
-  if (ext.length > 8 || !/^[A-Za-z0-9]+$/.test(ext)) return fallback;
-  return ext.toUpperCase();
-}
-
 export function SiteDocuments({
   lang,
   documents,
@@ -138,7 +113,8 @@ export function SiteDocuments({
                 // 一張還沒上傳檔案的卡片不會承諾一個點不到的下載。
                 arrow={<i>{t.download} ↗︎</i>}
               >
-                {/* `.document-grid>a>span` 是金色的副檔名徽章，必須是直接子元素。 */}
+                {/* `.document-grid>a>span` 是金色的副檔名徽章，必須是直接子元素。
+                    徽章文字由 document-badge.ts 從檔名推導（與 ExamPapers 共用）。 */}
                 <span>{badgeFor(form, t.fileBadge)}</span>
                 <h3>{form.label}</h3>
                 {form.description ? <p>{form.description}</p> : null}
