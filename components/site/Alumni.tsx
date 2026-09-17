@@ -9,7 +9,7 @@ import { LocalNav } from "./LocalNav";
 import { SectionTitle } from "./SectionTitle";
 import { NextRoute } from "./NextRoute";
 import { MaybeLink } from "./MaybeLink";
-import { AlumniEventList } from "./AlumniEventList";
+import { EventList } from "./EventList";
 
 /**
  * 系友專區 (/alumni) — route 08 / 08.
@@ -186,7 +186,7 @@ export function Alumni({
               heading={ev.sectionHeading}
               description={ev.sectionDescription}
             />
-            <AlumniEventList lang={lang} events={events} />
+            <EventList lang={lang} events={events} emptyMessage={ev.sectionEmpty} />
           </div>
         </section>
 

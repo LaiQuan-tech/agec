@@ -11,8 +11,8 @@ export const SEARCH = {
 
   /** 還沒輸入任何字時的說明。 */
   idle: {
-    zh: "可以搜尋最新消息、系所成員、課程與系友活動。",
-    en: "Searches news, people, courses and alumni events.",
+    zh: "可以搜尋最新消息、系所成員、課程與活動。",
+    en: "Searches news, people, courses and events.",
   },
   /** {n} 與 {q} 會被代換。 */
   count: { zh: "「{q}」找到 {n} 筆", en: "{n} results for “{q}”" },
@@ -26,8 +26,8 @@ export const SEARCH = {
   },
   /** 結果只搜資料庫，不含八個靜態頁的內文 —— 說清楚比讓人以為漏東西好。 */
   scopeNote: {
-    zh: "搜尋範圍是最新消息、系所成員、課程與系友活動的資料；本系簡介、招生資訊等頁面的說明文字不在其中。",
-    en: "This searches news, people, courses and alumni events. The narrative copy on pages like About and Admissions is not included.",
+    zh: "搜尋範圍是最新消息、系所成員、課程與活動的資料；本系簡介、招生資訊等頁面的說明文字不在其中。",
+    en: "This searches news, people, courses and events. The narrative copy on pages like About and Admissions is not included.",
   },
   backHome: { zh: "← 回到首頁", en: "← Back to home" },
 } satisfies Dict;

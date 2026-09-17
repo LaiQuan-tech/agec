@@ -1,9 +1,17 @@
+import { translate, type Lang, type Msg } from "@/lib/i18n";
+import type { EventAudience } from "@/lib/alumni-events";
+
 /**
- * 系友活動與報名的介面文案。
+ * 活動（系友活動＋一般活動）與報名的介面文案。
  *
  * 與 lib/i18n/alumni.ts 分開：那一份是 /alumni 四個區塊的靜態文案（參考設計
  * 稿的 A 級內容），這一份是一個有狀態的功能 —— 表單標籤、錯誤訊息、報名成功
  * 畫面。兩者的變動頻率與變動原因都不一樣。
+ *
+ * 兩種對象共用這一份：活動頁、表單標籤、狀態、錯誤訊息一個字都不必分。
+ * 只有提到「系友」的那幾句依對象分兩版，放在檔尾的 `EVENT_AUDIENCE_COPY`，
+ * 元件用 `eventCopy(audience, lang)` 取 —— 一般活動的報名者不是系友，
+ * 「已報名的系友請洽…」對他們是錯的。
  *
  * ⚠️ 錯誤訊息與 supabase/migrations/20260901120000_alumni_events.sql 裡
  * `raise exception` 的那幾個代號是同一份合約的兩半。SQL 丟 'EVENT_FULL'，
@@ -39,16 +47,13 @@ export const ALUMNI_EVENTS = {
     zh: "尚餘 {remaining} 位（共 {capacity} 位）",
     en: "{remaining} of {capacity} places left",
   },
-  backToAlumni: { zh: "← 返回系友專區", en: "← Back to Alumni" },
+  /* 「← 返回系友專區」／「← 返回最新消息」與「已報名的系友請洽…」依對象分版，
+     在檔尾的 EVENT_AUDIENCE_COPY。 */
 
   /* --- 狀態 -------------------------------------------------------------- */
   stateFull: { zh: "報名已額滿", en: "Fully booked" },
   stateClosed: { zh: "報名已截止", en: "Registration has closed" },
   stateCancelled: { zh: "本活動已取消", en: "This event has been cancelled" },
-  stateCancelledNote: {
-    zh: "已報名的系友請洽下方聯絡窗口。",
-    en: "If you had registered, please contact the department office below.",
-  },
   stateFullNote: {
     zh: "若有名額釋出會在本頁更新，也可以直接聯絡系辦詢問。",
     en: "Any places that open up will be shown here. You may also contact the office.",
@@ -139,3 +144,40 @@ export const ALUMNI_EVENTS = {
     en: "The registration could not be submitted. Please try again, or contact the office.",
   },
 } as const;
+
+/**
+ * 依對象不同的那幾句。
+ *
+ * 系友活動的報名者是系友、一般活動的報名者是「參加者」；活動頁的返回連結
+ * 也各自回到自己住的那一頁。其餘文案（表單標籤、個資告知、成功畫面、錯誤）
+ * 本來就沒提到系友，兩種對象共用上面那一份。
+ *
+ * ⚠️ 兩個分支的 key 必須一樣多、一樣名 —— `eventCopy()` 的回傳型別是兩者的
+ * 交集，少一個 key 就會在元件裡變成 undefined。
+ */
+export const EVENT_AUDIENCE_COPY = {
+  alumni: {
+    /** 活動頁底部的返回連結。 */
+    backToParent: { zh: "← 返回系友專區", en: "← Back to Alumni" },
+    /** 活動取消時，狀態句後面接的那一句。 */
+    stateCancelledNote: {
+      zh: "已報名的系友請洽下方聯絡窗口。",
+      en: "If you had registered, please contact the department office below.",
+    },
+  },
+  general: {
+    backToParent: { zh: "← 返回最新消息", en: "← Back to news" },
+    stateCancelledNote: {
+      zh: "已報名的參加者請洽下方聯絡窗口。",
+      en: "If you had registered, please contact the office below.",
+    },
+  },
+} satisfies Record<EventAudience, Record<string, Msg>>;
+
+export type EventAudienceCopy = {
+  [K in keyof (typeof EVENT_AUDIENCE_COPY)["alumni"]]: string;
+};
+
+export function eventCopy(audience: EventAudience, lang: Lang): EventAudienceCopy {
+  return translate(EVENT_AUDIENCE_COPY[audience], lang);
+}

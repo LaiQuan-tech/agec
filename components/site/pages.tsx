@@ -21,8 +21,9 @@ import {
   TALKS_PREVIEW_SIZE,
 } from "@/lib/data";
 import type { Lang } from "@/lib/i18n";
+import type { EventAudience } from "@/lib/alumni-events";
 import { Home } from "./Home";
-import { AlumniEventPage } from "./AlumniEventPage";
+import { EventPage } from "./EventPage";
 import { News } from "./News";
 import { Talks } from "./Talks";
 import { NewsPost } from "./NewsPost";
@@ -91,7 +92,12 @@ export async function NewsRoute({
   //    它現在是一個常駐的區塊，不隨篩選消失。
   //
   // 仍然限定第 1 頁：它是一個預覽區塊，翻到第 7 頁還跟著同一批演講沒有意義。
-  const [newsPage, years, talks, talkCount] = await Promise.all([
+  //
+  // 活動報名區塊（一般活動）只在**未篩選的第 1 頁**：它不是消息的一種切法，
+  // 而是另一張表；點了「招生」籤還跟著一排活動，讀者會以為那是招生活動。
+  // 演講區塊是相反的決定（見上），因為演講真的是消息、只是被抽出主列表。
+  const filtered = Boolean(category || year);
+  const [newsPage, years, talks, talkCount, events] = await Promise.all([
     getNewsPage(page, lang, category, year),
     // ⚠️ 只帶 category，不帶 year。年份列要列出「這個分類底下所有有資料的
     // 年份」，把目前選的年份也套進去，列表就只會剩下那一年，等於選了之後
@@ -99,6 +105,11 @@ export async function NewsRoute({
     getNewsYears(category),
     page === 1 ? getTalks(lang, TALKS_PREVIEW_SIZE) : [],
     page === 1 ? countTalks() : 0,
+    // 只取還沒結束的一般活動，近的在前，最多 6 場。⚠️ 一定要傳 audience：
+    // 預設是 alumni，漏了會把系友回娘家列到最新消息上。
+    // 不設上限：與 /alumni 一致。設了上限又沒有「更多」連結，第 N+1 場開放報名中的
+    // 活動會從所有列表頁消失、只剩搜尋找得到。
+    page === 1 && !filtered ? getAlumniEvents(lang, { audience: "general" }) : [],
   ]);
 
   // A page number past the end is a 404 rather than an empty list — otherwise
@@ -132,6 +143,7 @@ export async function NewsRoute({
       newsPage={newsPage}
       talks={talks}
       talkCount={talkCount}
+      events={events}
       category={category}
       year={year}
       years={years}
@@ -139,19 +151,28 @@ export async function NewsRoute({
   );
 }
 
-/** 單一系友活動 (/alumni/events/[slug], /en/alumni/events/[slug]). */
-export async function AlumniEventRoute({
+/**
+ * 單一活動 (/alumni/events/[slug] 與 /news/events/[slug]，各有 /en 版)。
+ *
+ * `audience` 由路由檔傳：/alumni/events/ 傳 alumni、/news/events/ 傳 general。
+ * 🔴 活動的 audience 對不上就 404 —— 一場活動只有一個正確網址。少了這一條，
+ *    同一場會在兩個網址各活一份，搜尋引擎當成重複內容，而且報名成功後的
+ *    revalidatePath 只打其中一個，另一個會一直顯示舊名額。
+ */
+export async function EventRoute({
   lang,
   slug,
+  audience,
 }: {
   lang: Lang;
   slug: string;
+  audience: EventAudience;
 }) {
   const event = await getAlumniEventBySlug(slug, lang);
   // 草稿與不存在的 slug 都走這裡：getAlumniEventBySlug 只回 published 與
   // cancelled，所以草稿在前台就是 404，不需要在這裡再判一次狀態。
-  if (!event) notFound();
-  return <AlumniEventPage lang={lang} event={event} />;
+  if (!event || event.audience !== audience) notFound();
+  return <EventPage lang={lang} event={event} />;
 }
 
 /** 演講公告封存 (/news/talks, /news/talks/page/N). */
@@ -283,8 +304,9 @@ export async function StudentsRoute({ lang }: { lang: Lang }) {
  * `links` table has no columns for (see the note in components/site/Alumni.tsx).
  */
 export async function AlumniRoute({ lang }: { lang: Lang }) {
-  // 只取還沒結束的活動，近的在前。歷屆活動不列在這一區：這是「要不要來」的
-  // 區塊，不是封存。真的需要封存頁時再另開路由，不要把它塞進同一份清單。
-  const events = await getAlumniEvents(lang);
+  // 只取還沒結束的**系友**活動，近的在前（一般活動住在 /news）。歷屆活動不列
+  // 在這一區：這是「要不要來」的區塊，不是封存。真的需要封存頁時再另開路由，
+  // 不要把它塞進同一份清單。
+  const events = await getAlumniEvents(lang, { audience: "alumni" });
   return <Alumni lang={lang} events={events} />;
 }

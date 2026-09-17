@@ -4,12 +4,25 @@ import { requireAdminOrRedirect } from "@/lib/admin/auth";
 import { loadEventList } from "@/lib/admin/events";
 import { Button } from "@/components/admin/ui/Button";
 import { EmptyState, Table, TBody, TD, TH, THead, TR } from "@/components/admin/ui/Table";
-import { EVENT_STATUS_SHORT, toEventStatus } from "./constants";
+import {
+  EVENT_AUDIENCES,
+  EVENT_AUDIENCE_SHORT,
+  EVENT_STATUS_SHORT,
+  eventBasePath,
+  toEventAudience,
+  toEventStatus,
+} from "./constants";
 import { EnBadge, enProgress } from "../_components/EnBadge";
 import { AppearsOn } from "../_components/AppearsOn";
+import { FilterLink } from "../_components/FilterLink";
 
-export const metadata: Metadata = { title: "系友活動" };
+export const metadata: Metadata = { title: "活動" };
 export const dynamic = "force-dynamic";
+
+const AUDIENCE_STYLE: Record<string, { background: string; color: string }> = {
+  alumni: { background: "#e0f2fe", color: "#075985" },
+  general: { background: "#ede9fe", color: "#5b21b6" },
+};
 
 const STATUS_STYLE: Record<string, { background: string; color: string }> = {
   draft: { background: "#fef3c7", color: "#92400e" },
@@ -29,26 +42,51 @@ function taipei(iso: string): string {
   }).format(new Date(iso));
 }
 
-export default async function EventsListPage() {
+export default async function EventsListPage({
+  searchParams,
+}: {
+  // Next 16：searchParams 是 promise。後台是 force-dynamic，讀它沒有副作用。
+  // `?audience=` 是側欄「最新消息 › 活動報名」／「系友專區 › 系友回娘家」
+  // 兩個入口帶進來的（lib/admin/site-map.ts），認不得的值當成「全部」。
+  searchParams: Promise<{ audience?: string }>;
+}) {
   const { supabase } = await requireAdminOrRedirect();
-  const { rows, error } = await loadEventList(supabase);
+  const { audience: audienceParam } = await searchParams;
+  const audience = toEventAudience(audienceParam);
+  const { rows, error } = await loadEventList(supabase, audience);
+  // 從篩選狀態進「新增」時預選同一個對象，系辦少選一次。
+  const newHref = audience ? `/admin/events/new?audience=${audience}` : "/admin/events/new";
 
   return (
     <div className="flex flex-col gap-5">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-bold" style={{ color: "var(--brand-green)" }}>
-            系友活動
+            活動{audience ? ` · ${EVENT_AUDIENCE_SHORT[audience]}` : ""}
           </h1>
-          <AppearsOn pathname="/admin/events" />
+          <AppearsOn pathname="/admin/events" filters={{ audience }} />
           <p className="mt-1 text-[13px]" style={{ color: "var(--muted)" }}>
-            系友回娘家等活動的上架與報名管理。上架後會出現在前台的「系友專區」。
+            活動的上架與報名管理。系友活動上架後出現在「系友專區」的系友回娘家區塊；
+            一般活動出現在「最新消息」的活動報名區塊，任何人都能報名。
           </p>
         </div>
-        <Link href="/admin/events/new">
+        <Link href={newHref}>
           <Button variant="primary">新增活動</Button>
         </Link>
       </header>
+
+      {/* 篩選籤：與 links / documents 的 `?section=` 同一個元件。 */}
+      <nav aria-label="依對象篩選" className="flex flex-wrap items-center gap-2">
+        <FilterLink label="全部" href="/admin/events" active={audience === null} />
+        {EVENT_AUDIENCES.map((value) => (
+          <FilterLink
+            key={value}
+            label={EVENT_AUDIENCE_SHORT[value]}
+            href={`/admin/events?audience=${value}`}
+            active={audience === value}
+          />
+        ))}
+      </nav>
 
       {error && (
         <p
@@ -61,9 +99,11 @@ export default async function EventsListPage() {
 
       {rows.length === 0 && !error ? (
         <EmptyState
-          message="目前沒有任何活動"
+          message={
+            audience ? `目前沒有任何${EVENT_AUDIENCE_SHORT[audience]}` : "目前沒有任何活動"
+          }
           action={
-            <Link href="/admin/events/new">
+            <Link href={newHref}>
               <Button variant="primary" size="sm">
                 新增第一場活動
               </Button>
@@ -75,6 +115,7 @@ export default async function EventsListPage() {
           <THead>
             <TH className="w-[150px]">開始時間</TH>
             <TH>活動名稱</TH>
+            <TH className="w-[90px]">對象</TH>
             <TH className="w-[90px]">狀態</TH>
             <TH className="w-[130px]">報名</TH>
             <TH className="w-[80px]">英文</TH>
@@ -91,7 +132,7 @@ export default async function EventsListPage() {
                 <TR key={row.id}>
                   <TD className="whitespace-nowrap tabular-nums">{taipei(row.startsAt)}</TD>
                   <TD>
-                    <Link href={`/admin/events/${row.id}`} className="hover:underline underline-offset-2">
+                    <Link href={`/admin/events/${row.id}?audience=${row.audience}`} className="hover:underline underline-offset-2">
                       {row.title}
                     </Link>
                     {row.location && (
@@ -99,6 +140,14 @@ export default async function EventsListPage() {
                         {row.location}
                       </span>
                     )}
+                  </TD>
+                  <TD>
+                    <span
+                      className="rounded px-1.5 py-0.5 text-[12px] font-medium"
+                      style={AUDIENCE_STYLE[row.audience]}
+                    >
+                      {EVENT_AUDIENCE_SHORT[row.audience]}
+                    </span>
                   </TD>
                   <TD>
                     <span
@@ -127,18 +176,19 @@ export default async function EventsListPage() {
                   </TD>
                   <TD>
                     <div className="flex items-center gap-1">
-                      <Link href={`/admin/events/${row.id}`}>
+                      <Link href={`/admin/events/${row.id}?audience=${row.audience}`}>
                         <Button variant="ghost" size="sm">
                           編輯
                         </Button>
                       </Link>
-                      <Link href={`/admin/events/${row.id}/registrations`}>
+                      <Link href={`/admin/events/${row.id}/registrations?audience=${row.audience}`}>
                         <Button variant="ghost" size="sm">
                           報名名單
                         </Button>
                       </Link>
+                      {/* 前綴跟著對象走：一般活動在 /news/events/，連到 /alumni/events/ 會是 404。 */}
                       {status !== "draft" && (
-                        <Link href={`/alumni/events/${row.slug}`} target="_blank">
+                        <Link href={`${eventBasePath(row.audience)}/${row.slug}`} target="_blank">
                           <Button variant="ghost" size="sm" title="在新分頁開啟前台的這場活動">
                             前台 ↗︎
                           </Button>

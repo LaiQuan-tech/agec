@@ -1,5 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { pick, type Lang } from "@/lib/i18n";
+import { eventBasePath } from "@/lib/alumni-events";
 
 /**
  * 全站搜尋。
@@ -223,11 +224,11 @@ export async function search(query: string, lang: Lang): Promise<SearchResult> {
     }
   }
 
-  /* --- 系友活動 -------------------------------------------------------- */
+  /* --- 活動（系友活動＋一般活動）------------------------------------------ */
   {
     const { data, error } = await supabase
       .from("alumni_events")
-      .select("id, slug, title, title_en, summary, summary_en, starts_at, status")
+      .select("id, slug, audience, title, title_en, summary, summary_en, starts_at, status")
       // 與 lib/data.ts 的 PUBLIC_EVENT_STATUSES 一致：草稿不能外流，
       // 已取消的仍要找得到（已報名的人會來查）。
       .in("status", ["published", "cancelled"])
@@ -240,6 +241,7 @@ export async function search(query: string, lang: Lang): Promise<SearchResult> {
         {
           id: number;
           slug: string;
+          audience: string;
           title: string;
           title_en: string | null;
           summary: string | null;
@@ -256,14 +258,25 @@ export async function search(query: string, lang: Lang): Promise<SearchResult> {
       console.error("[search] events failed:", error.message);
     }
     for (const row of data ?? []) {
+      // 一般活動住在 /news/events/、系友活動住在 /alumni/events/ —— 前綴寫死
+      // 的話，一般活動的搜尋結果會連到 404。標籤也跟著分，讀者才知道點進去
+      // 是「大家都能報」還是「系友限定」。
+      const audience = row.audience === "general" ? "general" : "alumni";
       hits.push({
         key: `event-${row.id}`,
-        kind: lang === "en" ? "Alumni event" : "系友活動",
+        kind:
+          audience === "general"
+            ? lang === "en"
+              ? "Event"
+              : "活動"
+            : lang === "en"
+              ? "Alumni event"
+              : "系友活動",
         title: pick(row.title, row.title_en, lang),
         detail:
           truncate(pick(row.summary, row.summary_en, lang)) ??
           row.starts_at.slice(0, 10),
-        href: localize(`/alumni/events/${row.slug}`, lang),
+        href: localize(`${eventBasePath(audience)}/${row.slug}`, lang),
         titleHit: matches(row.title, row.title_en),
       });
     }

@@ -136,8 +136,8 @@ export const ALUMNI = {
           en: "Exchange across generations turns experience into shared ground",
         },
         action: { zh: "近期活動", en: "Upcoming events" },
-        // No events page or table on either site yet.
-        url: "#",
+        // 同一頁下方的系友回娘家區塊（alumni_events，audience = alumni）。
+        url: "#section-events",
       },
       {
         eyebrow: { zh: "STAY CONNECTED", en: "STAY CONNECTED" },

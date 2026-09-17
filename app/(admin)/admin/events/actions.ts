@@ -16,10 +16,17 @@ import {
   requireId,
   text,
 } from "@/lib/admin/validate";
-import { EVENT_STATUSES, type EventStatus } from "./constants";
+import {
+  EVENT_AUDIENCES,
+  EVENT_STATUSES,
+  type EventAudience,
+  type EventStatus,
+} from "./constants";
 
 type EventInput = {
   slug: string;
+  /** 只准 'alumni' | 'general'（資料庫 CHECK 同一份合約）。 */
+  audience: EventAudience;
   title: string;
   title_en: string | null;
   summary: string | null;
@@ -52,6 +59,7 @@ function parse(form: FormData): {
   fieldErrors?: Record<string, string>;
 } {
   const slug = text(form, "slug", "網址代稱", { required: true, max: 80 });
+  const audience = oneOf(form, "audience", "對象", EVENT_AUDIENCES, { required: true });
   const title = text(form, "title", "活動名稱", { required: true, max: 120 });
   const titleEn = text(form, "title_en", "英文活動名稱", { max: 200 });
   const summary = text(form, "summary", "一句話摘要", { max: 200 });
@@ -84,6 +92,7 @@ function parse(form: FormData): {
 
   const fieldErrors = collect({
     slug: slug.error ?? slugFormat,
+    audience: audience.error,
     title: title.error,
     title_en: titleEn.error,
     summary: summary.error,
@@ -106,6 +115,7 @@ function parse(form: FormData): {
   return {
     values: {
       slug: slug.value!,
+      audience: audience.value!,
       title: title.value!,
       title_en: titleEn.value,
       summary: summary.value,
@@ -274,6 +284,9 @@ function describeWriteError(error: { code?: string; message?: string; details?: 
   }
   if (message.includes("alumni_events_time_valid")) {
     return "結束時間必須晚於開始時間";
+  }
+  if (message.includes("alumni_events_audience_valid")) {
+    return "對象只能是「系友活動」或「一般活動」";
   }
   if (message.includes("alumni_events_not_oversold")) {
     // 把名額改到比已報名人數還低時會撞到這一條。這是真的要擋的：改小名額

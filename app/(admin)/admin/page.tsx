@@ -17,13 +17,18 @@ export const dynamic = "force-dynamic";
  */
 
 /** 後台入口 → 怎麼算筆數。沒列在這裡的入口不印數字。 */
-const COUNTS: Record<string, { table: string; section?: string; managerOnly?: boolean }> = {
+const COUNTS: Record<
+  string,
+  { table: string; section?: string; audience?: string; managerOnly?: boolean }
+> = {
   "/admin/news": { table: "news" },
   "/admin/faculty": { table: "faculty" },
   "/admin/courses": { table: "courses" },
   "/admin/programs": { table: "programs" },
   "/admin/capabilities": { table: "capabilities" },
-  "/admin/events": { table: "alumni_events" },
+  // 活動模組兩個入口各算自己的對象（key 要與 site-map 的 href 一字不差）。
+  "/admin/events?audience=alumni": { table: "alumni_events", audience: "alumni" },
+  "/admin/events?audience=general": { table: "alumni_events", audience: "general" },
   "/admin/links?section=students": { table: "links", section: "students" },
   "/admin/links?section=admissions": { table: "links", section: "admissions" },
   "/admin/documents?section=courses": { table: "documents", section: "courses" },
@@ -35,10 +40,11 @@ const COUNTS: Record<string, { table: string; section?: string; managerOnly?: bo
 
 async function countRows(
   supabase: SupabaseClient,
-  spec: { table: string; section?: string }
+  spec: { table: string; section?: string; audience?: string }
 ): Promise<number | null> {
   let query = supabase.from(spec.table).select("id", { count: "exact", head: true });
   if (spec.section) query = query.eq("section", spec.section);
+  if (spec.audience) query = query.eq("audience", spec.audience);
   const { count, error } = await query;
   if (error) {
     console.error(`[admin] count ${spec.table} failed:`, error.message);

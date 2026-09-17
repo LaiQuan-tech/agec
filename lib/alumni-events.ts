@@ -14,13 +14,54 @@ import type { Lang } from "@/lib/i18n";
  *
  * 所以這個檔案只回答「畫面上寫什麼」，送出之後由函式回答「行不行」，而且
  * 函式擋下來時的訊息會明講是名額在填寫期間被補滿了。
+ *
+ * ## 「一般活動」也住在這裡
+ *
+ * 2026-09-16 客戶要求「除了校友活動之外，也可以開一般的活動，並且放到最新
+ * 消息區讓大家報名」。做法是表加一欄 `audience`，**不改表名**：
+ * `alumni_events`／`register_for_alumni_event()` 這些名字散在十幾個檔案與
+ * 資料庫函式簽章裡，改名只有成本沒有收益。所以型別叫 `AlumniEvent`、表叫
+ * `alumni_events`，但裡面的一列可能是一般活動 —— 看 `audience`。
+ *
+ *   alumni   系友活動：列在 /alumni#section-events，活動頁 /alumni/events/<slug>，
+ *            報名表收畢業年度與學制
+ *   general  一般活動：列在 /news 的「活動報名」區塊，活動頁 /news/events/<slug>，
+ *            報名表不收畢業年度與學制（任何人都能報）
+ *
+ * 一場活動只有一個正確網址：兩條活動頁路由都會在 audience 對不上時 404，
+ * 否則同一場會在兩個網址各活一份、被搜尋引擎當成重複內容。
  */
 
 export type AlumniEventStatus = "draft" | "published" | "cancelled";
 
+/**
+ * 活動對象。⚠️ 與 migration 20260917100000 的
+ * `check (audience in ('alumni','general'))` 是同一份合約的兩半。
+ */
+export type EventAudience = "alumni" | "general";
+export const EVENT_AUDIENCES: readonly EventAudience[] = ["alumni", "general"];
+
+/**
+ * 活動頁的網址前綴（語言中立，`localizePath` 會補 /en）。
+ *
+ * 🔴 所有印活動連結的地方都要經過這一支 —— 列表、活動頁的返回、搜尋結果、
+ * 後台的「前台 ↗」、sitemap、報名成功後的 revalidatePath。寫死
+ * `/alumni/events/` 的話，一般活動會被連到一個 404 的網址。
+ */
+export function eventBasePath(audience: EventAudience): "/alumni/events" | "/news/events" {
+  return audience === "general" ? "/news/events" : "/alumni/events";
+}
+
+/** 活動頁所在的上層頁面（麵包屑第二層與「返回」連結的去處）。 */
+export function eventParentPath(audience: EventAudience): "/alumni" | "/news" {
+  return audience === "general" ? "/news" : "/alumni";
+}
+
 export type AlumniEvent = {
   id: number;
   slug: string;
+  /** 決定活動住在哪一頁、網址前綴，以及報名表收不收畢業年度／學制。 */
+  audience: EventAudience;
   title: string;
   summary: string | null;
   body: string | null;

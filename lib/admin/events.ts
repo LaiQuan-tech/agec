@@ -1,8 +1,9 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { EventAudience } from "@/lib/alumni-events";
 
 /**
- * 系友活動報名名單的查詢。
+ * 活動（系友活動＋一般活動）與報名名單的查詢。
  *
  * 🔴 「誰報名了這一場」只有這一份定義：`status = 'confirmed'`。
  *
@@ -21,6 +22,8 @@ export const CONFIRMED = "confirmed";
 export type EventListRow = {
   id: number;
   slug: string;
+  /** alumni＝系友活動（/alumni）、general＝一般活動（/news 活動報名區）。 */
+  audience: EventAudience;
   title: string;
   startsAt: string;
   endsAt: string | null;
@@ -53,8 +56,9 @@ export type RegistrationRow = {
 
 // ⚠️ 英文欄位是給列表的翻譯進度徽章用的（與最新消息、系所成員等列表一致）。
 // 少了它們，系友活動就是唯一一個看不出「翻到哪了」的實體。
+// `audience` 在 migration 20260917100000 才加 —— 沒跑的話這支整個查不到。
 const EVENT_COLUMNS =
-  "id, slug, title, title_en, summary, summary_en, body, body_en, " +
+  "id, slug, audience, title, title_en, summary, summary_en, body, body_en, " +
   "location, location_en, starts_at, ends_at, capacity, seats_taken, status";
 const REGISTRATION_COLUMNS =
   "id, code, name, email, phone, grad_year, program, guests, dietary, note, status, created_at";
@@ -102,16 +106,22 @@ function toRegistration(raw: RawRegistration): RegistrationRow {
  * 過資料庫，那時候要看得見。
  */
 export async function loadEventList(
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  /** 列表的 `?audience=` 篩選；null = 全部（兩種對象都列）。 */
+  audience: EventAudience | null = null
 ): Promise<{ rows: EventListRow[]; error: string }> {
-  const { data, error } = await supabase
+  let query = supabase
     .from("alumni_events")
     .select(EVENT_COLUMNS)
-    .order("starts_at", { ascending: false })
+    .order("starts_at", { ascending: false });
+  if (audience) query = query.eq("audience", audience);
+
+  const { data, error } = await query
     .returns<
       {
         id: number;
         slug: string;
+        audience: string;
         title: string;
         title_en: string | null;
         summary: string | null;
@@ -147,6 +157,7 @@ export async function loadEventList(
       return {
         id: e.id,
         slug: e.slug,
+        audience: e.audience === "general" ? "general" : "alumni",
         title: e.title,
         startsAt: e.starts_at,
         endsAt: e.ends_at,

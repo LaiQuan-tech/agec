@@ -1,18 +1,29 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import type { ActionState } from "@/lib/admin/action-result";
 import { FormShell } from "@/components/admin/ui/FormShell";
 import { Field } from "@/components/admin/ui/Field";
 import { Input, Select, Textarea } from "@/components/admin/ui/Input";
 import { UploadField } from "@/components/admin/ui/UploadField";
-import { EVENT_STATUSES, EVENT_STATUS_LABEL } from "./constants";
+import {
+  EVENT_AUDIENCES,
+  EVENT_AUDIENCE_LABEL,
+  EVENT_STATUSES,
+  EVENT_STATUS_LABEL,
+  eventBasePath,
+  toEventAudience,
+  type EventAudience,
+} from "./constants";
 
 export type EventFormValues = {
   id?: number;
   /** 編輯時帶著原本的 slug，改了才知道舊網址也要重新驗證。 */
   previousSlug?: string;
   slug: string;
+  /** alumni＝系友活動（/alumni）、general＝一般活動（/news 活動報名區）。 */
+  audience: EventAudience;
   title: string;
   title_en: string;
   summary: string;
@@ -36,7 +47,12 @@ export type EventFormValues = {
 };
 
 /**
- * 系友活動的新增／編輯表單。
+ * 活動（系友活動／一般活動）的新增／編輯表單。
+ *
+ * 「對象」決定活動出現在前台哪一頁、活動頁的網址前綴，以及報名表收不收
+ * 畢業年度與學制。它是 client state 而不只是 defaultValue：網址代稱的提示要
+ * 跟著選項即時換成 /alumni/events/ 或 /news/events/，系辦才看得到自己選了
+ * 什麼會發生什麼事。
  *
  * ⚠️ 沒有「已報名人數」這個欄位可以改。它由報名與取消兩支函式成對維護，
  * 表單上只以唯讀的一句話呈現 —— 讓它可編輯等於開一條「數字與名單對不起來」
@@ -54,6 +70,8 @@ export function EventForm({
   initial: EventFormValues;
   submitLabel: string;
 }) {
+  const [audience, setAudience] = useState<EventAudience>(initial.audience);
+
   return (
     <FormShell
       action={action}
@@ -96,15 +114,46 @@ export function EventForm({
           </Field>
 
           <Field
+            htmlFor="audience"
+            label="對象"
+            required
+            error={state.fieldErrors?.audience}
+            hint={
+              <>
+                系友活動出現在「系友專區」的系友回娘家區塊；一般活動出現在「最新消息」的
+                活動報名區塊，任何人都能報名，報名表<strong>不會</strong>收畢業年度與學制。
+                ⚠️ 上架之後改對象，活動頁的網址會跟著換前綴，已經分享出去的連結會失效。
+              </>
+            }
+          >
+            <Select
+              id="audience"
+              name="audience"
+              value={audience}
+              onChange={(e) => setAudience(toEventAudience(e.target.value) ?? "alumni")}
+              required
+            >
+              {EVENT_AUDIENCES.map((value) => (
+                <option key={value} value={value}>
+                  {EVENT_AUDIENCE_LABEL[value]}
+                </option>
+              ))}
+            </Select>
+          </Field>
+
+          <Field
             htmlFor="slug"
             label="網址代稱"
             required
             error={state.fieldErrors?.slug}
             hint={
               <>
-                活動頁的網址會是 <code>/alumni/events/{initial.slug || "你填的代稱"}</code>。
-                只能用小寫英文、數字與連字號，例如 <code>homecoming-2026</code>。
-                ⚠️ 上架之後就不要再改：系友分享出去的連結會失效。
+                活動頁的網址會是{" "}
+                <code>
+                  {eventBasePath(audience)}/{initial.slug || "你填的代稱"}
+                </code>
+                。只能用小寫英文、數字與連字號，例如 <code>homecoming-2026</code>。
+                ⚠️ 上架之後就不要再改：分享出去的連結會失效。
               </>
             }
           >

@@ -1,3 +1,5 @@
+import { EVENT_AUDIENCES, eventBasePath, type EventAudience } from "@/lib/alumni-events";
+
 /**
  * 活動狀態。⚠️ 與 migration 的
  * `check (status in ('draft','published','cancelled'))` 是同一份合約的兩半。
@@ -48,4 +50,35 @@ export function toDatetimeLocal(iso: string | null): string {
   }).formatToParts(at);
   const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
   return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
+}
+
+/* ---------------------------------------------------------------------------
+ * 活動對象。⚠️ 與 migration 20260917100000 的
+ * `check (audience in ('alumni','general'))` 是同一份合約的兩半；型別本身在
+ * lib/alumni-events.ts（前台也用）。
+ * ------------------------------------------------------------------------ */
+
+// 前台與後台共用同一份：後台的 import 都從這個檔拿，不必再記另一個路徑。
+export { EVENT_AUDIENCES, eventBasePath, type EventAudience };
+
+/** 表單選項用的長標籤。 */
+export const EVENT_AUDIENCE_LABEL: Record<EventAudience, string> = {
+  alumni: "系友活動（出現在「系友專區」）",
+  general: "一般活動（出現在「最新消息」，任何人都能報名）",
+};
+
+/** 列表與篩選籤用的短標籤。 */
+export const EVENT_AUDIENCE_SHORT: Record<EventAudience, string> = {
+  alumni: "系友活動",
+  general: "一般活動",
+};
+
+/**
+ * 網址參數或資料庫值 → 對象。認不得的值回 null（列表的 `?audience=` 亂填時
+ * 當成「全部」，不當成某一種）。
+ */
+export function toEventAudience(value: string | null | undefined): EventAudience | null {
+  return (EVENT_AUDIENCES as readonly string[]).includes(value ?? "")
+    ? (value as EventAudience)
+    : null;
 }

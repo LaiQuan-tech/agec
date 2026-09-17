@@ -6,14 +6,21 @@ import { Button } from "@/components/admin/ui/Button";
 import { DeleteButton } from "@/components/admin/ui/DeleteButton";
 import { EventForm } from "../EventForm";
 import { deleteEvent, updateEvent } from "../actions";
-import { toDatetimeLocal, toEventStatus } from "../constants";
+import {
+  EVENT_AUDIENCE_SHORT,
+  eventBasePath,
+  toDatetimeLocal,
+  toEventAudience,
+  toEventStatus,
+} from "../constants";
 
-export const metadata: Metadata = { title: "編輯系友活動" };
+export const metadata: Metadata = { title: "編輯活動" };
 export const dynamic = "force-dynamic";
 
 type Row = {
   id: number;
   slug: string;
+  audience: string;
   title: string;
   title_en: string | null;
   summary: string | null;
@@ -46,7 +53,7 @@ export default async function EditEventPage({
   const { data, error } = await supabase
     .from("alumni_events")
     .select(
-      "id, slug, title, title_en, summary, summary_en, body, body_en, starts_at, " +
+      "id, slug, audience, title, title_en, summary, summary_en, body, body_en, starts_at, " +
         "ends_at, location, location_en, address, capacity, seats_taken, " +
         "registration_closes_at, cover_url, contact, status"
     )
@@ -55,13 +62,15 @@ export default async function EditEventPage({
 
   if (error) console.error("[admin/events] 讀取失敗:", error.message);
   if (!data) notFound();
+  // 資料庫有 CHECK，這裡的退回只是給型別看的。
+  const audience = toEventAudience(data.audience) ?? "alumni";
 
   return (
     <div className="flex flex-col gap-5">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-bold" style={{ color: "var(--brand-green)" }}>
-            編輯系友活動
+            編輯{EVENT_AUDIENCE_SHORT[audience]}
           </h1>
           <p className="mt-1 text-[13px]" style={{ color: "var(--muted)" }}>
             目前已佔用 {data.seats_taken} 位（含攜伴）
@@ -74,8 +83,9 @@ export default async function EditEventPage({
               報名名單
             </Button>
           </Link>
+          {/* 前綴跟著對象走：一般活動在 /news/events/。 */}
           {toEventStatus(data.status) !== "draft" && (
-            <Link href={`/alumni/events/${data.slug}`} target="_blank">
+            <Link href={`${eventBasePath(audience)}/${data.slug}`} target="_blank">
               <Button variant="ghost" size="sm">
                 前台 ↗︎
               </Button>
@@ -95,6 +105,7 @@ export default async function EditEventPage({
           id: data.id,
           previousSlug: data.slug,
           slug: data.slug,
+          audience,
           title: data.title,
           title_en: data.title_en ?? "",
           summary: data.summary ?? "",

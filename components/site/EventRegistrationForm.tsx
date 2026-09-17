@@ -7,17 +7,23 @@ import {
   idleRegistration,
   MAX_GUESTS,
   PROGRAM_OPTIONS,
+  type EventAudience,
   type RegistrationState,
 } from "@/lib/alumni-events";
 import { translate, type Lang } from "@/lib/i18n";
 import { ALUMNI_EVENTS } from "@/lib/i18n/alumni-events";
 
 /**
- * 系友活動的線上報名表單。
+ * 活動的線上報名表單（系友活動與一般活動共用）。
  *
  * 站上唯一一個 Client Component 的公開表單 —— 其餘每一頁都是純靜態。用
  * `useActionState` 而不是導到另一個頁面，理由是失敗時要保住使用者已經打的
  * 字：送出後導頁的話，「名額剛好滿了」會連同他填的十個欄位一起消失。
+ *
+ * 兩種對象的差別只有兩個欄位：一般活動不收畢業年度與學制（任何人都能報，
+ * 那兩欄對非系友沒有意義）。`audience` 在這裡只決定**印不印**那兩個欄位；
+ * action 端會自己依 slug 查一次對象，一般活動一律存 null —— 不信任表單上
+ * 有沒有那兩欄，因為任何人都能改 HTML 再送。
  *
  * ⚠️ 送出成功後整個表單被結果畫面取代，而不是清空後留在原地。留著會讓人
  * 以為要再送一次，而第二次一定會撞上「同信箱已報名」的唯一索引。
@@ -48,14 +54,18 @@ function fieldError(copy: Copy, state: RegistrationState, name: string): string 
 export function EventRegistrationForm({
   lang,
   slug,
+  audience,
   contact,
 }: {
   lang: Lang;
   slug: string;
+  /** 系友活動印畢業年度與學制兩欄；一般活動不印。 */
+  audience: EventAudience;
   /** 承辦窗口，印在成功畫面上——目前沒有確認信，這是唯一的後續管道。 */
   contact: string | null;
 }) {
   const copy = translate(ALUMNI_EVENTS, lang);
+  const asksAlumniFields = audience === "alumni";
   const [state, formAction] = useActionState(registerForEvent, idleRegistration);
   // useId 而不是寫死字串：同一頁若日後放兩個表單，label 的 for 會指到第一個。
   const uid = useId();
@@ -139,33 +149,40 @@ export function EventRegistrationForm({
           autoComplete="tel"
           error={fieldError(copy, state, "phone")}
         />
-        <Field
-          id={id("grad_year")}
-          name="grad_year"
-          /* type="text" + inputMode 而不是 type="number"：民國年與西元年都要
-             收，而 number 欄位的上下鍵與滾輪在這種「兩種紀年」的欄位上只會
-             讓人誤觸。 */
-          inputMode="numeric"
-          label={copy.fieldGradYear}
-          optionalLabel={copy.optional}
-          hint={copy.fieldGradYearHint}
-          error={fieldError(copy, state, "grad_year")}
-        />
+        {/* 畢業年度與學制只有系友活動收。一般活動的報名者不一定是系友，
+            這兩欄對他們沒有意義；action 端對一般活動一律存 null，所以就算
+            有人改 HTML 把欄位加回來也不會被存進去。 */}
+        {asksAlumniFields && (
+          <>
+            <Field
+              id={id("grad_year")}
+              name="grad_year"
+              /* type="text" + inputMode 而不是 type="number"：民國年與西元年都要
+                 收，而 number 欄位的上下鍵與滾輪在這種「兩種紀年」的欄位上只會
+                 讓人誤觸。 */
+              inputMode="numeric"
+              label={copy.fieldGradYear}
+              optionalLabel={copy.optional}
+              hint={copy.fieldGradYearHint}
+              error={fieldError(copy, state, "grad_year")}
+            />
 
-        <div className="event-field">
-          <label htmlFor={id("program")}>
-            {copy.fieldProgram}
-            <em>（{copy.optional}）</em>
-          </label>
-          <select id={id("program")} name="program" defaultValue="">
-            <option value="">—</option>
-            {PROGRAM_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </div>
+            <div className="event-field">
+              <label htmlFor={id("program")}>
+                {copy.fieldProgram}
+                <em>（{copy.optional}）</em>
+              </label>
+              <select id={id("program")} name="program" defaultValue="">
+                <option value="">—</option>
+                {PROGRAM_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </>
+        )}
 
         <div className="event-field">
           <label htmlFor={id("guests")}>{copy.fieldGuests}</label>

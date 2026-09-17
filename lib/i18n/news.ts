@@ -90,7 +90,18 @@ export const NEWS = {
   featureLink: { zh: "閱讀完整消息 →", en: "Read the full story →" },
 
   /**
-   * `#section-2`, the talks-only block. Its heading is deliberately not the
+   * `#section-2`, the 活動報名 block: general-audience events anyone can
+   * register for (alumni_events with audience = general). The heading repeats
+   * the eyebrow / local-nav label on purpose — see lib/i18n/eyebrows.ts.
+   */
+  eventsHeading: { zh: "活動報名", en: "Events" },
+  eventsDescription: {
+    zh: "系上開放報名的活動，歡迎有興趣的師生與社會大眾線上報名。",
+    en: "Departmental events open to all — students, staff and the public are welcome to register online.",
+  },
+
+  /**
+   * `#section-3`, the talks-only block. Its heading is deliberately not the
    * category label 「演講公告」 printed on each row a few centimetres below —
    * the same rule `sectionHeading` follows for `LATEST UPDATES`.
    */
@@ -168,31 +179,34 @@ export const NEWS = {
 } satisfies Record<string, Msg>;
 
 /**
- * `nav.local-nav` anchors, verbatim from the reference.
+ * `nav.local-nav` anchors.
  *
- * #section-2 (演講 / Talks) now has a real target: the talks were pulled out
- * into their own block at the client's request, and it took the id the anchor
- * was already pointing at.
+ * #section-2 is 活動報名 (general events, 2026-09-16) and #section-3 is
+ * 演講與研討會 — the talks block moved down one id when the events block was
+ * inserted between the list and it. Both are conditional: the events block is
+ * absent when no general event is open, the talks block when there are no
+ * talks.
  *
- * #section-3 … #section-5 still have none — the page renders no 活動花絮 /
- * 招生 / 徵才 blocks. That is the reference site's own behaviour; don't "fix"
- * it by inventing sections.
+ * That is safe: LocalNav checks each href against the DOM and drops the ones
+ * with no target, so a reader never sees an item that cannot be reached or
+ * highlighted. (#section-4 / #section-5 from the reference site — 活動花絮 /
+ * 招生 / 徵才 — were never built and are not listed; the filter tabs cover
+ * those.)
  *
- * They are safe to leave in this list: LocalNav checks each href against the
- * DOM and drops the ones with no target, so a reader never sees an item that
- * cannot be reached or highlighted. Build those sections one day and the
- * matching entries come back on their own.
+ * 🔴 標籤必須與落點區塊的小標（lib/i18n/eyebrows.ts）一字不差 —— 見那個檔頭。
  */
 export const NEWS_LOCAL_NAV = [
   { href: "#section-1", label: { zh: "全部消息", en: "All news" } },
+  /* 與 EYEBROWS.eventsRegistration 一字不差。 */
+  { href: "#section-2", label: { zh: "活動報名", en: "Events" } },
   /*
-   * 「演講與研討會」而不是「演講」—— 與 §2 的大標一字不差。
+   * 「演講與研討會」而不是「演講」—— 與 §3 的小標一字不差。
    *
    * 兩個字的灰色連結，擺在四個字的「全部消息」旁邊，在整條 bar 上幾乎看不見
    * （2026-09 客戶回報「容易忽略」）。字級已經從 13px 提到 15px，但兩個字就是
-   * 兩個字：這一排只有兩項，橫向空間多得是，沒有理由把它縮寫。
+   * 兩個字：這一排只有三項，橫向空間多得是，沒有理由把它縮寫。
    */
-  { href: "#section-2", label: { zh: "演講與研討會", en: "Talks and seminars" } },
+  { href: "#section-3", label: { zh: "演講與研討會", en: "Talks and seminars" } },
   // #section-3…#section-5 (活動花絮 / 招生 / 徵才) used to sit here, inherited
   // from the reference site, which named three blocks it never built. LocalNav
   // dropped them at runtime because their targets do not exist, so they were

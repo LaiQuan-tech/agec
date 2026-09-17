@@ -105,6 +105,8 @@ export const EYEBROWS = {
 
   /* --- /news ------------------------------------------------------------ */
   latestUpdates: { zh: "全部消息", en: "ALL NEWS" },
+  /** 一般活動的報名區。值＝NEWS_LOCAL_NAV 的標籤，見檔頭的規則。 */
+  eventsRegistration: { zh: "活動報名", en: "EVENTS" },
   talksSeminars: { zh: "演講與研討會", en: "TALKS AND SEMINARS" },
 
   /* --- /students -------------------------------------------------------- */

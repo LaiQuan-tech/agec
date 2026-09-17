@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { NewsItem, NewsPage, NewsYear } from "@/lib/data";
+import type { AlumniEvent } from "@/lib/alumni-events";
 import { localizePath, translate, type Lang } from "@/lib/i18n";
 import {
   NEWS,
@@ -19,22 +20,28 @@ import { NewsYearNav } from "./NewsYearNav";
 import { NextRoute } from "./NextRoute";
 import { Pagination } from "./Pagination";
 import { TalkList } from "./TalkList";
+import { EventList } from "./EventList";
 import { formatNewsDate } from "./format";
 
 /**
  * 最新消息 (/news, /en/news) — route 02 / 08.
  *
- * Two `.inner-section`s. `#section-1` is the reference site's whole page:
+ * Three `.inner-section`s. `#section-1` is the reference site's whole page:
  * hero + local nav + section title (A-class static copy, in lib/i18n/news.ts),
  * then one B-class block reading getNewsPage() — `article.inner-news-feature` for
  * the first row and `.inner-news-list` for the rest — wrapped by two C-class
  * controls that are cosmetic on the reference site (see the comments below).
  *
- * `#section-2` is an addition: 演講公告 rows were pulled out of that list into
- * their own block at the client's request. It takes the id the local nav's
- * 演講 / Talks anchor was already pointing at (the reference left it dead), and
+ * `#section-2` 活動報名 is an addition (2026-09-16): general-audience events
+ * from `alumni_events` (audience = general), listed with the same `.event-list`
+ * rows /alumni uses for 系友回娘家. Rendered only on the unfiltered first page
+ * and only while there is at least one event that has not ended — no empty
+ * "no events" box on a page that is otherwise about announcements.
+ *
+ * `#section-3` (formerly `#section-2`) is the other addition: 演講公告 rows were
+ * pulled out of that list into their own block at the client's request, and it
  * disappears entirely when there are no talks rather than rendering an empty
- * container.
+ * container. LocalNav drops the anchor of whichever section is absent.
  */
 
 /**
@@ -61,6 +68,7 @@ export function News({
   newsPage,
   talks,
   talkCount,
+  events,
   category,
   year,
   years,
@@ -72,6 +80,11 @@ export function News({
   talks: NewsItem[];
   /** How many talks exist in total, for the link to the archive. */
   talkCount: number;
+  /**
+   * 還沒結束的一般活動（audience = general），近的在前。只有未篩選的第 1 頁
+   * 會拿到非空陣列；空陣列時 `#section-2` 整個不印。
+   */
+  events: AlumniEvent[];
   /**
    * The `news.category` this page is filtered to, or undefined for /news.
    * Drives the heading, the active tab and every link on the page.
@@ -261,16 +274,40 @@ export function News({
           </div>
         </section>
 
+        {/* 活動報名：一般活動（audience = general）的清單，任何人都能報名。
+            只在未篩選的第 1 頁、而且有還沒結束的活動時才印 —— `events` 在其他
+            情況下是空陣列（pages.tsx 根本不查），所以這裡只看長度。沒有活動時
+            整區不印，LocalNav 會自己丟掉 #section-2 那一項。
+            不加 `.tint`：下面的演講區是 tint，兩個 tint 疊在一起會糊成一塊。 */}
+        {events.length > 0 ? (
+          <section className="inner-section" id="section-2">
+            <div className="container">
+              <SectionTitle
+                no="02"
+                eyebrow={eb.eventsRegistration}
+                heading={t.eventsHeading}
+                description={t.eventsDescription}
+              />
+              {/* 與 /alumni#section-events 同一個元件、同一組 `.event-list`
+                  樣式；連結由每一列自己的 audience 決定去 /news/events/。 */}
+              <EventList lang={lang} events={events} />
+            </div>
+          </section>
+        ) : null}
+
         {/* Page 1 only. Repeating the block under page 2's list would show
             the same items again and put one panel at two URLs. LocalNav drops
             its 演講 anchor by itself when the section is absent. */}
         {/* ⚠️ 條件裡刻意沒有 category：點分類籤時這一區不該消失。
             見 components/site/pages.tsx 裡對應的查詢說明。 */}
         {page === 1 && talks.length > 0 ? (
-          <section className="inner-section tint" id="section-2">
+          <section className="inner-section tint" id="section-3">
             <div className="container">
               <SectionTitle
-                no="02"
+                /* 編號跟著頁面上實際印出的區塊走：活動報名區不印時，這一區是
+                   頁面上的第二區，印「03」會讓讀者去找不存在的 02。id 不跟著
+                   變 —— 錨點是 LocalNav 與外部連結認的東西，要穩定。 */
+                no={events.length > 0 ? "03" : "02"}
                 eyebrow={eb.talksSeminars}
                 heading={t.talksHeading}
                 description={t.talksDescription}

@@ -1,5 +1,5 @@
 import { createServerClient } from "@/lib/supabase/server";
-import type { AlumniEvent } from "@/lib/alumni-events";
+import type { AlumniEvent, EventAudience } from "@/lib/alumni-events";
 import { TALKS_CATEGORY } from "@/lib/news-categories";
 import { pick, pickNullable, type Lang } from "@/lib/i18n";
 import type { AdmissionsPostRef } from "@/lib/admissions-kinds";
@@ -1317,21 +1317,28 @@ export async function getNewsIds(): Promise<number[]> {
 }
 
 /* ===========================================================================
- * 系友活動 alumni_events
+ * 活動 alumni_events（系友活動＋一般活動，以 `audience` 分）
  *
  * ⚠️ 這裡只讀 `alumni_events`，永遠不讀 `alumni_event_registrations`。
  * 報名紀錄是個資，只有後台（lib/admin/events.ts）碰得到；把它的查詢放進這個
  * 檔案，等於讓任何公開頁面隨手就能 import 到。
+ *
+ * ⚠️ 表名沒有改：一般活動也住在 `alumni_events` 裡（見 lib/alumni-events.ts
+ * 檔頭）。列表查詢一律帶 `audience`，否則 /alumni 會列出一般活動、/news 會
+ * 列出系友活動。
  * ========================================================================= */
 
+// 🔴 `audience` 在 migration 20260917100000 才加。欄位不存在時整個 select 會
+//    失敗、活動區與活動頁全部空掉 —— 那支 migration 必須先跑再推這份程式碼。
 const ALUMNI_EVENT_COLUMNS =
-  "id, slug, title, title_en, summary, summary_en, body, body_en, starts_at, " +
+  "id, slug, audience, title, title_en, summary, summary_en, body, body_en, starts_at, " +
   "ends_at, location, location_en, address, capacity, seats_taken, " +
   "registration_closes_at, cover_url, contact, status";
 
 type AlumniEventRow = {
   id: number;
   slug: string;
+  audience: string;
   title: string;
   title_en: string | null;
   summary: string | null;
@@ -1355,6 +1362,8 @@ function toAlumniEvent(row: AlumniEventRow, lang: Lang): AlumniEvent {
   return {
     id: row.id,
     slug: row.slug,
+    // 資料庫有 CHECK 限制只會是這兩個值；這裡的退回是給型別看的，不是防禦。
+    audience: row.audience === "general" ? "general" : "alumni",
     title: pick(row.title, row.title_en, lang),
     summary: pickNullable(row.summary, row.summary_en, lang),
     body: pickNullable(row.body, row.body_en, lang),
@@ -1386,19 +1395,25 @@ const PUBLIC_EVENT_STATUSES = ["published", "cancelled"];
 /**
  * 前台的活動清單，近的在前。
  *
+ * `audience` 預設 `alumni`：/alumni 是這支最早的呼叫端，預設值讓它在加了
+ * 一般活動之後一個字都不會變。/news 的「活動報名」區塊明傳 `general`。
+ * ⚠️ 沒有「兩種都要」的選項 —— 兩種活動的活動頁網址前綴不同，混在同一份
+ * 清單裡印，連結就得逐列判斷；目前沒有任何一頁需要那樣的清單。
+ *
  * `includePast = false` 時只回還沒結束的：以 `ends_at`（沒填就用 `starts_at`）
  * 為準而不是 `starts_at` —— 一場 10:00–16:00 的回娘家，下午兩點還在進行中，
  * 那時候最需要它留在頁面上。
  */
 export async function getAlumniEvents(
   lang: Lang,
-  options: { includePast?: boolean; limit?: number } = {}
+  options: { audience?: EventAudience; includePast?: boolean; limit?: number } = {}
 ): Promise<AlumniEvent[]> {
   const supabase = createServerClient();
 
   let query = supabase
     .from("alumni_events")
     .select(ALUMNI_EVENT_COLUMNS)
+    .eq("audience", options.audience ?? "alumni")
     .in("status", PUBLIC_EVENT_STATUSES);
 
   if (!options.includePast) {
@@ -1429,6 +1444,14 @@ export async function getAlumniEvents(
   return options.limit ? visible.slice(0, options.limit) : visible;
 }
 
+/**
+ * 依 slug 取一場活動，不分對象。
+ *
+ * ⚠️ 刻意不帶 `audience` 參數：slug 全表唯一，用它找到的就是那一場。
+ * 「這場活動該不該出現在這個網址」由呼叫端（components/site/pages.tsx 的
+ * `EventRoute`）比對回傳的 `audience` 決定 —— 對不上就 404，讓一場活動只有
+ * 一個正確網址。
+ */
 export async function getAlumniEventBySlug(
   slug: string,
   lang: Lang
@@ -1449,13 +1472,18 @@ export async function getAlumniEventBySlug(
   return data ? toAlumniEvent(data, lang) : null;
 }
 
-/** generateStaticParams 用。草稿不會出現在這裡，所以不會被預產成靜態頁。 */
-export async function getAlumniEventSlugs(): Promise<string[]> {
+/**
+ * generateStaticParams 與 sitemap 用。草稿不會出現在這裡，所以不會被預產成
+ * 靜態頁。依對象分開回：/alumni/events/[slug] 只預產系友活動、
+ * /news/events/[slug] 只預產一般活動，否則 build 時會先產出一批 404 頁。
+ */
+export async function getAlumniEventSlugs(audience: EventAudience): Promise<string[]> {
   const supabase = createServerClient();
 
   const { data, error } = await supabase
     .from("alumni_events")
     .select("slug")
+    .eq("audience", audience)
     .in("status", PUBLIC_EVENT_STATUSES)
     .returns<{ slug: string }[]>();
 

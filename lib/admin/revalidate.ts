@@ -32,8 +32,10 @@ const AFFECTED_ROUTES = {
   // is the failure this file exists to prevent: the office saves a link, the
   // page keeps serving its ISR copy, and they save again.
   links: ["/students", "/admissions"],
-  // 系友活動：列表在 /alumni，詳情頁在下面用動態路徑一併處理。
-  events: ["/alumni"],
+  // 活動：系友活動列在 /alumni、一般活動列在 /news 的活動報名區。一次存檔不
+  // 知道它改前改後各是哪一種對象（對象可以改），兩頁一起重新驗證；詳情頁在
+  // 下面用動態路徑一併處理。
+  events: ["/alumni", "/news"],
   // 核心能力膠囊只出現在 /admissions §3。
   capabilities: ["/admissions"],
   // 檔案下載卡。documents.section 決定每一筆落在哪一頁，但一次存檔只知道
@@ -142,11 +144,17 @@ export function revalidateFor(entity: RevalidateEntity, ...slugs: (string | null
   if (entity === "events") {
     // 活動詳情頁。slugs 帶舊值與新值兩個 —— 改了 slug 而只重新驗證新的，
     // 舊網址會繼續供應快取內容。
-    revalidatePath("/alumni/events/[slug]", "page");
-    revalidatePath(`${EN_PREFIX}/alumni/events/[slug]`, "page");
-    for (const slug of slugs) {
-      if (!slug) continue;
-      for (const path of bothLanguages(`/alumni/events/${slug}`)) revalidatePath(path);
+    //
+    // 兩個前綴都打：一場活動只住在其中一個底下（依 audience），但存檔時
+    // 不知道對象有沒有被改過 —— 從系友活動改成一般活動，舊的
+    // /alumni/events/<slug> 必須變成 404，而不是繼續供應快取的那一頁。
+    for (const base of ["/alumni/events", "/news/events"]) {
+      revalidatePath(`${base}/[slug]`, "page");
+      revalidatePath(`${EN_PREFIX}${base}/[slug]`, "page");
+      for (const slug of slugs) {
+        if (!slug) continue;
+        for (const path of bothLanguages(`${base}/${slug}`)) revalidatePath(path);
+      }
     }
   }
 

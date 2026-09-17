@@ -4,14 +4,24 @@ import { revalidatePath } from "next/cache";
 import { EN_PREFIX } from "@/lib/i18n";
 import { createServerClient } from "@/lib/supabase/server";
 import {
+  eventBasePath,
+  eventParentPath,
   MAX_GUESTS,
   PROGRAM_OPTIONS,
   toGregorianYear,
+  type EventAudience,
   type RegistrationState,
 } from "@/lib/alumni-events";
 
 /**
- * 前台報名的 Server Action。
+ * 前台報名的 Server Action（系友活動與一般活動共用，住在 /alumni/events/
+ * 底下只是歷史因素 —— /news/events/[slug] 的表單也打這一支）。
+ *
+ * ## 對象怎麼決定
+ *
+ * 先用 slug 查一次活動的 `audience`，**不看表單有沒有送畢業年度／學制**：
+ * 這是公開端點，任何人都能改 HTML 再送。一般活動一律把 grad_year 與 program
+ * 存 null；系友活動照舊驗證。多一次 select 的代價是一次索引查詢。
  *
  * ## 這是一個公開的寫入端點
  *
@@ -85,6 +95,26 @@ export async function registerForEvent(
     return { ok: false, messageKey: "errorUnknown" };
   }
 
+  /*
+   * 這場活動的對象。一次 select，只拿一欄。
+   *
+   * 找不到就直接回「找不到這場活動」—— 與 RPC 的 EVENT_NOT_FOUND 同一句。
+   * 不篩 status：草稿也能查到對象，但草稿會在 RPC 那一層被 EVENT_NOT_OPEN
+   * 擋下來，這裡不必重複判斷（判準只能有一份，見檔頭的三層防線）。
+   */
+  const supabase = createServerClient();
+  const { data: eventRow, error: lookupError } = await supabase
+    .from("alumni_events")
+    .select("audience")
+    .eq("slug", slug)
+    .maybeSingle<{ audience: string }>();
+  if (lookupError) {
+    console.error("[alumni/events] 查活動對象失敗:", lookupError.code, lookupError.message);
+    return { ok: false, messageKey: "errorUnknown" };
+  }
+  if (!eventRow) return { ok: false, messageKey: "errorNotFound" };
+  const audience: EventAudience = eventRow.audience === "general" ? "general" : "alumni";
+
   const name = trimmed(form, "name");
   const email = trimmed(form, "email").toLowerCase();
   const phone = trimmed(form, "phone");
@@ -113,9 +143,12 @@ export async function registerForEvent(
    *
    * 下界 1930 不是隨便訂的：本系 1919 年設科，最早的系友不會早於 1930 年代
    * 畢業。上界是明年，因為應屆畢業生在畢業前就會來報名。
+   *
+   * ⚠️ 只有系友活動看這一欄。一般活動的表單沒有印它，就算有人把欄位加回來
+   * 送過來也直接略過（存 null），不驗證也不報錯 —— 對一般活動來說它不存在。
    */
   let gradYear: number | null = null;
-  if (gradYearRaw) {
+  if (audience === "alumni" && gradYearRaw) {
     const parsed = Number(gradYearRaw);
     if (!Number.isInteger(parsed) || parsed <= 0) {
       fieldErrors.grad_year = FIELD_ERROR_KEYS.gradYear;
@@ -144,18 +177,19 @@ export async function registerForEvent(
     return { ok: false, messageKey: "errorRequired", fieldErrors };
   }
 
-  const supabase = createServerClient();
   const { data, error } = await supabase.rpc("register_for_alumni_event", {
     p_slug: slug,
     p_name: name,
     p_email: email,
     p_phone: phone || null,
+    // 一般活動：上面沒有解析，這裡就是 null。
     p_grad_year: gradYear,
     // 列舉外的值一律存 null，不存原字串：這一欄後台會拿來分組，放進一個沒人
-    // 預期的值等於在報表上開一個看不見的洞。
-    p_program: (PROGRAM_OPTIONS as readonly string[]).includes(program)
-      ? program
-      : null,
+    // 預期的值等於在報表上開一個看不見的洞。一般活動不收學制，一律 null。
+    p_program:
+      audience === "alumni" && (PROGRAM_OPTIONS as readonly string[]).includes(program)
+        ? program
+        : null,
     p_guests: guests,
     p_dietary: dietary || null,
     p_note: note || null,
@@ -182,17 +216,19 @@ export async function registerForEvent(
   }
 
   /*
-   * 名額變了，讓兩種語言的活動頁與 /alumni 重新產生。
+   * 名額變了，讓兩種語言的活動頁與它住的那一頁（/alumni 或 /news）重新產生。
    *
    * 不用 lib/admin/revalidate.ts 的 revalidateFor()：那一支是後台用的，
    * 而這裡是公開路徑 —— 讓公開端點能觸發整站的重新驗證，等於給任何人一個
-   * 讓伺服器重算所有頁面的按鈕。這裡只動這場活動自己的兩個網址與 /alumni。
+   * 讓伺服器重算所有頁面的按鈕。這裡只動這場活動自己的兩個網址與它的上層頁。
    */
+  const eventPath = `${eventBasePath(audience)}/${slug}`;
+  const parentPath = eventParentPath(audience);
   for (const path of [
-    `/alumni/events/${slug}`,
-    `${EN_PREFIX}/alumni/events/${slug}`,
-    "/alumni",
-    `${EN_PREFIX}/alumni`,
+    eventPath,
+    `${EN_PREFIX}${eventPath}`,
+    parentPath,
+    `${EN_PREFIX}${parentPath}`,
   ]) {
     revalidatePath(path);
   }

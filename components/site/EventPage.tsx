@@ -1,13 +1,15 @@
 import Link from "next/link";
 import {
   displayState,
+  eventParentPath,
   registrationDeadline,
   remainingSeats,
   type AlumniEvent,
 } from "@/lib/alumni-events";
 import { localizePath, translate, type Lang } from "@/lib/i18n";
 import { ALUMNI } from "@/lib/i18n/alumni";
-import { ALUMNI_EVENTS } from "@/lib/i18n/alumni-events";
+import { ALUMNI_EVENTS, eventCopy } from "@/lib/i18n/alumni-events";
+import { NEWS, NEWS_TITLE } from "@/lib/i18n/news";
 import { SHARED } from "@/lib/i18n/shared";
 import { SiteShell } from "./SiteShell";
 import { NextRoute } from "./NextRoute";
@@ -15,7 +17,14 @@ import { EventRegistrationForm } from "./EventRegistrationForm";
 import { formatEventRange, formatEventTime } from "./format";
 
 /**
- * 單一系友活動 (/alumni/events/[slug]).
+ * 單一活動頁 (/alumni/events/[slug] 與 /news/events/[slug])。
+ *
+ * 一個元件供兩種對象：版面、活動資訊、報名表單、狀態訊息完全相同，只有三樣
+ * 東西跟著 `event.audience` 走 —— 麵包屑第二層（系友專區／最新消息）、
+ * eyebrow、頁尾的返回連結。這三樣由 `eventParentPath()` 與 `eventCopy()`
+ * 決定，不是由路由檔傳進來：路由檔已經在 audience 對不上時 404 了
+ * （components/site/pages.tsx 的 `EventRoute`），所以進到這裡的活動一定住在
+ * 正確的網址底下。
  *
  * 沿用 /news/[id] 的 `.post-*` 版型而不是自己另做一套：形狀完全相同
  * （麵包屑、日期、標題、前言、封面、內文、返回），而且那一套已經有 760px 的
@@ -30,7 +39,7 @@ import { formatEventRange, formatEventTime } from "./format";
  * 這一頁算出來的 displayState 只決定畫面上顯示什麼 —— 靜態頁的名額必然可能
  * 落後，兩邊各判一次才是真正的問題（見 lib/alumni-events.ts 檔頭）。
  */
-export function AlumniEventPage({
+export function EventPage({
   lang,
   event,
 }: {
@@ -38,9 +47,17 @@ export function AlumniEventPage({
   event: AlumniEvent;
 }) {
   const t = translate(ALUMNI_EVENTS, lang);
+  const copy = eventCopy(event.audience, lang);
   const shared = translate(SHARED, lang);
-  const alumni = translate(ALUMNI, lang);
-  const alumniPath = localizePath("/alumni", lang);
+  const parentPath = localizePath(eventParentPath(event.audience), lang);
+  // 麵包屑第二層與 eyebrow：系友活動印「系友專區」、一般活動印「最新消息」——
+  // 與那兩頁自己的頁名同一個來源（ALUMNI.title / NEWS_TITLE），不另外抄一份。
+  const parentLabel =
+    event.audience === "general"
+      ? translate(NEWS, lang).breadcrumbList
+      : t.breadcrumbAlumni;
+  const eyebrow =
+    event.audience === "general" ? NEWS_TITLE[lang] : translate(ALUMNI, lang).title;
 
   // 一次算好，整頁共用。⚠️ 這是 Server Component，所以 new Date() 只會在
   // 伺服器上跑一次，不會在 hydration 時被重算成瀏覽器的時間。
@@ -55,11 +72,11 @@ export function AlumniEventPage({
           <div className="breadcrumb">
             <Link href={localizePath("/", lang)}>{shared.home}</Link>
             <span>/</span>
-            <Link href={alumniPath}>{t.breadcrumbAlumni}</Link>
+            <Link href={parentPath}>{parentLabel}</Link>
             <span>/</span>
             <span>{event.title}</span>
           </div>
-          <p className="eyebrow">{alumni.title}</p>
+          <p className="eyebrow">{eyebrow}</p>
           <h1>{event.title}</h1>
           {event.summary ? <p className="post-standfirst">{event.summary}</p> : null}
 
@@ -136,6 +153,7 @@ export function AlumniEventPage({
               <EventRegistrationForm
                 lang={lang}
                 slug={event.slug}
+                audience={event.audience}
                 contact={event.contact}
               />
             </section>
@@ -151,14 +169,14 @@ export function AlumniEventPage({
                     ? t.stateFull
                     : t.stateClosed}
               </strong>
-              {state === "cancelled" && <> {t.stateCancelledNote}</>}
+              {state === "cancelled" && <> {copy.stateCancelledNote}</>}
               {state === "full" && <> {t.stateFullNote}</>}
             </p>
           )}
         </div>
 
         <div className="container post-foot">
-          <Link href={alumniPath}>{t.backToAlumni}</Link>
+          <Link href={parentPath}>{copy.backToParent}</Link>
         </div>
       </article>
       <NextRoute lang={lang} />

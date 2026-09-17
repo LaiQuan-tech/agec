@@ -26,8 +26,9 @@ import { ALUMNI } from "@/lib/i18n/alumni";
  * ## 供應多頁的模組
  *
  * programs 供應首頁、招生資訊、課程資訊；links 與 documents 各供應兩頁；news
- * 供應首頁、最新消息、各學制招生頁。它們在每一頁底下各出現一次，links /
- * documents 帶 `?section=`、news 帶 `?category=`，讓列表先篩好那一頁的資料。
+ * 供應首頁、最新消息、各學制招生頁；events 供應最新消息（一般活動）與系友專區
+ * （系友活動）。它們在每一頁底下各出現一次，links / documents 帶 `?section=`、
+ * news 帶 `?category=`、events 帶 `?audience=`，讓列表先篩好那一頁的資料。
  *
  * ## 側欄永遠只亮一個
  *
@@ -111,6 +112,15 @@ export const ADMIN_SITE_MAP: AdminPage[] = [
         href: "/admin/news",
         publicHref: "/news",
         primary: true,
+      },
+      {
+        // 與 NEWS_LOCAL_NAV / EYEBROWS.eventsRegistration 同一個字。
+        label: "活動報名",
+        // 一般活動（alumni_events.audience = general）。同一個模組另一個入口在
+        // 系友專區底下（?audience=alumni，primary）。
+        href: "/admin/events?audience=general",
+        publicHref: "/news#section-2",
+        note: "對象選「一般活動」；任何人都能報名，報名表不收畢業年度與學制。沒有開放中的一般活動時，前台整區不印",
       },
     ],
   },
@@ -220,8 +230,12 @@ export const ADMIN_SITE_MAP: AdminPage[] = [
     blocks: [
       {
         label: section(ALUMNI.nav.items, "#section-events"),
-        href: "/admin/events",
+        // 系友活動（alumni_events.audience = alumni）。活動模組現在供應兩頁
+        // （另一個入口是「最新消息 › 活動報名」），所以這裡要標 primary。
+        href: "/admin/events?audience=alumni",
         publicHref: "/alumni#section-events",
+        note: "對象選「系友活動」；報名表會收畢業年度與學制",
+        primary: true,
       },
     ],
   },

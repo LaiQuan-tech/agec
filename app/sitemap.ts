@@ -1,6 +1,13 @@
 import type { MetadataRoute } from "next";
 import { LANGS, localizePath } from "@/lib/i18n";
-import { getProgramsWithRequirements, getFacultyPageIds, getNewsIds, getNewsYears } from "@/lib/data";
+import {
+  getAlumniEventSlugs,
+  getFacultyPageIds,
+  getNewsIds,
+  getNewsYears,
+  getProgramsWithRequirements,
+} from "@/lib/data";
+import { eventBasePath } from "@/lib/alumni-events";
 import { NEWS_CATEGORIES } from "@/lib/news-categories";
 import { PROGRAM_SLUG_LIST, slugForProgram } from "@/lib/program-slugs";
 import { SITE_ORIGIN } from "@/lib/site-routes";
@@ -29,7 +36,7 @@ const ROUTES = [
 
 /**
  * Both language versions of every public route — the eight in lib/nav.ts, plus
- * one entry per news item — each carrying
+ * one entry per news item and per event page — each carrying
  * the `alternates.languages` block so a crawler that finds one version knows
  * the other exists. /admin and /login are omitted deliberately.
  *
@@ -41,13 +48,22 @@ const ROUTES = [
  * getNewsIds, so this never advertises a URL that would 404.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [newsIds, years, facultyIds, programNames] = await Promise.all([
-    getNewsIds(),
-    getNewsYears(),
-    getFacultyPageIds(),
-    getProgramsWithRequirements(),
-  ]);
+  const [newsIds, years, facultyIds, programNames, alumniEventSlugs, generalEventSlugs] =
+    await Promise.all([
+      getNewsIds(),
+      getNewsYears(),
+      getFacultyPageIds(),
+      getProgramsWithRequirements(),
+      // 活動單頁，兩種對象各自的前綴。getAlumniEventSlugs 只回已上架與已取消
+      // 的（草稿不列），而且依對象分開，所以這裡不會列出會 404 的網址。
+      getAlumniEventSlugs("alumni"),
+      getAlumniEventSlugs("general"),
+    ]);
   const articles = newsIds.map((id) => `/news/${id}`);
+  const events = [
+    ...alumniEventSlugs.map((slug) => `${eventBasePath("alumni")}/${slug}`),
+    ...generalEventSlugs.map((slug) => `${eventBasePath("general")}/${slug}`),
+  ];
   // 師資的站內個人頁：行政同仁以外每一位都有（getFacultyPageIds 與
   // getFacultyById 同一個條件），所以這裡列的就是全部，不會出現會 404 的網址。
   const profiles = facultyIds.map((id) => `/faculty/${id}`);
@@ -78,6 +94,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...admissions,
     ...profiles,
     ...articles,
+    ...events,
   ].flatMap((route) =>
     LANGS.map((lang) => ({
       url: `${SITE_ORIGIN}${localizePath(route, lang)}`,

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AlumniEventRoute } from "@/components/site/pages";
+import { EventRoute } from "@/components/site/pages";
 import { getAlumniEventBySlug, getAlumniEventSlugs } from "@/lib/data";
 import { articleMetadata } from "@/lib/site-routes";
 
@@ -16,11 +16,12 @@ export const revalidate = 60;
 /**
  * `dynamicParams = true`：後台上架一場新活動之後，它的頁面要立刻能開，
  * 不能等到下一次部署。generateStaticParams 只回已上架的，草稿不會被預產。
+ * 只預產系友活動：一般活動住在 /news/events/[slug]，在這裡會是 404。
  */
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
-  return (await getAlumniEventSlugs()).map((slug) => ({ slug }));
+  return (await getAlumniEventSlugs("alumni")).map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({
@@ -30,7 +31,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const event = await getAlumniEventBySlug(slug, "en");
-  if (!event) return { title: "Alumni event" };
+  // 一般活動不住在這個網址（頁面本身會 404），metadata 也照 404 的樣子給。
+  if (!event || event.audience !== "alumni") return { title: "Alumni event" };
   return articleMetadata(`/alumni/events/${slug}`, "en", {
     title: event.title,
     excerpt: event.summary,
@@ -38,12 +40,12 @@ export async function generateMetadata({
   });
 }
 
-/** 單一系友活動 */
+/** 單一系友活動。audience 對不上（一般活動）時 EventRoute 會 404。 */
 export default async function Page({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  return <AlumniEventRoute lang={"en"} slug={slug} />;
+  return <EventRoute lang={"en"} slug={slug} audience="alumni" />;
 }

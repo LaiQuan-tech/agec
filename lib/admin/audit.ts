@@ -20,8 +20,9 @@ export const ENTITY_LABEL: Record<string, string> = {
   courses: "課程",
   programs: "招生學制",
   links: "連結卡片",
-  alumni_events: "系友活動",
-  alumni_event_registrations: "系友報名",
+  // 表名沒改（一般活動也住在這兩張表裡，見 lib/alumni-events.ts 檔頭）。
+  alumni_events: "活動",
+  alumni_event_registrations: "活動報名",
   admin_users: "後台人員",
 };
 

@@ -68,9 +68,10 @@ export function LocalNav({
    * the effect below narrow it. Same shape as SiteHeader's scroll state, which
    * likewise cannot know `scrollY` before hydration.
    *
-   * This matters on /news: three of its five anchors are the reference site's
-   * own dead links (#section-3…#section-5 name blocks the page never had), and
-   * #section-2 only exists when there is at least one talk to put in it. Once
+   * This matters on /news: #section-2（活動報名）only exists when there is at
+   * least one general event open, and #section-3（演講）only when there is at
+   * least one talk; the reference site's remaining anchors name blocks the page
+   * never had. Once
    * the rest of the bar highlights, an item that can neither be reached nor lit
    * reads as broken, so those are dropped rather than shown inert.
    */

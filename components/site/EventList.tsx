@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   displayState,
+  eventBasePath,
   remainingSeats,
   type AlumniEvent,
 } from "@/lib/alumni-events";
@@ -9,7 +10,11 @@ import { ALUMNI_EVENTS } from "@/lib/i18n/alumni-events";
 import { formatEventRange } from "./format";
 
 /**
- * /alumni 上的活動列表。
+ * 活動列表。/alumni#section-events 列系友活動，/news#section-2 列一般活動，
+ * 同一個元件 —— 兩種活動要回答的問題一樣：什麼時候、在哪裡、還有沒有位子、
+ * 怎麼報名。差別只有連結去哪裡，由每一列自己的 `audience` 決定
+ * （`eventBasePath()`），不是由呼叫端傳前綴：呼叫端傳錯一次，整份清單就
+ * 全連到 404。
  *
  * 版型參考快樂手的 `session-row.tsx`（日期方塊｜標題與地點｜名額｜CTA），
  * 那是這次唯一值得照抄的視覺件：一行就把「什麼時候、在哪裡、還有沒有位子、
@@ -20,18 +25,25 @@ import { formatEventRange } from "./format";
  * 已經記過這件事：現在只有兩則的話那一列會缺一角。活動的數量是 0 到 N，
  * 固定格數在這裡一定會壞。
  */
-export function AlumniEventList({
+export function EventList({
   lang,
   events,
+  emptyMessage,
 }: {
   lang: Lang;
   events: AlumniEvent[];
+  /**
+   * 空清單時印的那一句。/alumni 的活動區永遠會印（有沒有活動都在），所以要
+   * 一句說明；/news 的活動報名區在沒有活動時整區不印，用不到這一句。
+   * 不傳時什麼都不印。
+   */
+  emptyMessage?: string;
 }) {
   const t = translate(ALUMNI_EVENTS, lang);
 
   if (events.length === 0) {
     // 一句話，不是一個空框。系辦上架第一場活動之前，這一區會維持這個樣子。
-    return <p className="news-empty">{t.sectionEmpty}</p>;
+    return emptyMessage ? <p className="news-empty">{emptyMessage}</p> : null;
   }
 
   // 一次算好給整份清單用。⚠️ Server Component：new Date() 只在伺服器跑一次。
@@ -43,6 +55,7 @@ export function AlumniEventList({
         const state = displayState(event, now);
         const remaining = remainingSeats(event);
         const [y, m, d] = event.startsAt.slice(0, 10).split("-");
+        const href = localizePath(`${eventBasePath(event.audience)}/${event.slug}`, lang);
 
         return (
           <li key={event.id} className="event-row">
@@ -57,9 +70,7 @@ export function AlumniEventList({
 
             <div className="event-row-main">
               <h3>
-                <Link href={localizePath(`/alumni/events/${event.slug}`, lang)}>
-                  {event.title}
-                </Link>
+                <Link href={href}>{event.title}</Link>
               </h3>
               <p className="event-row-when">
                 <time dateTime={event.startsAt}>
@@ -94,7 +105,7 @@ export function AlumniEventList({
             <div className="event-row-cta">
               <Link
                 className="text-action"
-                href={localizePath(`/alumni/events/${event.slug}`, lang)}
+                href={href}
                 // 一頁上有好幾個「查看詳情與報名」，讀屏使用者逐一跳連結時
                 // 需要知道每一個各自通往哪一場。
                 aria-label={`${event.title}：${t.cardCta}`}
