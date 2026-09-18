@@ -24,7 +24,11 @@ import { SITE_ORIGIN } from "@/lib/site-routes";
  * lib/admin/revalidate.ts 存檔時會對 /sitemap.xml 打 revalidatePath，正常情況
  * 是即時更新；這個 300 秒與公開頁相同，是那條路徑失效時的兜底。
  */
-export const revalidate = 300;
+// 🔴 不用 `revalidate = 300`：正式站實測（2026-09-19）Vercel 把 metadata route 的
+//    ISR 當靜態檔——20 分鐘內 etag 不變、x-vercel-cache 永遠 HIT、age 一路增加，
+//    同一時段 /news 這種 ISR 頁 300 秒就 STALE 重生。改成每次請求都算：三四個
+//    只取 id／slug 的查詢，爬蟲一天打幾次而已。
+export const dynamic = "force-dynamic";
 
 const ROUTES = [
   "/",

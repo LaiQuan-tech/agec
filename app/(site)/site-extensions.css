@@ -713,6 +713,10 @@
   /* 9px → 12px */
   .route-number {
     font-size: 12px;
+    /* 英文頁標題長（"Faculty & Staff"、"News"）時 flex 會把它擠成 14px 寬的直條
+       貼在右緣（/en/news、/en/faculty @375）：計數器永遠一行、不縮。 */
+    white-space: nowrap;
+    flex: 0 0 auto;
   }
 
 }

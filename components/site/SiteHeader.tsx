@@ -131,8 +131,17 @@ export function SiteHeader({
     /* 不能在 effect 裡直接 focus()：.menu-overlay 的 visibility 有 .35s 的
        transition，過渡起點那一格的計算值仍是 hidden，focus() 會被靜默忽略
        （headless 實測 activeElement 停在 body）。等兩個 frame 讓過渡真的開始。 */
-    let focusFrame = requestAnimationFrame(() => {
-      focusFrame = requestAnimationFrame(() => closeButtonRef.current?.focus());
+    /* prefers-reduced-motion 下 site.css 把 transition 縮成 .01ms，子元素對繼承的
+       visibility 各自再跑一段，第 2 個 frame 關閉鈕仍是 hidden、focus() 一樣被忽略
+       （正式站實測要到第 4 個 frame）。所以不猜幾個 frame：每個 frame 試一次，
+       直到 activeElement 真的是關閉鈕，最多 20 個 frame（約 1/3 秒）就放棄。 */
+    let tries = 0;
+    let focusFrame = requestAnimationFrame(function attempt() {
+      const button = closeButtonRef.current;
+      if (!button) return;
+      button.focus();
+      if (document.activeElement === button || ++tries >= 20) return;
+      focusFrame = requestAnimationFrame(attempt);
     });
 
     const onKeyDown = (event: KeyboardEvent) => {

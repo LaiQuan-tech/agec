@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { FacultyProfile } from "@/components/site/FacultyProfile";
 import { getFacultyPageIds, getFacultyById } from "@/lib/data";
 import { articleMetadata } from "@/lib/site-routes";
+import { namePair } from "@/lib/i18n/faculty";
 
 export const revalidate = 300;
 
@@ -30,7 +31,8 @@ export async function generateMetadata({
   // 與 /news/[id]、/alumni/events/[slug] 共用同一支：標題、摘要、封面。
   // 摘要用職稱加領域 —— 那是搜尋結果裡最能分辨兩位老師的一行。
   return articleMetadata(`/faculty/${id}`, "en", {
-    title: member.name,
+    // 與 h1 同一個規則：有英文名用英文名（namePair），不然退回中文。
+    title: namePair(member, "en").heading,
     excerpt: [member.title, member.fields].filter(Boolean).join(" · "),
     cover_url: member.photo_url,
   });

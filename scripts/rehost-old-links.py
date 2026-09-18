@@ -8,7 +8,8 @@
 為什麼還會有：2026-08-31 搬消息時，附件與封面走的是舊站的公告附件系統
 （/xhr/announcements/file/…），但少數幾則的內文與封面直接寫了 /uploads/… 的
 相對路徑（在新站等於 404、破圖），上線前測試（http-4／static-4／static-5）抓到
-7 處。舊站網域一旦切到新站，這些連結全斷，所以要把檔案搬過來。
+7 處；第二輪又抓到大學部修業規定的 4 張課程圖與 /xhr/announcements/file/ 的附件。
+舊站網域一旦切到新站，這些連結全斷，所以要把檔案搬過來。
 
 規則（與 scripts/import-forms.py 相同）：
 - 抓舊站要用 Chrome UA（Cloudflare 擋非瀏覽器 UA）；每個請求都有逾時。
@@ -34,7 +35,9 @@ MIME = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".gif"
         ".xls": "application/vnd.ms-excel", ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         ".odt": "application/vnd.oasis.opendocument.text", ".zip": "application/zip"}
 IMAGE_EXT = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
-UPLOAD_RE = re.compile(r'(href|src)="((?:https?://www\.agec\.ntu\.edu\.tw)?/uploads/[^"]+)"')
+# 兩種舊站檔案路徑：/uploads/<...>/<id>/<name>（CMS 資產）與 /xhr/announcements/file/<id>/<name>
+# （公告附件系統）；兩種倒數第二段都是 24 位 hex 的檔案 id。
+UPLOAD_RE = re.compile(r'(href|src)="((?:https?://www\.agec\.ntu\.edu\.tw)?/(?:uploads|xhr/announcements/file)/[^"]+)"')
 
 
 def env():
@@ -92,7 +95,7 @@ def rehost(old_path):
 
 
 def main():
-    rows = json.loads(rest("news?select=id,title,cover_url,content_html&or=(cover_url.like./uploads/*,cover_url.like.*agec.ntu.edu.tw/uploads*,content_html.like.*/uploads/*)&order=id"))
+    rows = json.loads(rest("news?select=id,title,cover_url,content_html&or=(cover_url.like./uploads/*,cover_url.like.*agec.ntu.edu.tw/uploads*,content_html.like.*/uploads/*,content_html.like.*xhr/announcements/file*)&order=id"))
     print(f"要處理 {len(rows)} 列（{'寫入' if WRITE else 'dry-run'}）")
     touched = 0
     for row in rows:
@@ -115,6 +118,21 @@ def main():
             print(f"    已改 {list(patch)}；殘留舊路徑 {left}")
         else:
             print(f"    會改 {list(patch)}")
+    # programs.requirements_html（各學制修業規定）也有同一種殘留：大學部的雙主修／輔系課程圖。
+    progs = json.loads(rest("programs?select=id,name,requirements_html&or=(requirements_html.like.*/uploads/*,requirements_html.like.*xhr/announcements/file*)&order=id"))
+    for row in progs:
+        print(f"== programs {row['id']} {row['name']}")
+        html = row.get("requirements_html") or ""
+        new_html = UPLOAD_RE.sub(lambda m: f'{m.group(1)}="{rehost(m.group(2))}"', html)
+        if new_html == html:
+            print("    （沒有需要改的欄位）")
+            continue
+        touched += 1
+        if WRITE:
+            got = json.loads(rest(f"programs?id=eq.{row['id']}", "PATCH", {"requirements_html": new_html}, prefer="return=representation"))[0]
+            print(f"    已改 requirements_html；殘留舊路徑 {len(re.findall(r'/uploads/|xhr/announcements/file', got.get('requirements_html') or ''))}")
+        else:
+            print("    會改 requirements_html")
     print(f"完成：{touched} 列{'已更新' if WRITE else '待更新'}")
 
 

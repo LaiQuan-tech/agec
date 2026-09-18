@@ -130,6 +130,11 @@ export function localizePath(href: string, lang: Lang): string {
  * "en" (`/english-summary`) is not a match: only a whole segment counts.
  */
 export function splitLang(pathname: string): { lang: Lang; path: string } {
+  // Vercel 上 ISR 重新產生根頁時 usePathname() 拿到的是 "/index"（本機 build 是
+  // "/"）：不正規化，首頁語言切換的 SSR href 會變成 /en/index → 404（新分頁、
+  // 中鍵、爬蟲會中；左鍵靠 client 端 props 沒事）。正式站 2026-09-19 實測。
+  if (pathname === "/index") pathname = "/";
+  if (pathname === `${EN_PREFIX}/index`) pathname = EN_PREFIX;
   if (pathname === EN_PREFIX) return { lang: "en", path: "/" };
   if (pathname.startsWith(`${EN_PREFIX}/`)) {
     return { lang: "en", path: pathname.slice(EN_PREFIX.length) };
