@@ -173,6 +173,8 @@ export type RegistrationState = {
   messageKey?: string;
   /** 成功時的報名代碼。 */
   code?: string;
+  /** 成功時：確認信有沒有寄出（寄不出去報名仍成立，畫面改提醒保留代碼）。 */
+  emailed?: boolean;
   fieldErrors?: Record<string, string>;
 };
 

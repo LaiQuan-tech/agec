@@ -96,9 +96,18 @@ export const ALUMNI_EVENTS = {
   /* --- 送出結果 ---------------------------------------------------------- */
   successHeading: { zh: "報名成功", en: "You are registered" },
   successCodeLabel: { zh: "報名代碼", en: "Registration code" },
+  /** 兩句擇一，看 action 回的 emailed；後面永遠接 successNote。 */
+  successMailSent: {
+    zh: "確認信已寄到您填的信箱；沒收到請檢查垃圾郵件。",
+    en: "A confirmation email is on its way to the address you gave; check your spam folder if it does not arrive.",
+  },
+  successMailFailed: {
+    zh: "確認信沒有寄成，請截圖或抄下這組代碼。",
+    en: "We could not send a confirmation email, so please screenshot or write down this code.",
+  },
   successNote: {
-    zh: "系統目前不會寄送確認信，請保留這組代碼。如需修改或取消，請聯絡下方窗口並提供代碼。",
-    en: "No confirmation email is sent, so please keep this code. To change or cancel, contact the office and quote it.",
+    zh: "如需修改或取消，請聯絡下方窗口並提供報名代碼。",
+    en: "To change or cancel, contact the office below and quote your registration code.",
   },
 
   /* --- 錯誤（與 SQL 的 raise exception 代號一一對應）--------------------- */

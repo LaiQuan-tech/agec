@@ -300,10 +300,17 @@ posts、更新 faculty、刪除 links、讀取或竄改 `admin_users` 全部被�
 
 ⚠️ 兩件與這次有關、但**還沒處理**的事：
 
-1. **仍然沒有自訂 SMTP**（`smtp_host` 是 null），所以忘記密碼是走 Supabase
-   內建的寄信服務，`rate_limit_email_sent` 是**每小時 2 封**。同一小時內第三個
-   人按下忘記密碼就收不到信，而且內建寄件人容易被歸到垃圾郵件。要正式用的話
-   請設一組系上的 SMTP（Dashboard → Project Settings → Auth → SMTP Settings）。
+1. **自訂 SMTP**：2026-09-19 起寄信改走 Resend（萊乾資訊的帳號，寄件網域
+   `laiquan.co` 已驗證；系上自己的網域要請計中加 DNS 紀錄才能用）。兩條路：
+   - 站內程式寄的信（活動報名確認信）走 `lib/email.ts` 的 Resend HTTP API，
+     Vercel 要設 `RESEND_API_KEY`（沒設就不寄，報名仍成立）。
+   - Supabase Auth 的信（忘記密碼）要在 Dashboard → Project Settings → Auth →
+     SMTP Settings 設：host `smtp.resend.com`、port `465`、user `resend`、
+     password ＝同一把 Resend API key、sender `noreply@laiquan.co`、名稱
+     「國立臺灣大學農業經濟學系」；順便把 rate limit 從每小時 2 封調高。
+     Management API 的 `PATCH /config/auth` 也能設（欄位 `smtp_host` …
+     `smtp_pass`），但這是寫入金鑰庫，我的自動模式會擋，所以交人手動。
+     沒設之前忘記密碼仍走 Supabase 內建信箱（每小時 2 封、易進垃圾郵件）。
 
 2. **開放註冊還是開著的**（`disable_signup: false`）。下面那一段第 1 點從
    2026-08 就記著要關，至今未關。白名單擋住了寫入權，但沒有理由留著。

@@ -338,7 +338,7 @@ export function EventForm({
             htmlFor="contact"
             label="聯絡窗口"
             error={state.fieldErrors?.contact}
-            hint="會印在報名成功畫面上。⚠️ 目前系統不會寄確認信，這是報名者唯一的後續管道，請務必填。"
+            hint="會印在報名成功畫面與確認信上；寫了信箱的話，報名者回信會直接到那個信箱。請務必填。"
           >
             <Input
               id="contact"

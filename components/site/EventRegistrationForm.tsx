@@ -61,7 +61,7 @@ export function EventRegistrationForm({
   slug: string;
   /** 系友活動印畢業年度與學制兩欄；一般活動不印。 */
   audience: EventAudience;
-  /** 承辦窗口，印在成功畫面上——目前沒有確認信，這是唯一的後續管道。 */
+  /** 承辦窗口，印在成功畫面與確認信上；確認信沒寄成時它是唯一的後續管道。 */
   contact: string | null;
 }) {
   const copy = translate(ALUMNI_EVENTS, lang);
@@ -79,6 +79,7 @@ export function EventRegistrationForm({
           <span>{copy.successCodeLabel}</span>
           <strong>{state.code}</strong>
         </p>
+        <p>{state.emailed ? copy.successMailSent : copy.successMailFailed}</p>
         <p>{copy.successNote}</p>
         {contact && (
           <p className="event-success-contact">
@@ -96,6 +97,8 @@ export function EventRegistrationForm({
   return (
     <form action={formAction} className="event-form">
       <input type="hidden" name="slug" value={slug} />
+      {/* 確認信的語言：在哪個語言的頁面送出，就收哪種語言。 */}
+      <input type="hidden" name="lang" value={lang} />
 
       {/*
         Honeypot。人看不到、tab 不到、螢幕閱讀器不會唸到，所以填了的幾乎一定

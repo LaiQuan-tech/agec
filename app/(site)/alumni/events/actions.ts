@@ -1,8 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { EN_PREFIX } from "@/lib/i18n";
+import { EN_PREFIX, pick, pickNullable, type Lang } from "@/lib/i18n";
 import { createServerClient } from "@/lib/supabase/server";
+import { SITE_ORIGIN } from "@/lib/site-routes";
+import { firstEmailIn, sendMail } from "@/lib/email";
+import { registrationMail } from "@/lib/event-mail";
+import { formatEventRange } from "@/components/site/format";
 import {
   eventBasePath,
   eventParentPath,
@@ -102,18 +106,33 @@ export async function registerForEvent(
    * 不篩 status：草稿也能查到對象，但草稿會在 RPC 那一層被 EVENT_NOT_OPEN
    * 擋下來，這裡不必重複判斷（判準只能有一份，見檔頭的三層防線）。
    */
+  // 確認信要用的欄位一起取，不再查第二次；標題與地點依報名者所在的語言解析。
   const supabase = createServerClient();
   const { data: eventRow, error: lookupError } = await supabase
     .from("alumni_events")
-    .select("audience")
+    .select(
+      "audience, title, title_en, starts_at, ends_at, location, location_en, address, contact"
+    )
     .eq("slug", slug)
-    .maybeSingle<{ audience: string }>();
+    .maybeSingle<{
+      audience: string;
+      title: string;
+      title_en: string | null;
+      starts_at: string;
+      ends_at: string | null;
+      location: string | null;
+      location_en: string | null;
+      address: string | null;
+      contact: string | null;
+    }>();
   if (lookupError) {
     console.error("[alumni/events] 查活動對象失敗:", lookupError.code, lookupError.message);
     return { ok: false, messageKey: "errorUnknown" };
   }
   if (!eventRow) return { ok: false, messageKey: "errorNotFound" };
   const audience: EventAudience = eventRow.audience === "general" ? "general" : "alumni";
+  // 表單的 hidden lang：決定確認信的語言。不在白名單就當中文。
+  const lang: Lang = trimmed(form, "lang") === "en" ? "en" : "zh";
 
   const name = trimmed(form, "name");
   const email = trimmed(form, "email").toLowerCase();
@@ -235,5 +254,38 @@ export async function registerForEvent(
 
   // rpc 回的是 returns table，所以是一個一列的陣列。
   const row = Array.isArray(data) ? data[0] : data;
-  return { ok: true, code: row?.code ?? undefined };
+  const code = row?.code ?? undefined;
+
+  /*
+   * 確認信。報名已經寫進資料庫、名額已扣，這一步只是通知：寄不出去不能
+   * 讓報名變成失敗，所以 sendMail() 永遠不 throw，這裡只把結果帶回成功畫面
+   * （「確認信已寄到…」或「確認信沒寄成，請保留代碼」）。RESEND_API_KEY 沒設
+   * 時 sendMail 直接回 sent:false，畫面上就是後者。
+   */
+  let emailed = false;
+  if (code) {
+    const mail = registrationMail({
+      lang,
+      name,
+      code,
+      guests,
+      eventTitle: pick(eventRow.title, eventRow.title_en, lang),
+      when: formatEventRange(eventRow.starts_at, eventRow.ends_at, lang),
+      location: pickNullable(eventRow.location, eventRow.location_en, lang),
+      address: eventRow.address,
+      contact: eventRow.contact,
+      eventUrl: `${SITE_ORIGIN}${lang === "en" ? EN_PREFIX : ""}${eventPath}`,
+    });
+    const result = await sendMail({
+      to: email,
+      subject: mail.subject,
+      text: mail.text,
+      html: mail.html,
+      // 聯絡窗口若含信箱，「回覆」就直接到系辦。
+      replyTo: firstEmailIn(eventRow.contact),
+    });
+    emailed = result.sent;
+  }
+
+  return { ok: true, code, emailed };
 }
