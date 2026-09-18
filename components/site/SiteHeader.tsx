@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { desktopNav, menuItems } from "./nav";
@@ -22,6 +22,12 @@ import type { SitemapGroup } from "./sitemap-tree";
  * the page content. One client component because the menu-open and
  * header-scrolled states both live here (site.js lines 2–18).
  */
+/*
+ * useSyncExternalStore 的 subscribe：location.search 只會隨路由變，而路由一變
+ * 這個元件本來就會重新 render（usePathname），所以不需要真的訂閱任何事件。
+ */
+const subscribeToNothing = () => () => {};
+
 export function SiteHeader({
   lang,
   navTree,
@@ -60,7 +66,19 @@ export function SiteHeader({
   // target language comes from the `lang` prop rather than from `splitLang`,
   // so the button can never disagree with the page that actually rendered.
   const otherLang: Lang = lang === "zh" ? "en" : "zh";
-  const otherHref = localizePath(path, otherLang);
+  /*
+   * /search 是唯一帶查詢字串的路由，切換語言時要把 ?q= 一起帶過去，否則讀者
+   * 在英文站按「中文」會落在空白的搜尋頁、關鍵字不見（上線前實測）。
+   * 不用 useSearchParams()：那會要求 Suspense 邊界、而且讓靜態頁在 client 端
+   * 重新渲染。useSyncExternalStore 的 server snapshot 是空字串，所以 SSR 的
+   * href 沒有查詢字串、hydration 後才補上，不會有屬性不符的警告。
+   */
+  const otherSearch = useSyncExternalStore(
+    subscribeToNothing,
+    () => (path === "/search" ? window.location.search : ""),
+    () => ""
+  );
+  const otherHref = localizePath(path, otherLang) + otherSearch;
 
   // site.js toggles `.scrolled` past 28px and calls the handler once up front so
   // a reload that restores mid-page scroll doesn't start in the tall state. The
@@ -87,6 +105,63 @@ export function SiteHeader({
   // explicit because a <Link> navigation doesn't reload the document, so the
   // overlay would otherwise stay open over the new page.
   const closeOnNavigate = () => setMenuOpen(false);
+
+  /*
+   * 鍵盤與焦點（上線前瀏覽器層實測補上；參考站的 site.js 沒有這一段）：
+   *  - 打開時焦點進到覆蓋層的關閉鈕；沒有這一步，Tab 會從漢堡鈕往下走到被
+   *    覆蓋層蓋住的機構列語言切換，看不見自己在哪。
+   *  - Esc 關閉，關閉後焦點回到漢堡鈕（也涵蓋點連結後 closeOnNavigate 的關閉）。
+   *  - Tab 在覆蓋層內循環：走到最後一個連結再 Tab 回到關閉鈕，Shift+Tab 反向。
+   * 覆蓋層是 fixed 全幅、其餘內容仍在 DOM 裡，所以焦點不能靠 CSS 擋，得自己收。
+   */
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
+  const wasOpenRef = useRef(false);
+
+  useEffect(() => {
+    if (!menuOpen) {
+      if (wasOpenRef.current) {
+        wasOpenRef.current = false;
+        menuButtonRef.current?.focus();
+      }
+      return;
+    }
+    wasOpenRef.current = true;
+    /* 不能在 effect 裡直接 focus()：.menu-overlay 的 visibility 有 .35s 的
+       transition，過渡起點那一格的計算值仍是 hidden，focus() 會被靜默忽略
+       （headless 實測 activeElement 停在 body）。等兩個 frame 讓過渡真的開始。 */
+    let focusFrame = requestAnimationFrame(() => {
+      focusFrame = requestAnimationFrame(() => closeButtonRef.current?.focus());
+    });
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const root = overlayRef.current;
+      if (!root) return;
+      const focusables = root.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled])'
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+      const inside = active instanceof Node && root.contains(active);
+      if (event.shiftKey ? active === first || !inside : active === last || !inside) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      cancelAnimationFrame(focusFrame);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menuOpen]);
 
   return (
     <>
@@ -234,6 +309,7 @@ export function SiteHeader({
           </Link>
 
           <button
+            ref={menuButtonRef}
             className="menu-button"
             type="button"
             aria-label={t.openMenu}
@@ -247,6 +323,7 @@ export function SiteHeader({
       </header>
 
       <div
+        ref={overlayRef}
         className={`menu-overlay${menuOpen ? " open" : ""}`}
         aria-hidden={!menuOpen}
       >
@@ -272,6 +349,7 @@ export function SiteHeader({
               X. Keep exactly two spans, and keep this the only <button> in
               .menu-top — the reference CSS/JS both address it positionally. */}
           <button
+            ref={closeButtonRef}
             type="button"
             aria-label={t.closeMenu}
             onClick={() => setMenuOpen(false)}

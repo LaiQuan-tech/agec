@@ -27,10 +27,18 @@ export function ProgramForm({
   action,
   initial,
   submitLabel,
+  nameLocked = false,
 }: {
   action: (prev: ActionState, form: FormData) => Promise<ActionState>;
   initial: ProgramFormValues;
   submitLabel: string;
+  /**
+   * 名稱鎖成唯讀。`name` 是課程／消息／連結／檔案的文字外鍵，也是網址代稱表
+   * （lib/program-slugs.ts）的 key —— 內建的四個學制、或已經有資料引用的，
+   * 改一個字就是靜默的孤兒與 404。readOnly 而不是 disabled：值仍要隨表單送出，
+   * updateProgram 是全欄覆蓋。真正的閘在 updateProgram，這裡只是先講清楚。
+   */
+  nameLocked?: boolean;
 }) {
   return (
     <FormShell
@@ -55,7 +63,11 @@ export function ProgramForm({
             label="學制名稱"
             required
             error={state.fieldErrors?.name}
-            hint="前台卡片上的圖示是依名稱判斷的（含「碩」、「博」、「在職」、「國際」等字樣）"
+            hint={
+              nameLocked
+                ? "這個名稱是課程、消息、檔案與網址（/courses/學制代稱）的比對鍵，不能在這裡改；要改請聯絡開發者。其他欄位都可以照常編輯。"
+                : "前台卡片上的圖示是依名稱判斷的（含「碩」、「博」、「在職」、「國際」等字樣）"
+            }
           >
             <Input
               id="name"
@@ -63,6 +75,8 @@ export function ProgramForm({
               defaultValue={initial.name}
               required
               maxLength={50}
+              readOnly={nameLocked}
+              className={nameLocked ? "bg-neutral-100" : undefined}
               aria-invalid={Boolean(state.fieldErrors?.name)}
             />
           </Field>

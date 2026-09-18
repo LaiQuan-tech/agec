@@ -4,6 +4,7 @@ import { NewsRoute } from "@/components/site/pages";
 import { getNewsPage } from "@/lib/data";
 import { NEWS_CATEGORIES, categoryForSlug } from "@/lib/news-categories";
 import { NEWS_CATEGORY_PAGES } from "@/lib/i18n/news";
+import { listingMetadata } from "@/lib/site-routes";
 
 export const revalidate = 300;
 
@@ -46,7 +47,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const copy = NEWS_CATEGORY_PAGES[slug as keyof typeof NEWS_CATEGORY_PAGES];
-  return { title: copy?.title.zh };
+  return listingMetadata(`/news/category/${slug}`, "zh", copy?.title.zh ?? "消息");
 }
 
 /** 最新消息，依分類篩選，第 N 頁 */

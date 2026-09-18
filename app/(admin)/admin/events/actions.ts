@@ -15,6 +15,7 @@ import {
   oneOf,
   requireId,
   text,
+  url,
 } from "@/lib/admin/validate";
 import {
   EVENT_AUDIENCES,
@@ -73,7 +74,8 @@ function parse(form: FormData): {
   const address = text(form, "address", "地址", { max: 200 });
   const capacity = number(form, "capacity", "名額上限", { min: 0, max: 100000 });
   const closesAt = datetimeLocal(form, "registration_closes_at", "報名截止時間");
-  const coverUrl = text(form, "cover_url", "封面圖片", { max: 500 });
+  // 印成 EventPage 的 <img src>：上傳回來的 https 網址或 /images/… 的站內路徑。
+  const coverUrl = url(form, "cover_url", "封面圖片", { max: 500, allowRelative: true });
   const contact = text(form, "contact", "聯絡窗口", { max: 200 });
   const status = oneOf(form, "status", "狀態", EVENT_STATUSES, { required: true });
 

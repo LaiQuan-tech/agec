@@ -146,33 +146,40 @@ export function EventPage({
         ) : null}
 
         <div className="container post-body">
-          {state === "open" ? (
-            <section className="event-register">
-              <h2>{t.formHeading}</h2>
-              <p>{t.formIntro}</p>
-              <EventRegistrationForm
-                lang={lang}
-                slug={event.slug}
-                audience={event.audience}
-                contact={event.contact}
-              />
-            </section>
-          ) : (
-            /* 額滿、截止、取消都走這裡。刻意仍然印出活動的全部資訊而不是把頁面
-               收掉：已經報名的人會回來看時間地點，把頁面變成一句「已結束」對
-               他們毫無用處。 */
-            <p className="event-closed" role="status">
-              <strong>
-                {state === "cancelled"
-                  ? t.stateCancelled
-                  : state === "full"
-                    ? t.stateFull
-                    : t.stateClosed}
-              </strong>
-              {state === "cancelled" && <> {copy.stateCancelledNote}</>}
-              {state === "full" && <> {t.stateFullNote}</>}
-            </p>
-          )}
+          {/*
+            🔴 open 與 closed 都經過同一個 client component，而且它在樹上的位置
+            固定，不能像以前那樣用 `state === "open" ? <section/> : <p/>` 切換。
+
+            報名成功時 action 會 revalidatePath 這一頁，伺服器樹隨即用新名額重算
+            displayState。填掉最後一席的人在那一刻會變成 "full"：如果這裡把
+            表單換成一段「報名已額滿」，client component 就被卸載，他的成功畫面
+            與報名代碼一起消失 —— 資料庫裡明明有他，畫面上卻像報名失敗
+            （上線前測試實際踩到：DB 有列、seats_taken 已加、畫面只剩額滿）。
+
+            所以「額滿／截止／取消」的訊息當 prop 傳進去，由 client component
+            在自己沒有成功狀態時才印。訊息本身仍在這裡組，理由不變：刻意印出活動
+            的全部資訊而不是把頁面收掉，已經報名的人會回來看時間地點。
+          */}
+          <EventRegistrationForm
+            lang={lang}
+            slug={event.slug}
+            audience={event.audience}
+            contact={event.contact}
+            open={state === "open"}
+            closedNotice={
+              <p className="event-closed" role="status">
+                <strong>
+                  {state === "cancelled"
+                    ? t.stateCancelled
+                    : state === "full"
+                      ? t.stateFull
+                      : t.stateClosed}
+                </strong>
+                {state === "cancelled" && <> {copy.stateCancelledNote}</>}
+                {state === "full" && <> {t.stateFullNote}</>}
+              </p>
+            }
+          />
         </div>
 
         <div className="container post-foot">

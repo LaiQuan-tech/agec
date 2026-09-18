@@ -6,6 +6,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { SITE_ORIGIN } from "@/lib/site-routes";
 import { firstEmailIn, sendMail } from "@/lib/email";
 import { registrationMail } from "@/lib/event-mail";
+import { clientIpHash, takeSlot } from "@/lib/rate-limit";
 import { formatEventRange } from "@/components/site/format";
 import {
   eventBasePath,
@@ -33,7 +34,7 @@ import {
  * 它的每一道檢查都必須當成安全邊界看，不能靠「表單上只有這些欄位」。
  *
  * 三層防線，由外而內：
- *   1. 這裡：格式、長度、列舉值、honeypot
+ *   1. 這裡：格式、長度、列舉值、honeypot、同一來源的節流（lib/rate-limit.ts）
  *   2. `register_for_alumni_event()`：活動狀態、截止時間、名額（含 for update
  *      的併發鎖）—— 這一層才是真正的判準
  *   3. CHECK / 唯一索引：就算前兩層都寫錯，資料庫也不允許超賣或同信箱重複
@@ -45,8 +46,9 @@ import {
  *
  * ## 已知缺口
  *
- * 沒有節流。目前擋得住的是隨手濫填（honeypot ＋ 同信箱唯一索引），擋不住
- * 有心人。migration 檔尾記了最小的補法。
+ * 節流只在行程記憶體裡（同一來源十分鐘 5 筆），Vercel 每個實例各算各的、
+ * 冷啟動歸零 —— 擋得住一條連線換信箱灌名額，擋不住分散來源的有心人。
+ * 做成保證的補法在 migration 檔尾（ip_hash 一欄 ＋ 在函式裡數）。
  */
 
 /*
@@ -99,6 +101,32 @@ export async function registerForEvent(
     return { ok: false, messageKey: "errorUnknown" };
   }
 
+  const name = trimmed(form, "name");
+  const email = trimmed(form, "email").toLowerCase();
+  const phone = trimmed(form, "phone");
+  const program = trimmed(form, "program");
+  const dietary = trimmed(form, "dietary");
+  const note = trimmed(form, "note");
+  const gradYearRaw = trimmed(form, "grad_year");
+  const guestsRaw = trimmed(form, "guests");
+
+  /*
+   * 失敗時原樣帶回給表單當 defaultValue（見 lib/alumni-events.ts 的
+   * RegistrationState.values）。React 19 會在 action 結束後 reset 表單，
+   * 不帶回去的話「名額剛好滿了」會連同他填的字一起清空。信箱帶未轉小寫的原值。
+   * 放在查活動之前：查詢本身失敗（errorUnknown）那條路也要帶。
+   */
+  const values: Record<string, string> = {
+    name,
+    email: trimmed(form, "email"),
+    phone,
+    program,
+    dietary,
+    note,
+    grad_year: gradYearRaw,
+    guests: guestsRaw,
+  };
+
   /*
    * 這場活動的對象。一次 select，只拿一欄。
    *
@@ -127,21 +155,12 @@ export async function registerForEvent(
     }>();
   if (lookupError) {
     console.error("[alumni/events] 查活動對象失敗:", lookupError.code, lookupError.message);
-    return { ok: false, messageKey: "errorUnknown" };
+    return { ok: false, messageKey: "errorUnknown", values };
   }
-  if (!eventRow) return { ok: false, messageKey: "errorNotFound" };
+  if (!eventRow) return { ok: false, messageKey: "errorNotFound", values };
   const audience: EventAudience = eventRow.audience === "general" ? "general" : "alumni";
   // 表單的 hidden lang：決定確認信的語言。不在白名單就當中文。
   const lang: Lang = trimmed(form, "lang") === "en" ? "en" : "zh";
-
-  const name = trimmed(form, "name");
-  const email = trimmed(form, "email").toLowerCase();
-  const phone = trimmed(form, "phone");
-  const program = trimmed(form, "program");
-  const dietary = trimmed(form, "dietary");
-  const note = trimmed(form, "note");
-  const gradYearRaw = trimmed(form, "grad_year");
-  const guestsRaw = trimmed(form, "guests");
 
   const fieldErrors: Record<string, string> = {};
 
@@ -193,7 +212,16 @@ export async function registerForEvent(
   }
 
   if (Object.keys(fieldErrors).length > 0) {
-    return { ok: false, messageKey: "errorRequired", fieldErrors };
+    return { ok: false, messageKey: "errorRequired", fieldErrors, values };
+  }
+
+  /*
+   * 節流放在驗證之後、進資料庫之前：只數「真的要寫進去」的送出，填錯格式
+   * 重送幾次不算。超過就直接回頭，連 RPC 都不打 —— 灌名額、灌個資表、
+   * 拿別人信箱觸發確認信，三條路都要先過這裡。
+   */
+  if (!takeSlot(await clientIpHash())) {
+    return { ok: false, messageKey: "errorTooMany", values };
   }
 
   const { data, error } = await supabase.rpc("register_for_alumni_event", {
@@ -221,17 +249,17 @@ export async function registerForEvent(
     const message = error.message ?? "";
     console.error("[alumni/events] 報名失敗:", error.code, message);
 
-    if (message.includes("EVENT_FULL")) return { ok: false, messageKey: "errorFull" };
+    if (message.includes("EVENT_FULL")) return { ok: false, messageKey: "errorFull", values };
     if (message.includes("REGISTRATION_CLOSED"))
-      return { ok: false, messageKey: "errorClosed" };
+      return { ok: false, messageKey: "errorClosed", values };
     if (message.includes("EVENT_NOT_OPEN"))
-      return { ok: false, messageKey: "errorNotOpen" };
+      return { ok: false, messageKey: "errorNotOpen", values };
     if (message.includes("EVENT_NOT_FOUND"))
-      return { ok: false, messageKey: "errorNotFound" };
+      return { ok: false, messageKey: "errorNotFound", values };
     // 23505 = 唯一索引，也就是同一場活動同一個信箱已經有一筆有效報名。
-    if (error.code === "23505") return { ok: false, messageKey: "errorDuplicate" };
+    if (error.code === "23505") return { ok: false, messageKey: "errorDuplicate", values };
 
-    return { ok: false, messageKey: "errorUnknown" };
+    return { ok: false, messageKey: "errorUnknown", values };
   }
 
   /*

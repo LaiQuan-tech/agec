@@ -51,3 +51,4 @@ supabase/.temp/
 scripts/data/news-list.json
 scripts/data/news-parsed.json
 scripts/data/news-prepared.json
+.rehost-cache/

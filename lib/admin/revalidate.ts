@@ -60,6 +60,11 @@ function bothLanguages(path: string): string[] {
  *   otherwise the old URL keeps serving cached content.
  */
 export function revalidateFor(entity: RevalidateEntity, ...slugs: (string | null | undefined)[]) {
+  // /sitemap.xml 列的是消息、活動、師資與學制的全部網址，這裡的每一種實體都
+  // 會改變它的內容，所以不分實體一律重新驗證。app/sitemap.ts 另有 300 秒 ISR
+  // 兜底；這一行讓系辦一存檔、爬蟲就拿得到新網址。
+  revalidatePath("/sitemap.xml");
+
   for (const path of AFFECTED_ROUTES[entity]) {
     for (const localized of bothLanguages(path)) {
       revalidatePath(localized);

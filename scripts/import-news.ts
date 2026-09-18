@@ -304,7 +304,21 @@ function main() {
 
     const body = summarise(clean);
     if (!body) bump("摘要-無內容可摘（留 null）");
-    const cover = row.cover ?? hoistCover(clean);
+    /*
+     * The parser's cover (the CMS's `.s-annc__sub-img`) is an old-host asset
+     * like any `<img>` in the body, so it goes through the same map. It used to
+     * be copied across verbatim, which is how `/assets/announcement-default.jpg`
+     * (the old site's placeholder cover) and one never-fetched
+     * `/uploads/bulletin/image/…` reached the `news` table as covers that 404
+     * on the new host — three rows (695, 708, 743), caught by the pre-launch
+     * crawl and nulled by hand. Unmapped now means "no cover": fall through to
+     * the body's first image, or to the front end's default.
+     */
+    const mappedCover = row.cover
+      ? urlMap[row.cover.startsWith("http") ? row.cover : `https://www.agec.ntu.edu.tw${row.cover}`]
+      : undefined;
+    if (row.cover && !mappedCover) bump("封面-來源已失效，改抽內文");
+    const cover = mappedCover?.url ?? hoistCover(clean);
     if (cover) bump("封面-自內文第一張圖抽出");
 
     if (clean.includes("<table")) bump("內文-保留表格");

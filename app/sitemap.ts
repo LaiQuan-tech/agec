@@ -12,6 +12,20 @@ import { NEWS_CATEGORIES } from "@/lib/news-categories";
 import { PROGRAM_SLUG_LIST, slugForProgram } from "@/lib/program-slugs";
 import { SITE_ORIGIN } from "@/lib/site-routes";
 
+/**
+ * 🔴 沒有這一行，/sitemap.xml 會在 build 時凍結。
+ *
+ * sitemap.ts 是特殊的 Route Handler：沒有 Request-time API、也沒有 segment
+ * config 的話，Next 會把它當靜態檔預先產生（build 輸出印成「○ /sitemap.xml」），
+ * 之後系辦在後台發的每一則消息、每一場活動、每一位新老師都不會出現在
+ * sitemap 裡，直到下一次部署（上線前實測：後台新增一場活動後，正式站的
+ * /sitemap.xml 沒有它，本機同一份資料庫算出來的有）。
+ *
+ * lib/admin/revalidate.ts 存檔時會對 /sitemap.xml 打 revalidatePath，正常情況
+ * 是即時更新；這個 300 秒與公開頁相同，是那條路徑失效時的兜底。
+ */
+export const revalidate = 300;
+
 const ROUTES = [
   "/",
   "/news",

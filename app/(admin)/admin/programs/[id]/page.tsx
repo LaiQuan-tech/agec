@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdminOrRedirect } from "@/lib/admin/auth";
+import { countProgramReferences } from "@/lib/admin/programs";
+import { slugForProgram } from "@/lib/program-slugs";
 import { ProgramForm } from "../ProgramForm";
 import { updateProgram } from "../actions";
 
@@ -52,6 +54,12 @@ export default async function EditProgramPage({
   if (error) console.error("[admin/programs] load failed:", error.message);
   if (!data) notFound();
 
+  // 名稱要不要鎖：內建的四個學制（有網址代稱）一律鎖；其他學制只要已經有
+  // 課程／消息／連結／檔案引用就鎖。數不到（null）也鎖 —— 與 updateProgram
+  // 的判斷同一份，這裡鎖了那邊也一定會擋。
+  const refs = await countProgramReferences(supabase, data.name);
+  const nameLocked = slugForProgram(data.name) !== null || refs === null || refs.total > 0;
+
   return (
     <div className="flex flex-col gap-5">
       <header className="flex flex-wrap items-baseline justify-between gap-2">
@@ -77,6 +85,7 @@ export default async function EditProgramPage({
       <ProgramForm
         action={updateProgram}
         submitLabel="儲存變更"
+        nameLocked={nameLocked}
         initial={{
           id: data.id,
           name: data.name,

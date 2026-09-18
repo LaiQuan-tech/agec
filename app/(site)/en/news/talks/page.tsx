@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 import { TalksRoute } from "@/components/site/pages";
 import { NEWS } from "@/lib/i18n/news";
+import { listingMetadata } from "@/lib/site-routes";
 
 export const revalidate = 300;
 
-export const metadata: Metadata = { title: NEWS.talksArchiveTitle.en };
+export const metadata: Metadata = listingMetadata(
+  "/news/talks",
+  "en",
+  NEWS.talksArchiveTitle.en
+);
 
 /**
  * 演講公告封存第一頁。

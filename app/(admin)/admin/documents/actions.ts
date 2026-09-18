@@ -8,7 +8,7 @@ import {
   type ActionState,
 } from "@/lib/admin/action-result";
 import { revalidateFor } from "@/lib/admin/revalidate";
-import { collect, number, oneOf, requireId, text } from "@/lib/admin/validate";
+import { collect, number, oneOf, requireId, text, url } from "@/lib/admin/validate";
 import { DOCUMENT_SECTIONS } from "./constants";
 
 /**
@@ -51,7 +51,9 @@ function parse(form: FormData): {
   const labelEn = text(form, "label_en", "英文表單名稱", { max: 120 });
   const description = text(form, "description", "說明", { max: 120 });
   const descriptionEn = text(form, "description_en", "英文說明", { max: 240 });
-  const fileUrl = text(form, "file_url", "檔案網址", { max: 500 });
+  // 印成下載卡的 href，副檔名徽章也從它推。上傳回來的是 https 的 Storage
+  // 網址，現有資料也全是 —— 只收完整網址。
+  const fileUrl = url(form, "file_url", "檔案網址", { max: 500 });
   const fileName = text(form, "file_name", "檔案名稱", { max: 200 });
   const sortOrder = number(form, "sort_order", "顯示順序", { min: 0, max: 9999 });
 

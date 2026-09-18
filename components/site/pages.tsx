@@ -22,6 +22,7 @@ import {
 } from "@/lib/data";
 import type { Lang } from "@/lib/i18n";
 import type { EventAudience } from "@/lib/alumni-events";
+import { NEWS_CATEGORIES } from "@/lib/news-categories";
 import { Home } from "./Home";
 import { EventPage } from "./EventPage";
 import { News } from "./News";
@@ -97,7 +98,7 @@ export async function NewsRoute({
   // 而是另一張表；點了「招生」籤還跟著一排活動，讀者會以為那是招生活動。
   // 演講區塊是相反的決定（見上），因為演講真的是消息、只是被抽出主列表。
   const filtered = Boolean(category || year);
-  const [newsPage, years, talks, talkCount, events] = await Promise.all([
+  const [newsPage, years, talks, talkCount, events, perCategoryYears] = await Promise.all([
     getNewsPage(page, lang, category, year),
     // ⚠️ 只帶 category，不帶 year。年份列要列出「這個分類底下所有有資料的
     // 年份」，把目前選的年份也套進去，列表就只會剩下那一年，等於選了之後
@@ -110,7 +111,27 @@ export async function NewsRoute({
     // 不設上限：與 /alumni 一致。設了上限又沒有「更多」連結，第 N+1 場開放報名中的
     // 活動會從所有列表頁消失、只剩搜尋找得到。
     page === 1 && !filtered ? getAlumniEvents(lang, { audience: "general" }) : [],
+    // 年份頁的分類籤。籤的連結會把年份帶著走（News.tsx：「換分類時保留
+    // 年份」），而「分類有、該年沒有」的組合是 404（見下面那段守門）——
+    // 兩個都是刻意的決定，但合在一起就是：/news/year/2017 印出四個分類籤，
+    // 其中三個點下去是 404。上線前的全站爬蟲在十個年份頁抓到 24 個這種
+    // 壞連結。所以有年份篩選時，先問每個分類「這一年有沒有消息」，
+    // 用的是同一支 getNewsYears(category)，與守門的述詞完全相同 ——
+    // 籤有列出來，就保證那一頁不會 404。沒有年份篩選時不查（null）。
+    year !== undefined
+      ? Promise.all(
+          NEWS_CATEGORIES.map(async (c) => ({
+            category: c.category,
+            years: await getNewsYears(c.category),
+          }))
+        )
+      : null,
   ]);
+  const categoriesInYear = perCategoryYears
+    ? perCategoryYears
+        .filter((c) => c.years.some((y) => y.year === year))
+        .map((c) => c.category)
+    : undefined;
 
   // A page number past the end is a 404 rather than an empty list — otherwise
   // /news/page/99 is a real URL serving a blank column.
@@ -147,6 +168,7 @@ export async function NewsRoute({
       category={category}
       year={year}
       years={years}
+      categoriesInYear={categoriesInYear}
     />
   );
 }

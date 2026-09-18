@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { htmlLang, translate, type Lang } from "@/lib/i18n";
 import { SHARED } from "@/lib/i18n/shared";
 import { SiteLoader } from "./SiteLoader";
+import { HtmlLang } from "./HtmlLang";
 import { SiteHeader } from "./SiteHeader";
 import { sitemapTree } from "./sitemap-tree";
 import { SiteFooter } from "./SiteFooter";
@@ -54,6 +55,8 @@ export function SiteShell({
   return (
     <>
       <SiteLoader lang={lang} />
+      {/* hydration 後把 <html lang> 補成當前語言（root layout 靜態、SSR 永遠是 zh-Hant）。 */}
+      <HtmlLang lang={lang} />
       {/* `lang` sits on <main>, not <html>.
           app/layout.tsx is shared by the public site and the admin, and it is
           statically rendered — reading the pathname there to vary the <html>

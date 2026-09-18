@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { TalksRoute } from "@/components/site/pages";
 import { getTalksPage } from "@/lib/data";
 import { NEWS } from "@/lib/i18n/news";
+import { listingMetadata } from "@/lib/site-routes";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -15,7 +16,11 @@ export async function generateStaticParams() {
   }));
 }
 
-export const metadata: Metadata = { title: NEWS.talksArchiveTitle.zh };
+export const metadata: Metadata = listingMetadata(
+  "/news/talks",
+  "zh",
+  NEWS.talksArchiveTitle.zh
+);
 
 /** 演講公告封存第 N 頁 */
 export default async function Page({

@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getOptionalSession } from "@/lib/admin/auth";
+import { Button } from "@/components/admin/ui/Button";
+import { logoutAction } from "../admin/logout/actions";
 import { LoginForm } from "./LoginForm";
 
 export const metadata: Metadata = {
@@ -18,6 +21,14 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string; error?: string }>;
 }) {
   const { next, error } = await searchParams;
+
+  // 有 session 的人也會走到這一頁：被「移除管理權限」的操作人員、自己在前台
+  // 註冊的帳號、用重設密碼拿到 session 的非管理員，都被 requireAdminOrRedirect
+  // 送來 /login?error=not_admin（lib/supabase/proxy.ts 對帶 ?error= 的登入頁
+  // 不再彈回 /admin，否則是無限轉址）。登出鈕只在後台側欄，這些人永遠渲染
+  // 不到 —— 所以這裡補一顆，他才能清掉這個 session、換別的帳號登入。
+  // logoutAction 刻意沒有 requireAdmin() guard，就是為了這個情境。
+  const session = await getOptionalSession();
 
   // Deliberately not wrapped in ClassicShell — it is a client component
   // carrying the full public chrome (nav, footer), none of which belongs on a
@@ -58,6 +69,21 @@ export default async function LoginPage({
         </div>
 
         <LoginForm next={next ?? "/admin"} notAdmin={error === "not_admin"} />
+
+        {session && (
+          <form
+            action={logoutAction}
+            className="mt-4 flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-[12px]"
+            style={{ borderColor: "var(--hairline)", color: "var(--muted)" }}
+          >
+            <span className="min-w-0 truncate">
+              目前登入：{session.email ?? "（無信箱）"}
+            </span>
+            <Button type="submit" variant="ghost" size="sm" className="shrink-0">
+              登出
+            </Button>
+          </form>
+        )}
 
         <p className="mt-6 flex justify-center gap-3 text-center text-[12px]" style={{ color: "var(--muted)" }}>
           <Link href="/forgot-password" className="underline underline-offset-2">

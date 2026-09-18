@@ -58,7 +58,15 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (claims && pathname === "/login") {
+  // ⚠️ 帶 `?error=` 的登入頁不要再彈回 /admin。那是 requireAdminOrRedirect()
+  // 把「登入了、但不在白名單」的人送過來的（/login?error=not_admin）——
+  // 被「移除管理權限」的操作人員、自己在前台註冊的帳號、用重設密碼拿到
+  // session 的非管理員都會走到這裡。這裡再導回 /admin 就是
+  // /admin → /login?error=not_admin → /admin → … 的無限轉址，瀏覽器直接
+  // 報 ERR_TOO_MANY_REDIRECTS，而且他連登出鈕都看不到（登出鈕在後台側欄）。
+  // 讓這一頁渲染出來，他才看得到「不在管理者名單」的訊息，也才能改用別的
+  // 帳號登入。
+  if (claims && pathname === "/login" && !request.nextUrl.searchParams.has("error")) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin";
     url.search = "";

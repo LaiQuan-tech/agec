@@ -8,7 +8,7 @@ import {
   type ActionState,
 } from "@/lib/admin/action-result";
 import { revalidateFor } from "@/lib/admin/revalidate";
-import { collect, number, oneOf, requireId, text } from "@/lib/admin/validate";
+import { collect, number, oneOf, requireId, text, url } from "@/lib/admin/validate";
 import { LINK_SECTIONS, type EditableSection } from "./constants";
 
 type LinkInput = {
@@ -35,7 +35,9 @@ function parse(form: FormData): { values?: LinkInput; fieldErrors?: Record<strin
   const section = oneOf(form, "section", "區塊", LINK_SECTIONS, { required: true });
   const label = text(form, "label", "卡片文字", { required: true, max: 100 });
   const labelEn = text(form, "label_en", "英文卡片文字", { max: 200 });
-  const url = text(form, "url", "連結網址", { max: 500 });
+  // 印成 MaybeLink 的 href：外站網址、站內路徑、頁內錨點（seed 裡的 "#" 與
+  // "#contact"）、mailto 都是它認得的形狀。
+  const linkUrl = url(form, "url", "連結網址", { max: 500, allowRelative: true, allowMailto: true });
   // 自由文字，不是 oneOf：值要比對 programs.name，而那是系辦可以改的顯示文字
   // （見 migration 20260908140000 為什麼不加 FK）。用封閉列舉的話，學制改名
   // 之後舊的值會變成「不合法」而擋住整張表單，那比讓它對不到籤更糟。
@@ -46,7 +48,7 @@ function parse(form: FormData): { values?: LinkInput; fieldErrors?: Record<strin
     section: section.error,
     label: label.error,
     label_en: labelEn.error,
-    url: url.error,
+    url: linkUrl.error,
     program: program.error,
     sort_order: sortOrder.error,
   });
@@ -59,7 +61,7 @@ function parse(form: FormData): { values?: LinkInput; fieldErrors?: Record<strin
       label_en: labelEn.value,
       // Empty stays null; '#' is kept as-is because the seed data uses it and
       // the public card treats both the same way.
-      url: url.value,
+      url: linkUrl.value,
       // 空字串收成 null，也就是「共通」—— 前台看到 null 才會在每個學制底下
       // 都印出這張卡。存成 "" 的話它會變成一個對不到任何學制的標記。
       program: program.value,

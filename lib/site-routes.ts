@@ -159,3 +159,46 @@ export function articleMetadata(
     },
   };
 }
+
+/**
+ * 封存／篩選頁的 metadata：/news/talks、/news/category/<slug>、/news/year/<year>
+ * 與它們的分頁，兩種語言都經過這裡。
+ *
+ * 這些頁原本只設 `title`，於是（1）吃到 root layout 的中文範本，英文頁標題
+ * 變成「Talks and seminars | 國立臺灣大學 農業經濟學系」；（2）沒有 canonical
+ * 也沒有 hreflang —— 但其中 30 頁列在 sitemap 裡，搜尋引擎會把中英兩版當成
+ * 重複內容。上線前的全站爬蟲抓到這件事，所以補一支與 `articleMetadata`
+ * 同形狀的幫手，差別只在標題是現成字串、OpenGraph 是 website 不是 article。
+ *
+ * @param route 語言中立的路徑，例如 "/news/talks"、"/news/category/admissions"。
+ *   分頁（/page/N）傳第 1 頁的路徑：canonical 指回第 1 頁，與 /news/page/N
+ *   指回 /news 的既有作法一致。
+ */
+export function listingMetadata(
+  route: string,
+  lang: Lang,
+  title: string
+): Metadata {
+  const description = DEFAULT_DESCRIPTION[lang];
+
+  return {
+    title: { absolute: `${title} | ${SITE_NAME[lang]}` },
+    description,
+    alternates: {
+      canonical: localizePath(route, lang),
+      languages: {
+        "zh-Hant": `${SITE_ORIGIN}${localizePath(route, "zh")}`,
+        en: `${SITE_ORIGIN}${localizePath(route, "en")}`,
+        "x-default": `${SITE_ORIGIN}${localizePath(route, "zh")}`,
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url: `${SITE_ORIGIN}${localizePath(route, lang)}`,
+      siteName: SITE_NAME[lang],
+      locale: lang === "en" ? "en_US" : "zh_TW",
+      type: "website",
+    },
+  };
+}

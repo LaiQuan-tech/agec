@@ -11,7 +11,7 @@ import {
   type ActionState,
 } from "@/lib/admin/action-result";
 import { revalidateFor } from "@/lib/admin/revalidate";
-import { collect, email, number, requireId, text } from "@/lib/admin/validate";
+import { collect, email, number, requireId, text, url } from "@/lib/admin/validate";
 
 type FacultyInput = {
   name: string;
@@ -107,11 +107,14 @@ function parse(form: FormData): { values?: FacultyInput; fieldErrors?: Record<st
   const emailValue = email(form, "email", "電子信箱", { max: 200 });
   // 分機是 text 不是 number：實際寫法有「5501」「5501、5502」「#12345」。
   const extension = text(form, "extension", "分機", { max: 30 });
-  const homepageUrl = text(form, "homepage_url", "個人網頁", { max: 500 });
+  // 印成 FacultyCard 的 href。外站網址才有意義，所以不准站內路徑。
+  const homepageUrl = url(form, "homepage_url", "個人網頁", { max: 500 });
   const bio = parseBio(form, "bio_html", "bio_json");
   const bioEn = parseBio(form, "bio_html_en", "bio_json_en");
   const experienceEn = text(form, "experience_en", "英文經歷", { max: 500 });
-  const photoUrl = text(form, "photo_url", "照片網址", { max: 500 });
+  // 印成 <img src>。上傳回來的是 https 的 Storage 網址；seed 進來的 23 位老師
+  // （20260814090500）照片是 /images/faculty/… 的站內路徑，所以要 allowRelative。
+  const photoUrl = url(form, "photo_url", "照片網址", { max: 500, allowRelative: true });
   const sortOrder = number(form, "sort_order", "顯示順序", { min: 0, max: 9999 });
 
   const fieldErrors = collect({

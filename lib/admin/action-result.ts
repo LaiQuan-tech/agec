@@ -3,6 +3,7 @@ import {
   NotAuthenticatedError,
   NotManagerError,
 } from "@/lib/admin/errors";
+import { FormError } from "@/lib/admin/validate";
 
 /**
  * The shape every admin Server Action returns, so FormShell can render the
@@ -84,6 +85,10 @@ export function toChineseError(error: PostgresErrorLike): string {
       return "這筆資料被其他項目引用，無法直接刪除";
     case "22P02":
       return "欄位格式不正確（例如數字欄位填了文字）";
+    case "22008":
+      // 日期／時間欄位收到不存在的值（2 月 30 日）。validate.ts 的 date() 與
+      // datetimeLocal() 已經先擋，這條是漏網之魚的中文。
+      return "日期或時間不是有效的值，請重新選擇";
     case "42501":
     case "PGRST301":
       return "你的帳號沒有寫入權限，請聯絡開發者把帳號加入管理者名單";
@@ -96,8 +101,19 @@ export function toChineseError(error: PostgresErrorLike): string {
  * Maps the auth errors thrown by requireAdmin() onto an ActionState. Anything
  * else is rethrown — including Next's redirect(), which is implemented as a
  * thrown control-flow exception and must not be swallowed.
+ *
+ * 也接 validate.ts 的 requireId() 丟出來的 FormError。它是每一支 update／
+ * delete action 的 catch 都會經過的唯一漏斗，所以放這裡，八個 actions.ts 的
+ * 十六個 catch 不必各補一句。沒接住的話，一個被竄改成 0 或 abc 的 hidden id
+ * 會變成 Next 的通用錯誤頁，而不是欄位旁的「資料編號不正確」。
  */
 export function toAuthErrorState(error: unknown): ActionState | null {
+  if (error instanceof FormError) {
+    // 只有竄改過表單才會走到這裡（hidden input 的 id 不是使用者打的），留一行
+    // 給 server log；delete 那一路沒有畫面可以顯示，這是它唯一的痕跡。
+    console.error("[admin] form rejected:", error.fieldErrors);
+    return { ok: false, message: "請修正下列欄位", fieldErrors: error.fieldErrors };
+  }
   if (error instanceof NotAuthenticatedError) {
     return { ok: false, message: "登入已逾時，請重新登入" };
   }

@@ -59,8 +59,12 @@ const PER_KIND = 20;
  *   ilike.%%    → 585 筆              ilike.%\%%  → 1 筆
  *   ilike.%_%   → 585 筆              ilike.%\_%  → 0 筆
  */
-function safePattern(raw: string): string {
+function safePattern(raw: string): string | null {
   const cleaned = raw.replace(/[,()"]/g, " ").trim();
+  // 🔴 整個查詢都是被拿掉的字元（`"`、`,`、`()`）時，這裡會剩下空字串，
+  //    而 `%%` 是「符合全部」—— 搜一個 `"` 會回整個資料庫（上線前測試：49 筆）。
+  //    回 null 讓呼叫端當成沒有查詢處理。
+  if (!cleaned) return null;
   const escaped = cleaned.replace(/([%_*\\])/g, "\\$1");
   return `%${escaped}%`;
 }
@@ -86,8 +90,11 @@ export async function search(query: string, lang: Lang): Promise<SearchResult> {
   const q = query.trim();
   if (!q) return { hits: [], failed: false };
 
-  const supabase = createServerClient();
   const like = safePattern(q);
+  // 查詢只剩被清掉的標點：沒有東西可以搜，與空查詢同樣處理（見 safePattern）。
+  if (!like) return { hits: [], failed: false };
+
+  const supabase = createServerClient();
   const hits: SearchHit[] = [];
   let failed = false;
 

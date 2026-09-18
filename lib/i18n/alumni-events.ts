@@ -132,6 +132,12 @@ export const ALUMNI_EVENTS = {
     zh: "這個信箱已經報名過這場活動了。如需修改，請聯絡下方窗口。",
     en: "This email address is already registered for this event. Contact the office to make changes.",
   },
+  /* 不對應 SQL 代號：由 lib/rate-limit.ts 在進資料庫之前擋下，同一個連線
+     短時間內送太多筆。 */
+  errorTooMany: {
+    zh: "這個連線在短時間內送出了太多筆報名，請稍後再試；若您是代替多位系友報名，請分批送出或聯絡系辦。",
+    en: "Too many registrations were sent from this connection in a short time. Please try again later, or contact the office if you are registering on behalf of several people.",
+  },
   /* 欄位層級的錯誤。key 由 app/(site)/alumni/events/actions.ts 的
      FIELD_ERROR_KEYS 產生 —— 那支 action 由中英兩頁共用，所以它只能回 key，
      不能回字串。 */

@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/ssr-server";
 import type { ActionState } from "@/lib/admin/action-result";
+import { SITE_ORIGIN } from "@/lib/site-routes";
 
 /**
  * 寄出重設密碼的信。
@@ -21,11 +22,18 @@ import type { ActionState } from "@/lib/admin/action-result";
  *
  * ## redirectTo
  *
- * 從請求的 host 組出來，而不是寫死：本機開發與正式站是不同的 origin，寫死
- * 會讓其中一邊永遠收到指向另一邊的連結。
+ * 正式環境用站台自己的 origin（lib/site-routes.ts 的 SITE_ORIGIN，與 sitemap、
+ * hreflang 同一個來源），不從請求的 Host／x-forwarded-proto 組：那兩個標頭是
+ * 客戶端可以指定的，自架或反向代理時偽造 Host 就能讓信裡的連結指向別的網域。
+ * Supabase 的允許清單是最後一道，但不該只靠它。
+ *
+ * 只有本機開發（NODE_ENV=development）才退回讀 Host：本機的埠會變、又不在
+ * SITE_ORIGIN 裡，寫死會讓本機永遠收到指向正式站的連結。
  *
  * ⚠️ 這個網址必須在 Supabase 的 Auth → URL Configuration 允許清單裡，否則
  * Supabase 會忽略它、改用 Site URL。2026-09 已設定：正式站加上兩個本機埠。
+ * preview 部署的 host 不在清單也不在 SITE_ORIGIN 裡，重設連結會落到正式站 ——
+ * 可接受，但要知道。
  */
 export async function requestPasswordReset(
   _prev: ActionState,
@@ -36,11 +44,12 @@ export async function requestPasswordReset(
     return { ok: false, message: "請輸入電子郵件", fieldErrors: { email: "請輸入電子郵件" } };
   }
 
-  const h = await headers();
-  // x-forwarded-proto 在 Vercel 後面才是對的；本機沒有這個標頭，退回 http。
-  const proto = h.get("x-forwarded-proto") ?? "http";
-  const host = h.get("host");
-  const origin = host ? `${proto}://${host}` : "https://agec-theta.vercel.app";
+  let origin = SITE_ORIGIN;
+  if (process.env.NODE_ENV === "development") {
+    const h = await headers();
+    const host = h.get("host");
+    if (host) origin = `http://${host}`;
+  }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {

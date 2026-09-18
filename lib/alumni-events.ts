@@ -176,6 +176,12 @@ export type RegistrationState = {
   /** 成功時：確認信有沒有寄出（寄不出去報名仍成立，畫面改提醒保留代碼）。 */
   emailed?: boolean;
   fieldErrors?: Record<string, string>;
+  /**
+   * 失敗時：使用者送出的原值（trim 過、未轉小寫），表單拿來當 defaultValue。
+   * React 19 在 `<form action>` 結束後會自動 reset 表單，沒有這一份，失敗一次
+   * 就把他填的十個欄位清空。honeypot 命中時不帶（那不是人）。
+   */
+  values?: Record<string, string>;
 };
 
 export const idleRegistration: RegistrationState = { ok: false };

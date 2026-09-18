@@ -18,6 +18,7 @@ import {
   oneOf,
   requireId,
   text,
+  url,
 } from "@/lib/admin/validate";
 import type { NewsAttachment } from "@/lib/data";
 import { categoryEnFor } from "@/lib/news-categories";
@@ -205,7 +206,9 @@ function parse(form: FormData): { values?: NewsInput; fieldErrors?: Record<strin
   const titleEn = text(form, "title_en", "英文標題", { max: 300 });
   const body = text(form, "body", "摘要", { max: 300 });
   const bodyEn = text(form, "body_en", "英文摘要", { max: 600 });
-  const coverUrl = text(form, "cover_url", "封面圖片網址", { max: 500 });
+  // 印成 <img src>。allowRelative 收 /images/… 但擋 //evil.example —— 原本這裡
+  // 自己寫的 /^(https?:\/\/|\/)/ 會放行後者。
+  const coverUrl = url(form, "cover_url", "封面圖片網址", { max: 500, allowRelative: true });
   const status = oneOf(form, "status", "發佈狀態", NEWS_STATUSES, { required: true });
   const attachments = parseAttachments(form);
   const speaker = text(form, "speaker", "講者", { max: 200 });
@@ -213,11 +216,6 @@ function parse(form: FormData): { values?: NewsInput; fieldErrors?: Record<strin
   const venue = text(form, "venue", "地點", { max: 200 });
   const venueEn = text(form, "venue_en", "英文地點", { max: 300 });
   const eventAt = datetimeLocal(form, "event_at", "演講時間");
-
-  const coverError =
-    coverUrl.error ?? (coverUrl.value && !/^(https?:\/\/|\/)/.test(coverUrl.value)
-      ? "封面圖片網址請以 http://、https:// 或 / 開頭"
-      : undefined);
 
   const fieldErrors = collect({
     published_at: publishedAt.error,
@@ -229,7 +227,7 @@ function parse(form: FormData): { values?: NewsInput; fieldErrors?: Record<strin
     title_en: titleEn.error,
     body: body.error,
     body_en: bodyEn.error,
-    cover_url: coverError,
+    cover_url: coverUrl.error,
     status: status.error,
     attachments: attachments.error,
     speaker: speaker.error,

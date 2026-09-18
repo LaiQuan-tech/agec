@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdminOrRedirect } from "@/lib/admin/auth";
+import { countProgramReferences, describeProgramReferences } from "@/lib/admin/programs";
 import { Button } from "@/components/admin/ui/Button";
 import { EmptyState, Table, TBody, TD, TH, THead, TR } from "@/components/admin/ui/Table";
 import { DeleteButton } from "@/components/admin/ui/DeleteButton";
@@ -42,6 +43,13 @@ export default async function ProgramsListPage() {
     console.error("[admin/programs] list failed:", error.message);
   }
   const rows = data ?? [];
+
+  // 每個學制被課程／消息／連結／檔案引用的筆數。被引用的不給刪除鈕，改印
+  // 「被 N 筆資料引用」—— deleteProgram 本來就會拒絕，但那是從對話框觸發的、
+  // 沒有地方顯示訊息，系辦只會看到「按了沒反應」。數不到（null）也不給鈕。
+  const references = await Promise.all(
+    rows.map((row) => countProgramReferences(supabase, row.name))
+  );
 
   return (
     <div className="flex flex-col gap-5">
@@ -89,13 +97,14 @@ export default async function ProgramsListPage() {
             <TH className="w-[130px]">操作</TH>
           </THead>
           <TBody>
-            {rows.map((row) => {
+            {rows.map((row, i) => {
               // 簡介 only counts once it has Chinese text to translate; a program
               // with no description is not "missing" an English one.
               const en = enProgress([
                 [row.name, row.name_en],
                 [row.description, row.description_en],
               ]);
+              const refs = references[i];
 
               return (
                 <TR key={row.id}>
@@ -141,7 +150,21 @@ export default async function ProgramsListPage() {
                           前台 ↗︎
                         </Button>
                       </Link>
-                      <DeleteButton action={deleteProgram} id={row.id} itemLabel={row.name} />
+                      {refs && refs.total === 0 ? (
+                        <DeleteButton action={deleteProgram} id={row.id} itemLabel={row.name} />
+                      ) : (
+                        <span
+                          className="px-2.5 py-1.5 text-[12px]"
+                          style={{ color: "var(--muted)" }}
+                          title={
+                            refs
+                              ? `${describeProgramReferences(refs)}引用了這個學制，先把它們改到別的學制才能刪除`
+                              : "引用數讀取失敗，重新整理再試"
+                          }
+                        >
+                          {refs ? `被 ${refs.total} 筆資料引用` : "引用數讀取失敗"}
+                        </span>
+                      )}
                     </div>
                   </TD>
                 </TR>

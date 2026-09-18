@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { NewsRoute } from "@/components/site/pages";
 import { getNewsYears } from "@/lib/data";
 import { parseNewsYear } from "@/lib/news-categories";
+import { listingMetadata } from "@/lib/site-routes";
 
 export const revalidate = 300;
 
@@ -29,7 +30,7 @@ export async function generateMetadata({
   params: Promise<{ year: string }>;
 }): Promise<Metadata> {
   const { year } = await params;
-  return { title: `News from ${year}` };
+  return listingMetadata(`/news/year/${year}`, "en", `News from ${year}`);
 }
 
 /** 最新消息，依年份篩選 */

@@ -12,7 +12,8 @@ import sanitizeHtml from "sanitize-html";
 import { RICH_TEXT_SANITIZE } from "@/lib/sanitize";
 import { hasEditorContent } from "../news/constants";
 import { slugForProgram } from "@/lib/program-slugs";
-import { collect, number, requireId, text } from "@/lib/admin/validate";
+import { countProgramReferences, describeProgramReferences } from "@/lib/admin/programs";
+import { collect, number, requireId, text, url } from "@/lib/admin/validate";
 
 type ProgramInput = {
   name: string;
@@ -79,7 +80,12 @@ function parse(form: FormData): { values?: ProgramInput; fieldErrors?: Record<st
   const nameEn = text(form, "name_en", "英文學制名稱", { max: 120 });
   const description = text(form, "description", "簡介", { max: 500 });
   const descriptionEn = text(form, "description_en", "英文簡介", { max: 1000 });
-  const admissionUrl = text(form, "admission_url", "招生資訊連結", { max: 500 });
+  // 印成 ProgramAdmissions 的 MaybeLink：外站網址、站內路徑、mailto 都走得通。
+  const admissionUrl = url(form, "admission_url", "招生資訊連結", {
+    max: 500,
+    allowRelative: true,
+    allowMailto: true,
+  });
   const sortOrder = number(form, "sort_order", "顯示順序", { min: 0, max: 999 });
   const req = parseRequirements(form, "requirements_html", "requirements_json");
   const reqEn = parseRequirements(form, "requirements_html_en", "requirements_json_en");
@@ -154,6 +160,36 @@ export async function updateProgram(_prev: ActionState, form: FormData): Promise
     const { values, fieldErrors } = parse(form);
     if (fieldErrors) return { ok: false, message: "請修正下列欄位", fieldErrors };
 
+    // 🔴 改名要先過這一關。name 是 courses / news / links / documents 的文字
+    //    外鍵（沒有 FK，見 lib/admin/programs.ts），也是 lib/program-slugs.ts
+    //    網址代稱表的 key：改了一個字，學制頁 404、招生消息與檔案從該學制頁
+    //    消失、課程掉出分頁籤 —— 全程沒有任何錯誤訊息。ProgramForm 對這種
+    //    學制把欄位鎖成唯讀，但直接 POST 的擋不住，所以伺服器端再驗一次。
+    //    沒有代稱、也沒有人引用的（剛建、打錯字的那種）才准改。
+    const { data: current, error: readError } = await supabase
+      .from("programs")
+      .select("name")
+      .eq("id", id)
+      .maybeSingle<{ name: string }>();
+    if (readError) return { ok: false, message: toChineseError(readError) };
+    if (current && current.name !== values!.name) {
+      const refs = await countProgramReferences(supabase, current.name);
+      if (!refs) return { ok: false, message: "無法確認這個學制有沒有被其他資料引用，請稍後再試" };
+      const slug = slugForProgram(current.name);
+      if (slug || refs.total > 0) {
+        const why = slug
+          ? `「${current.name}」是網址代稱表裡的內建學制（/courses/${slug}）`
+          : `「${current.name}」正被${describeProgramReferences(refs)}引用`;
+        return {
+          ok: false,
+          message: "請修正下列欄位",
+          fieldErrors: {
+            name: `${why}，改名會讓課程／消息／檔案對不到它，所以不能在這裡改；要改請聯絡開發者。`,
+          },
+        };
+      }
+    }
+
     const { error } = await supabase.from("programs").update(values!).eq("id", id);
     if (error) return { ok: false, message: toChineseError(error) };
 
@@ -168,10 +204,39 @@ export async function updateProgram(_prev: ActionState, form: FormData): Promise
   }
 }
 
+/**
+ * ⚠️ 被引用的學制不能刪。與 deleteEvent 同一種擋法：先數 courses / news /
+ * links / documents 有幾筆 program = 這個名稱，>0 就拒絕。刪除是從對話框
+ * 觸發的、沒有地方顯示訊息，所以列表頁在有人引用時根本不給刪除鈕，只印
+ * 「被 N 筆資料引用」；這裡是直接 POST 的最後一道。
+ */
 export async function deleteProgram(form: FormData): Promise<void> {
   try {
     const { supabase } = await requireAdmin();
     const id = requireId(form);
+
+    const { data: current, error: readError } = await supabase
+      .from("programs")
+      .select("name")
+      .eq("id", id)
+      .maybeSingle<{ name: string }>();
+    if (readError) {
+      console.error("[admin/programs] 刪除前讀取失敗:", toChineseError(readError));
+      return;
+    }
+    if (current) {
+      const refs = await countProgramReferences(supabase, current.name);
+      if (!refs) {
+        console.error(`[admin/programs] 拒絕刪除學制「${current.name}」：引用數讀不到，不放行。`);
+        return;
+      }
+      if (refs.total > 0) {
+        console.error(
+          `[admin/programs] 拒絕刪除學制「${current.name}」：被${describeProgramReferences(refs)}引用。請先把那些資料改到別的學制。`
+        );
+        return;
+      }
+    }
 
     const { error } = await supabase.from("programs").delete().eq("id", id);
     if (error) {

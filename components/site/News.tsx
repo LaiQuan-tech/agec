@@ -72,6 +72,7 @@ export function News({
   category,
   year,
   years,
+  categoriesInYear,
 }: {
   lang: Lang;
   newsPage: NewsPage;
@@ -94,6 +95,12 @@ export function News({
   year?: number;
   /** 這個分類下實際有消息的年份，新到舊。年份列從這裡來。 */
   years: NewsYear[];
+  /**
+   * 年份頁專用：這一年真的有消息的 `news.category` 值。分類籤只列這些，
+   * 因為籤會把年份帶著走，而分類×年份沒資料的那一頁是 404。
+   * undefined（沒有年份篩選）表示四個分類籤全列。
+   */
+  categoriesInYear?: string[];
 }) {
   const t = translate(NEWS, lang);
   const eb = translate(EYEBROWS, lang);
@@ -148,7 +155,16 @@ export function News({
         <LocalNav
           lang={lang}
           label={t.localNavLabel}
-          items={translate(NEWS_LOCAL_NAV, lang)}
+          /* §2（活動報名）與 §3（演講）都是有資料才印的區塊。這裡先照
+             server 已知的資料把沒落點的錨點拿掉，SSR 就不會先送出一個死連結、
+             再由 LocalNav 在 hydration 後抽掉（那一下是可見的閃動，沒有 JS 的
+             讀者與爬蟲則永遠看到死連結）。LocalNav 自己的 DOM 檢查仍在，
+             只是這裡讓它在 /news 上沒事可做。 */
+          items={translate(NEWS_LOCAL_NAV, lang).filter(
+            (item) =>
+              (item.href !== "#section-2" || events.length > 0) &&
+              (item.href !== "#section-3" || (page === 1 && talks.length > 0))
+          )}
         />
       )}
       <div className="interior-content">
@@ -164,7 +180,12 @@ export function News({
                 filtered pages too: without it 「全部」 is only reachable with
                 the browser's back button. */}
             <FilterTabLinks
-              tabs={translate(NEWS_FILTER_TABS, lang)}
+              tabs={translate(NEWS_FILTER_TABS, lang).filter(
+                (tab) =>
+                  tab.value === ALL_TABS_VALUE ||
+                  !categoriesInYear ||
+                  categoriesInYear.includes(tab.value)
+              )}
               activeValue={category ?? ALL_TABS_VALUE}
               /* 換分類時保留年份。兩排若各自把對方清掉，讀者每縮小一次範圍
                  就會失去另一次 —— 那不是兩個篩選器，是兩個互相打架的開關。 */

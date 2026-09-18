@@ -4,6 +4,7 @@ import { NewsRoute } from "@/components/site/pages";
 import { getNewsYears } from "@/lib/data";
 import { NEWS_CATEGORIES, categoryForSlug, parseNewsYear } from "@/lib/news-categories";
 import { NEWS_CATEGORY_PAGES } from "@/lib/i18n/news";
+import { listingMetadata } from "@/lib/site-routes";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -33,7 +34,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug, year } = await params;
   const copy = NEWS_CATEGORY_PAGES[slug as keyof typeof NEWS_CATEGORY_PAGES];
-  return { title: `${copy?.title.en ?? "News"} · ${year}` };
+  return listingMetadata(
+    `/news/category/${slug}/year/${year}`,
+    "en",
+    `${copy?.title.en ?? "News"} · ${year}`
+  );
 }
 
 /** 最新消息，依分類與年份篩選 */

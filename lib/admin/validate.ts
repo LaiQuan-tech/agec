@@ -61,8 +61,24 @@ export function date(
     return opts.required ? { value: null, error: `請選擇${label}` } : { value: null };
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return { value: null, error: `${label}格式不正確` };
-  if (Number.isNaN(Date.parse(raw))) return { value: null, error: `${label}不是有效的日期` };
+  if (!isCalendarDate(raw)) return { value: null, error: `${label}不是有效的日期` };
   return { value: raw };
+}
+
+/**
+ * `YYYY-MM-DD` 是不是真的存在的一天。
+ *
+ * ⚠️ 不能只看 Date.parse() 是不是 NaN：V8 對「日」的溢位是往後滾而不是報錯
+ * —— Date.parse('2026-02-30') 得到 3 月 2 日、'2026-04-31' 得到 5 月 1 日。
+ * 這種值會通過驗證，最後由 Postgres 以 22008 打回，系辦看到的是「儲存失敗
+ * （代碼 22008），請截圖回報」而不是欄位旁的一句話。所以把解析結果印回字串
+ * 比對：滾過位的會對不上。月份 13、日 00 這類 V8 本來就回 NaN，一樣被擋。
+ *
+ * 瀏覽器的日期選擇器選不出這種日期，只有直接 POST 的才會碰到。
+ */
+function isCalendarDate(ymd: string): boolean {
+  const t = Date.parse(`${ymd}T00:00:00Z`);
+  return !Number.isNaN(t) && new Date(t).toISOString().slice(0, 10) === ymd;
 }
 
 export function boolean(form: FormData, key: string): boolean {
@@ -129,7 +145,9 @@ export function datetimeLocal(
   if (!parts) return { value: null, error: `${label}格式不正確` };
 
   const value = `${parts[1]}T${parts[2]}${parts[3] ?? ":00"}${TAIPEI_UTC_OFFSET}`;
-  if (Number.isNaN(Date.parse(value))) {
+  // 日期那一半另外用 isCalendarDate() 驗：Date.parse 對 2 月 30 日這種值是往後
+  // 滾不是 NaN（見 date()）。時間那一半它倒是會老實回 NaN（25:00、23:60）。
+  if (!isCalendarDate(parts[1]) || Number.isNaN(Date.parse(value))) {
     return { value: null, error: `${label}不是有效的日期時間` };
   }
   return { value };
@@ -160,6 +178,44 @@ export function email(
 
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(base.value)) {
     return { value: base.value, error: `${label}的格式看起來不對，請確認有 @ 與網域` };
+  }
+  return base;
+}
+
+/**
+ * 會被印成 href／src 的網址欄位。只收 `http://` 與 `https://`：
+ *
+ *   - `allowRelative`：另准站內路徑（`/images/…`）與頁內錨點（`#contact`，
+ *     links 表裡真的有這一筆）。但**不含** `//evil.example` —— 那在瀏覽器眼裡
+ *     是另一個網域，只是長得像路徑。
+ *   - `allowMailto`：另准 `mailto:`。components/site/MaybeLink.tsx 把它當外部
+ *     連結處理，「聯絡系辦」這種卡片用得到。
+ *
+ * ⚠️ 這不是 XSS 的防線 —— React 自己會把 javascript: 的 href／src 換掉。這裡
+ *    擋的是資料品質：一個存進去的 `not a url` 會變成前台一張點不開的卡、一個
+ *    印錯的副檔名徽章，而且沒有人會發現。<input type="url"> 只擋得住走瀏覽器
+ *    的人（而且它放行 javascript:），直接 POST 的什麼都進得來。
+ */
+export function url(
+  form: FormData,
+  key: string,
+  label: string,
+  opts: { required?: boolean; max?: number; allowRelative?: boolean; allowMailto?: boolean } = {}
+): { value: string | null; error?: string } {
+  const base = text(form, key, label, opts);
+  if (base.error || !base.value) return base;
+
+  const value = base.value;
+  const ok =
+    /^https?:\/\//i.test(value) ||
+    (opts.allowRelative === true && /^(\/(?!\/)|#)/.test(value)) ||
+    (opts.allowMailto === true && /^mailto:/i.test(value));
+  if (!ok) {
+    const accepted = ["http://", "https://"];
+    if (opts.allowRelative) accepted.push("/");
+    if (opts.allowMailto) accepted.push("mailto:");
+    const last = accepted.pop();
+    return { value, error: `${label}請以 ${accepted.join("、")} 或 ${last} 開頭` };
   }
   return base;
 }

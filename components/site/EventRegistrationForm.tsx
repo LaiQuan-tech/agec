@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useId } from "react";
+import { useActionState, useId, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import { registerForEvent } from "@/app/(site)/alumni/events/actions";
 import {
@@ -27,6 +27,21 @@ import { ALUMNI_EVENTS } from "@/lib/i18n/alumni-events";
  *
  * ⚠️ 送出成功後整個表單被結果畫面取代，而不是清空後留在原地。留著會讓人
  * 以為要再送一次，而第二次一定會撞上「同信箱已報名」的唯一索引。
+ *
+ * 🔴 「開放／額滿／截止／取消」的切換也在這裡做，不在 EventPage。
+ * 報名成功時 action 會 revalidatePath 這一頁，伺服器樹馬上用新名額重算；
+ * 填掉最後一席的人在那一刻會變成「額滿」。如果是 EventPage 在 open 與 closed
+ * 之間切換元件，這個 client component 會被卸載、成功畫面與報名代碼一起消失，
+ * 畫面上只剩「報名已額滿」—— 資料庫裡明明有他。所以 EventPage 永遠渲染這個
+ * 元件（位置固定、state 保得住），把 closed 訊息當 prop 傳進來，由這裡在
+ * 「自己沒有成功狀態」時才印。
+ *
+ * 🔴 失敗時 action 會把使用者填的值原樣帶回（state.values），這裡拿它當每個
+ * 欄位的 defaultValue。React 19 在 `<form action>` 的 action 結束後會自動
+ * reset 表單（不論成功或失敗），少了這一份，「名額剛好滿了」會連同他填的十個
+ * 欄位一起被清空 —— 與檔頭「失敗時要保住使用者已經打的字」的初衷相反
+ * （上線前測試實際踩到）。兩個 select 用 key 讓它們在每次失敗後重新掛載：
+ * React 不會在更新時重套 <select> 的 defaultValue。
  *
  * ⚠️ 這支拿到的是 messageKey 而不是訊息本身。action 由中英兩個頁面共用，
  * 沒有辦法知道當下是哪一種語言，所以翻譯在這裡做。
@@ -56,6 +71,8 @@ export function EventRegistrationForm({
   slug,
   audience,
   contact,
+  open,
+  closedNotice,
 }: {
   lang: Lang;
   slug: string;
@@ -63,6 +80,10 @@ export function EventRegistrationForm({
   audience: EventAudience;
   /** 承辦窗口，印在成功畫面與確認信上；確認信沒寄成時它是唯一的後續管道。 */
   contact: string | null;
+  /** 伺服器算出來的 displayState 是否為 open。false 時（且尚未成功）印 closedNotice。 */
+  open: boolean;
+  /** 額滿／截止／取消的訊息，由 EventPage 依 displayState 組好傳進來。 */
+  closedNotice: ReactNode;
 }) {
   const copy = translate(ALUMNI_EVENTS, lang);
   const asksAlumniFields = audience === "alumni";
@@ -73,164 +94,190 @@ export function EventRegistrationForm({
 
   if (state.ok) {
     return (
-      <div className="event-success" role="status">
-        <h3>{copy.successHeading}</h3>
-        <p className="event-code">
-          <span>{copy.successCodeLabel}</span>
-          <strong>{state.code}</strong>
-        </p>
-        <p>{state.emailed ? copy.successMailSent : copy.successMailFailed}</p>
-        <p>{copy.successNote}</p>
-        {contact && (
-          <p className="event-success-contact">
-            {copy.detailContact}：{contact}
+      <section className="event-register">
+        <h2>{copy.formHeading}</h2>
+        <p>{copy.formIntro}</p>
+        <div className="event-success" role="status">
+          <h3>{copy.successHeading}</h3>
+          <p className="event-code">
+            <span>{copy.successCodeLabel}</span>
+            <strong>{state.code}</strong>
           </p>
-        )}
-      </div>
+          <p>{state.emailed ? copy.successMailSent : copy.successMailFailed}</p>
+          <p>{copy.successNote}</p>
+          {contact && (
+            <p className="event-success-contact">
+              {copy.detailContact}：{contact}
+            </p>
+          )}
+        </div>
+      </section>
     );
   }
+
+  // 額滿、截止、取消：沒有成功狀態才印。有成功狀態的是剛填掉最後一席的人，
+  // 他要看到的是上面的報名代碼，不是「已額滿」。
+  if (!open) return <>{closedNotice}</>;
 
   const topMessage = state.messageKey
     ? ((copy as unknown as Record<string, unknown>)[state.messageKey] as string | undefined)
     : undefined;
+  // 上一次失敗時送出的值；第一次進來是空的。
+  const values = state.values ?? {};
+  // select 的 defaultValue 只在掛載時生效，所以每次帶回新值就換 key 重新掛載。
+  const selectKey = JSON.stringify(values);
 
   return (
-    <form action={formAction} className="event-form">
-      <input type="hidden" name="slug" value={slug} />
-      {/* 確認信的語言：在哪個語言的頁面送出，就收哪種語言。 */}
-      <input type="hidden" name="lang" value={lang} />
+    <section className="event-register">
+      <h2>{copy.formHeading}</h2>
+      <p>{copy.formIntro}</p>
+      <form action={formAction} className="event-form">
+        <input type="hidden" name="slug" value={slug} />
+        {/* 確認信的語言：在哪個語言的頁面送出，就收哪種語言。 */}
+        <input type="hidden" name="lang" value={lang} />
 
-      {/*
-        Honeypot。人看不到、tab 不到、螢幕閱讀器不會唸到，所以填了的幾乎一定
-        是機器人。用 `left:-9999px` 而不是 `display:none`：部分機器人會跳過
-        display:none 的欄位，但照樣填會被移到畫面外的。
-        ⚠️ 不能加 `required`，否則真人永遠送不出去。
-      */}
-      <div className="event-form-trap" aria-hidden="true">
-        <label htmlFor={id("website")}>Website</label>
-        <input
-          id={id("website")}
-          type="text"
-          name="website"
-          tabIndex={-1}
-          autoComplete="off"
-        />
-      </div>
+        {/*
+          Honeypot。人看不到、tab 不到、螢幕閱讀器不會唸到，所以填了的幾乎一定
+          是機器人。用 `left:-9999px` 而不是 `display:none`：部分機器人會跳過
+          display:none 的欄位，但照樣填會被移到畫面外的。
+          ⚠️ 不能加 `required`，否則真人永遠送不出去。
+        */}
+        <div className="event-form-trap" aria-hidden="true">
+          <label htmlFor={id("website")}>Website</label>
+          <input
+            id={id("website")}
+            type="text"
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+          />
+        </div>
 
-      {topMessage && (
-        /* role="alert" 讓螢幕閱讀器在送出後立刻唸出來——這一段是動態插入的，
-           沒有它就只是畫面上多了一行字，讀屏使用者不會知道。 */
-        <p className="event-form-error" role="alert">
-          {topMessage}
-        </p>
-      )}
-
-      <div className="event-form-grid">
-        <Field
-          id={id("name")}
-          name="name"
-          label={copy.fieldName}
-          required
-          autoComplete="name"
-          error={fieldError(copy, state, "name")}
-        />
-        <Field
-          id={id("email")}
-          name="email"
-          type="email"
-          label={copy.fieldEmail}
-          required
-          autoComplete="email"
-          error={fieldError(copy, state, "email")}
-        />
-        <Field
-          id={id("phone")}
-          name="phone"
-          type="tel"
-          label={copy.fieldPhone}
-          optionalLabel={copy.optional}
-          autoComplete="tel"
-          error={fieldError(copy, state, "phone")}
-        />
-        {/* 畢業年度與學制只有系友活動收。一般活動的報名者不一定是系友，
-            這兩欄對他們沒有意義；action 端對一般活動一律存 null，所以就算
-            有人改 HTML 把欄位加回來也不會被存進去。 */}
-        {asksAlumniFields && (
-          <>
-            <Field
-              id={id("grad_year")}
-              name="grad_year"
-              /* type="text" + inputMode 而不是 type="number"：民國年與西元年都要
-                 收，而 number 欄位的上下鍵與滾輪在這種「兩種紀年」的欄位上只會
-                 讓人誤觸。 */
-              inputMode="numeric"
-              label={copy.fieldGradYear}
-              optionalLabel={copy.optional}
-              hint={copy.fieldGradYearHint}
-              error={fieldError(copy, state, "grad_year")}
-            />
-
-            <div className="event-field">
-              <label htmlFor={id("program")}>
-                {copy.fieldProgram}
-                <em>（{copy.optional}）</em>
-              </label>
-              <select id={id("program")} name="program" defaultValue="">
-                <option value="">—</option>
-                {PROGRAM_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </>
+        {topMessage && (
+          /* role="alert" 讓螢幕閱讀器在送出後立刻唸出來——這一段是動態插入的，
+             沒有它就只是畫面上多了一行字，讀屏使用者不會知道。 */
+          <p className="event-form-error" role="alert">
+            {topMessage}
+          </p>
         )}
 
-        <div className="event-field">
-          <label htmlFor={id("guests")}>{copy.fieldGuests}</label>
-          {/* 攜伴是 select 不是自由輸入：上限 5 是資料庫的 CHECK，用選單就
-              不可能送出超過的值，也省掉一種錯誤訊息。 */}
-          <select id={id("guests")} name="guests" defaultValue="0">
-            {Array.from({ length: MAX_GUESTS + 1 }, (_, n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-          <p className="event-field-hint">{copy.fieldGuestsHint}</p>
-          {fieldError(copy, state, "guests") && (
-            <p className="event-field-error">{fieldError(copy, state, "guests")}</p>
+        <div className="event-form-grid">
+          <Field
+            id={id("name")}
+            name="name"
+            label={copy.fieldName}
+            required
+            autoComplete="name"
+            defaultValue={values.name}
+            error={fieldError(copy, state, "name")}
+          />
+          <Field
+            id={id("email")}
+            name="email"
+            type="email"
+            label={copy.fieldEmail}
+            required
+            autoComplete="email"
+            defaultValue={values.email}
+            error={fieldError(copy, state, "email")}
+          />
+          <Field
+            id={id("phone")}
+            name="phone"
+            type="tel"
+            label={copy.fieldPhone}
+            optionalLabel={copy.optional}
+            autoComplete="tel"
+            defaultValue={values.phone}
+            error={fieldError(copy, state, "phone")}
+          />
+          {/* 畢業年度與學制只有系友活動收。一般活動的報名者不一定是系友，
+              這兩欄對他們沒有意義；action 端對一般活動一律存 null，所以就算
+              有人改 HTML 把欄位加回來也不會被存進去。 */}
+          {asksAlumniFields && (
+            <>
+              <Field
+                id={id("grad_year")}
+                name="grad_year"
+                /* type="text" + inputMode 而不是 type="number"：民國年與西元年都要
+                   收，而 number 欄位的上下鍵與滾輪在這種「兩種紀年」的欄位上只會
+                   讓人誤觸。 */
+                inputMode="numeric"
+                label={copy.fieldGradYear}
+                optionalLabel={copy.optional}
+                hint={copy.fieldGradYearHint}
+                defaultValue={values.grad_year}
+                error={fieldError(copy, state, "grad_year")}
+              />
+
+              <div className="event-field">
+                <label htmlFor={id("program")}>
+                  {copy.fieldProgram}
+                  <em>（{copy.optional}）</em>
+                </label>
+                <select
+                  key={selectKey}
+                  id={id("program")}
+                  name="program"
+                  defaultValue={values.program ?? ""}
+                >
+                  <option value="">—</option>
+                  {PROGRAM_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
+
+          <div className="event-field">
+            <label htmlFor={id("guests")}>{copy.fieldGuests}</label>
+            {/* 攜伴是 select 不是自由輸入：上限 5 是資料庫的 CHECK，用選單就
+                不可能送出超過的值，也省掉一種錯誤訊息。 */}
+            <select key={selectKey} id={id("guests")} name="guests" defaultValue={values.guests ?? "0"}>
+              {Array.from({ length: MAX_GUESTS + 1 }, (_, n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+            <p className="event-field-hint">{copy.fieldGuestsHint}</p>
+            {fieldError(copy, state, "guests") && (
+              <p className="event-field-error">{fieldError(copy, state, "guests")}</p>
+            )}
+          </div>
+
+          <Field
+            id={id("dietary")}
+            name="dietary"
+            label={copy.fieldDietary}
+            optionalLabel={copy.optional}
+            hint={copy.fieldDietaryHint}
+            defaultValue={values.dietary}
+            error={fieldError(copy, state, "dietary")}
+          />
+        </div>
+
+        <div className="event-field event-field-wide">
+          <label htmlFor={id("note")}>
+            {copy.fieldNote}
+            <em>（{copy.optional}）</em>
+          </label>
+          <textarea id={id("note")} name="note" rows={3} defaultValue={values.note} />
+          {fieldError(copy, state, "note") && (
+            <p className="event-field-error">{fieldError(copy, state, "note")}</p>
           )}
         </div>
 
-        <Field
-          id={id("dietary")}
-          name="dietary"
-          label={copy.fieldDietary}
-          optionalLabel={copy.optional}
-          hint={copy.fieldDietaryHint}
-          error={fieldError(copy, state, "dietary")}
-        />
-      </div>
+        {/* 個資告知放在送出鍵前面，不是頁尾的小字：這是報名者按下去之前應該
+            讀到的東西。 */}
+        <p className="event-form-privacy">{copy.privacyNotice}</p>
 
-      <div className="event-field event-field-wide">
-        <label htmlFor={id("note")}>
-          {copy.fieldNote}
-          <em>（{copy.optional}）</em>
-        </label>
-        <textarea id={id("note")} name="note" rows={3} />
-        {fieldError(copy, state, "note") && (
-          <p className="event-field-error">{fieldError(copy, state, "note")}</p>
-        )}
-      </div>
-
-      {/* 個資告知放在送出鍵前面，不是頁尾的小字：這是報名者按下去之前應該
-          讀到的東西。 */}
-      <p className="event-form-privacy">{copy.privacyNotice}</p>
-
-      <SubmitButton copy={copy} />
-    </form>
+        <SubmitButton copy={copy} />
+      </form>
+    </section>
   );
 }
 
@@ -243,6 +290,7 @@ function Field({
   required,
   optionalLabel,
   autoComplete,
+  defaultValue,
   hint,
   error,
 }: {
@@ -254,6 +302,8 @@ function Field({
   required?: boolean;
   optionalLabel?: string;
   autoComplete?: string;
+  /** 上一次失敗時送出的值（見檔頭）；沒有就是空字串。 */
+  defaultValue?: string;
   hint?: string;
   error?: string | null;
 }) {
@@ -272,6 +322,7 @@ function Field({
         inputMode={inputMode}
         required={required}
         autoComplete={autoComplete}
+        defaultValue={defaultValue ?? ""}
         // 描述與錯誤都綁上去，讀屏才會在唸完欄位名之後接著唸它們。
         aria-describedby={[hintId, errorId].filter(Boolean).join(" ") || undefined}
         aria-invalid={error ? true : undefined}

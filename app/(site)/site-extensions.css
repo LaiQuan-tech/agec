@@ -262,6 +262,16 @@
 .post-page .breadcrumb a:hover {
   color: var(--green);
 }
+/* 最後一段是本頁標題，消息標題動輒 20 字，375px 下會把前面的「首頁」「最新消息」
+   擠成一字一行（CJK 的 min-content 是單一個字）。前段不可縮，只讓標題那段換行。
+   上線前 /news/875、/faculty/22 在 375 實測。 */
+.post-page .breadcrumb > a,
+.post-page .breadcrumb > span:not(:last-child) {
+  flex-shrink: 0;
+}
+.post-page .breadcrumb > span:last-child {
+  min-width: 0;
+}
 
 .post-head h1 {
   /* Preflight resets h1 to inherit; this is the page's display type. */
@@ -1235,6 +1245,22 @@
   }
 }
 
+/* 頁尾的電話與 email（tel: / mailto:）—— WCAG 2.2 目標尺寸（2.5.8，axe
+   target-size，serious，上線前六頁全中）。
+
+   兩個 <a> 各自佔一行、用 <br> 隔開，行高是 1.8 × 13px = 23.4px：點擊區只有
+   15px 高，而且兩行的中心距 23px，都差一點到 24px 的門檻。inline-block +
+   24px 行高一次解決兩件事（目標 24px 高、行距也剛好 24px）；視覺上每行只長
+   0.6px。不用 .footer-external a 那套 padding＋負邊距，因為那只撐大目標、
+   兩行中心距還是 23px，仍會被「與鄰居距離不足」擋下來。
+
+   `:not(.footer-external)`：站外連結那一段也是 .footer-contact 裡的 <p>，
+   它們已經用 padding 撐到 36px，不需要、也不該被這條改到。 */
+.footer-contact p:not(.footer-external) > a {
+  display: inline-block;
+  line-height: 24px;
+}
+
 /* ===========================================================================
  * 全站搜尋
  *
@@ -1372,6 +1398,13 @@
   font-size: 14px;
   line-height: 1.8;
   margin: 6px 0 0;
+}
+/* 摘要與標題會原樣印出消息內文的第一段，活動剪影那類貼文常常只有一條
+   facebook 網址（單一連續字串 60+ 字元，無處可斷）。沒有這行，600px 以下
+   整頁被撐到 679px 寬、出現橫向捲軸（上線前 /search?q=農業 在 600/375 實測）。 */
+.search-results h2,
+.search-results p {
+  overflow-wrap: anywhere;
 }
 
 /* 範圍說明。永遠顯示 —— 搜不到「本系簡介」裡的一句話時，讀者需要知道那是
