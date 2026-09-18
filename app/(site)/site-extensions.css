@@ -718,6 +718,11 @@
     white-space: nowrap;
     flex: 0 0 auto;
   }
+  /* 標題本身放不下時（"Announcements" 一個字就 320px），讓計數器換到標題
+     下面一行，而不是被裁在 hero 右邊看不見。 */
+  .interior-title-row {
+    flex-wrap: wrap;
+  }
 
 }
 
