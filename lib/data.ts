@@ -938,7 +938,10 @@ const ADMISSIONS_CATEGORY = "招生";
 export async function getAdmissionsNews(
   nameZh: string,
   lang: Lang,
-  limit = 80
+  // 一個學制的招生公告最多幾十則（2026-09：在職專班 54），整份都給：學制頁的
+  // 年份籤在瀏覽器端篩（AdmissionNoticeList），少載的那一年就篩不出來。
+  // 500 只是防呆上限，不是分頁。
+  limit = 500
 ): Promise<NewsItem[]> {
   const supabase = createServerClient();
   const { data, error } = await supabase

@@ -4,6 +4,7 @@ import { localizePath, translate, type Lang } from "@/lib/i18n";
 import { ADMISSIONS } from "@/lib/i18n/admissions";
 import { SHARED } from "@/lib/i18n/shared";
 import { formatNewsDate } from "./format";
+import { AdmissionNoticeList } from "./AdmissionNoticeList";
 import { slugForProgram } from "@/lib/program-slugs";
 import { SiteShell } from "./SiteShell";
 import { NextRoute } from "./NextRoute";
@@ -105,22 +106,24 @@ export function ProgramAdmissions({
             <h3>{p.notices.heading}</h3>
             <p>{p.notices.description}</p>
           </div>
-          {notices.length > 0 ? (
-            <div className="inner-news-list">
-              {notices.map((item) => (
-                <Link href={localizePath(`/news/${item.id}`, lang)} key={item.id}>
-                  <time dateTime={item.published_at.slice(0, 10)}>
-                    {formatNewsDate(item.published_at).full}
-                  </time>
-                  <span>{item.category}</span>
-                  <h3>{item.title}</h3>
-                  <i>↗︎</i>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <p className="news-empty">{p.notices.empty}</p>
-          )}
+          {/* 年份籤＋清單在瀏覽器端篩（AdmissionNoticeList）。日期在這裡先算好：
+              formatNewsDate 是純函式，但 client 元件拿到的資料越扁越好。 */}
+          <AdmissionNoticeList
+            items={notices.map((item) => ({
+              id: item.id,
+              href: localizePath(`/news/${item.id}`, lang),
+              dateTime: item.published_at.slice(0, 10),
+              date: formatNewsDate(item.published_at).full,
+              year: Number(formatNewsDate(item.published_at).year),
+              category: item.category,
+              title: item.title,
+            }))}
+            yearLabel={p.notices.yearLabel}
+            allYearsLabel={p.notices.allYears}
+            navLabel={p.notices.yearNavLabel}
+            yearHint={p.notices.yearHint}
+            empty={p.notices.empty}
+          />
         </section>
 
         {/* 檔案、考古題與連結：一個都沒有時整區不印（SiteDocuments 自己會

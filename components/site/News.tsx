@@ -34,14 +34,19 @@ import { formatNewsDate } from "./format";
  *
  * `#section-2` 活動報名 is an addition (2026-09-16): general-audience events
  * from `alumni_events` (audience = general), listed with the same `.event-list`
- * rows /alumni uses for 系友回娘家. Rendered only on the unfiltered first page
- * and only while there is at least one event that has not ended — no empty
- * "no events" box on a page that is otherwise about announcements.
+ * rows /alumni uses for 系友回娘家. Rendered on every view of this page
+ * (unfiltered, category, year, page N) while there is at least one event that
+ * has not ended — no empty "no events" box on a page that is otherwise about
+ * announcements.
  *
  * `#section-3` (formerly `#section-2`) is the other addition: 演講公告 rows were
  * pulled out of that list into their own block at the client's request, and it
  * disappears entirely when there are no talks rather than rendering an empty
  * container. LocalNav drops the anchor of whichever section is absent.
+ *
+ * 🔴 篩選只影響 #section-1：LocalNav、活動報名、演講區在分類／年份／分頁都在
+ *    （客戶 2026-09-21：「點到活動剪影，上面的演講資訊會消失…我要一直都會
+ *    出現」）。分類頁少的只有特寫卡（它印的是全站最新，不是該分類最新）。
  */
 
 /**
@@ -76,14 +81,14 @@ export function News({
 }: {
   lang: Lang;
   newsPage: NewsPage;
-  /** The most recent few, not all of them — see `talkCount`. Empty when
-   *  filtered: a category page is one list, not the whole front page. */
+  /** The most recent few, not all of them — see `talkCount`. Present on every
+   *  view of the page; empty only when there are no talks at all. */
   talks: NewsItem[];
   /** How many talks exist in total, for the link to the archive. */
   talkCount: number;
   /**
-   * 還沒結束的一般活動（audience = general），近的在前。只有未篩選的第 1 頁
-   * 會拿到非空陣列；空陣列時 `#section-2` 整個不印。
+   * 還沒結束的一般活動（audience = general），近的在前；每一種檢視都會拿到。
+   * 空陣列時 `#section-2` 整個不印。
    */
   events: AlumniEvent[];
   /**
@@ -148,25 +153,21 @@ export function News({
         }
         imageAlt={t.heroAlt}
       />
-      {/* The strip is a table of contents for a page with several sections, and
-          a filtered page is a single list — `#section-2` is not rendered, so
-          LocalNav would collapse to one item that navigates nowhere. */}
-      {filtered ? null : (
-        <LocalNav
-          lang={lang}
-          label={t.localNavLabel}
-          /* §2（活動報名）與 §3（演講）都是有資料才印的區塊。這裡先照
-             server 已知的資料把沒落點的錨點拿掉，SSR 就不會先送出一個死連結、
-             再由 LocalNav 在 hydration 後抽掉（那一下是可見的閃動，沒有 JS 的
-             讀者與爬蟲則永遠看到死連結）。LocalNav 自己的 DOM 檢查仍在，
-             只是這裡讓它在 /news 上沒事可做。 */
-          items={translate(NEWS_LOCAL_NAV, lang).filter(
-            (item) =>
-              (item.href !== "#section-2" || events.length > 0) &&
-              (item.href !== "#section-3" || (page === 1 && talks.length > 0))
-          )}
-        />
-      )}
+      {/* 每一種檢視都印（原本篩選時整條藏起來，「演講與研討會」那個連結跟著
+          消失，客戶回報過）。§2（活動報名）與 §3（演講）都是有資料才印的區塊：
+          這裡先照 server 已知的資料把沒落點的錨點拿掉，SSR 就不會先送出一個
+          死連結、再由 LocalNav 在 hydration 後抽掉（那一下是可見的閃動，沒有
+          JS 的讀者與爬蟲則永遠看到死連結）。LocalNav 自己的 DOM 檢查仍在，
+          只是這裡讓它在 /news 上沒事可做。 */}
+      <LocalNav
+        lang={lang}
+        label={t.localNavLabel}
+        items={translate(NEWS_LOCAL_NAV, lang).filter(
+          (item) =>
+            (item.href !== "#section-2" || events.length > 0) &&
+            (item.href !== "#section-3" || talks.length > 0)
+        )}
+      />
       <div className="interior-content">
         <section className="inner-section" id="section-1">
           <div className="container">
@@ -296,9 +297,8 @@ export function News({
         </section>
 
         {/* 活動報名：一般活動（audience = general）的清單，任何人都能報名。
-            只在未篩選的第 1 頁、而且有還沒結束的活動時才印 —— `events` 在其他
-            情況下是空陣列（pages.tsx 根本不查），所以這裡只看長度。沒有活動時
-            整區不印，LocalNav 會自己丟掉 #section-2 那一項。
+            每一種檢視都印，只在有還沒結束的活動時才印；沒有活動時整區不印，
+            LocalNav 會自己丟掉 #section-2 那一項。
             不加 `.tint`：下面的演講區是 tint，兩個 tint 疊在一起會糊成一塊。 */}
         {events.length > 0 ? (
           <section className="inner-section" id="section-2">
@@ -316,12 +316,10 @@ export function News({
           </section>
         ) : null}
 
-        {/* Page 1 only. Repeating the block under page 2's list would show
-            the same items again and put one panel at two URLs. LocalNav drops
-            its 演講 anchor by itself when the section is absent. */}
-        {/* ⚠️ 條件裡刻意沒有 category：點分類籤時這一區不該消失。
-            見 components/site/pages.tsx 裡對應的查詢說明。 */}
-        {page === 1 && talks.length > 0 ? (
+        {/* 每一種檢視都印（分類、年份、第 N 頁）：點分類籤時這一區不該消失，
+            翻頁時也不該——那是預覽區塊，讀者要的是「每一頁長得一樣」。沒有演講
+            時整區不印，LocalNav 會自己丟掉錨點。見 pages.tsx 的查詢說明。 */}
+        {talks.length > 0 ? (
           <section className="inner-section tint" id="section-3">
             <div className="container">
               <SectionTitle

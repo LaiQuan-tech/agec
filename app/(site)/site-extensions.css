@@ -904,7 +904,8 @@
   margin-right: 6px;
   text-transform: uppercase;
 }
-.news-years a {
+.news-years a,
+.news-years button {
   color: var(--muted);
   /* 上下 padding 把點擊區從 20px 撐到 36px。年份是四個數字的窄目標，
      沒有它在觸控裝置上很難點中。負邊距讓這一行的高度不受影響。 */
@@ -912,10 +913,20 @@
   padding: 8px 0;
   transition: color 0.2s;
 }
-.news-years a:hover {
+/* 各學制招生頁的年份籤是 <button>（瀏覽器端篩，不換頁），長相要跟 /news 的
+   <a> 一樣：把按鈕的預設外觀拿掉。 */
+.news-years button {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+.news-years a:hover,
+.news-years button:hover {
   color: var(--green);
 }
-.news-years a.active {
+.news-years a.active,
+.news-years button.active {
   color: var(--green);
   font-weight: 700;
 }

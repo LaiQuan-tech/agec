@@ -295,6 +295,11 @@ export const ADMISSIONS = {
         zh: "簡章、書面資料下載、筆試與口試時間，依日期排列，最新的在前。",
         en: "Guidelines, document downloads and examination schedules, newest first.",
       },
+      /** 年份籤（AdmissionNoticeList）：字與 lib/i18n/news.ts 的年份列一致。 */
+      yearLabel: { zh: "年份", en: "Year" },
+      allYears: { zh: "全部年份", en: "All years" },
+      yearNavLabel: { zh: "依年份篩選招生公告", en: "Filter admission notices by year" },
+      yearHint: { zh: "{year} 年的招生公告，共 {count} 則", en: "{count} notices from {year}" },
       empty: {
         zh: "目前沒有這個學制的招生公告。",
         en: "No admission notices for this program yet.",

@@ -84,33 +84,29 @@ export async function NewsRoute({
   // and the main list's page count has to be computed from the announcements
   // alone. The count is its own head-only request rather than a length — the
   // block is a preview, so the number it advertises is not the number it holds.
-  // 演講區塊出現在「任何一種檢視的第 1 頁」，包含分類與年份。
+  // 🔴 篩選（分類、年份、翻頁）只影響 #section-1 的清單。演講與研討會、
+  //    活動報名、頁內導覽在每一種檢視都在。
   //
-  // ⚠️ 原本的條件是「只有未篩選的第 1 頁」，於是點任何一個分類籤，演講與
-  //    研討會整區就消失，要點回「全部消息」才會回來 —— 系辦回報過這件事。
-  //    演講公告被 getNewsPage() 用 .neq() 排除在主列表之外，所以它不是那五個
-  //    籤的其中一個；如果它又只在「全部」底下出現，讀者實際上很難走到它。
-  //    它現在是一個常駐的區塊，不隨篩選消失。
-  //
-  // 仍然限定第 1 頁：它是一個預覽區塊，翻到第 7 頁還跟著同一批演講沒有意義。
-  //
-  // 活動報名區塊（一般活動）只在**未篩選的第 1 頁**：它不是消息的一種切法，
-  // 而是另一張表；點了「招生」籤還跟著一排活動，讀者會以為那是招生活動。
-  // 演講區塊是相反的決定（見上），因為演講真的是消息、只是被抽出主列表。
-  const filtered = Boolean(category || year);
+  //    歷史：2026-09-01 的版本把分類頁當「單一清單」，演講區、活動區、頁內
+  //    導覽全部藏起來；系辦回報兩次「點了活動剪影，上面的演講資訊就不見，
+  //    要點回全部才回來」（09-10 先把演講區放回第 1 頁，09-21 客戶再回報頁內
+  //    導覽仍然消失、要「一直都會出現」）。演講公告被 getNewsPage() 用 .neq()
+  //    排除在主列表之外，不是那五個籤的其中一個，只有常駐才走得到。
+  //    活動報名區有自己的大標與說明，與清單分開，不會被誤讀成該分類的內容。
+  //    翻到第 N 頁也照印：那兩區是預覽，多一次查詢換來的是「每一頁長得一樣」。
   const [newsPage, years, talks, talkCount, events, perCategoryYears] = await Promise.all([
     getNewsPage(page, lang, category, year),
     // ⚠️ 只帶 category，不帶 year。年份列要列出「這個分類底下所有有資料的
     // 年份」，把目前選的年份也套進去，列表就只會剩下那一年，等於選了之後
     // 再也換不掉。
     getNewsYears(category),
-    page === 1 ? getTalks(lang, TALKS_PREVIEW_SIZE) : [],
-    page === 1 ? countTalks() : 0,
+    getTalks(lang, TALKS_PREVIEW_SIZE),
+    countTalks(),
     // 只取還沒結束的一般活動，近的在前，最多 6 場。⚠️ 一定要傳 audience：
     // 預設是 alumni，漏了會把系友回娘家列到最新消息上。
     // 不設上限：與 /alumni 一致。設了上限又沒有「更多」連結，第 N+1 場開放報名中的
     // 活動會從所有列表頁消失、只剩搜尋找得到。
-    page === 1 && !filtered ? getAlumniEvents(lang, { audience: "general" }) : [],
+    getAlumniEvents(lang, { audience: "general" }),
     // 年份頁的分類籤。籤的連結會把年份帶著走（News.tsx：「換分類時保留
     // 年份」），而「分類有、該年沒有」的組合是 404（見下面那段守門）——
     // 兩個都是刻意的決定，但合在一起就是：/news/year/2017 印出四個分類籤，
