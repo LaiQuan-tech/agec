@@ -139,7 +139,7 @@ export function SiteFooter({ lang }: { lang: Lang }) {
                   這裡補一條，兩欄剛好 4 / 4。 */}
               {i === 1 ? (
                 <Link href={localizePath("/alumni/giving", lang)}>
-                  {translate(GIVING, lang).title}
+                  {translate(GIVING, lang).linkLabel}
                 </Link>
               ) : null}
             </div>

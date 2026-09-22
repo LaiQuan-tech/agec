@@ -161,13 +161,9 @@ export const ALUMNI = {
       en: "Alumni giving funds scholarships, international exchange, research equipment and student activities, keeping an AGEC education equal to the challenges of a new era.",
     },
     // Arrow lives on MaybeLink, not here — see students.ts section2.cta.
-    cta: { zh: "前往捐贈專區", en: "Visit the giving page" },
-    /**
-     * 第二顆按鈕：系上匯款帳號的內頁（/alumni/giving）。只在系辦於後台填了
-     * 帳號之後才印（Alumni.tsx 的 `givingReady`）。字與那一頁的標題同一個
-     * （lib/i18n/giving.ts 的 GIVING.title），按鈕上看到什麼、點進去就是什麼。
-     */
-    bank: { zh: "匯款帳號資訊", en: "Bank transfer details" },
+    // 連到系上匯款帳號的內頁 /alumni/giving（不再是臺大捐款平台）。頁尾同一
+    // 條連結用同一組字（lib/i18n/giving.ts 的 GIVING.linkLabel 引用這裡）。
+    cta: { zh: "前往支持農經", en: "Support AGEC" },
   },
   section4: {
     heading: { zh: "李登輝系友專區", en: "The Lee Teng-hui Alumni Archive" },

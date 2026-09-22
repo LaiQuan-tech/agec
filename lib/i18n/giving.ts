@@ -1,3 +1,4 @@
+import { ALUMNI } from "./alumni";
 import type { Dict } from "@/lib/i18n";
 import { EYEBROWS } from "@/lib/i18n/eyebrows";
 
@@ -15,6 +16,8 @@ import { EYEBROWS } from "@/lib/i18n/eyebrows";
 export const GIVING = {
   /** 也是 <title> 與 sitemap 上的名字（lib/site-routes.ts 的 listingMetadata 讀它）。 */
   title: { zh: "匯款帳號資訊", en: "Bank transfer details" },
+  /** 頁尾那條連結的字：與 /alumni §3 的按鈕同一組（客戶要兩處都叫「前往支持農經」）。 */
+  linkLabel: ALUMNI.section3.cta,
   kicker: EYEBROWS.supportAgec,
   lead: {
     zh: "捐款可直接匯入以下帳戶。匯款後請與系辦聯絡，方便我們確認並致謝。",

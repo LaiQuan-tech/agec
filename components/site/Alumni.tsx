@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { AlumniEvent } from "@/lib/alumni-events";
 import { localizePath, translate, type Lang } from "@/lib/i18n";
 import { ALUMNI } from "@/lib/i18n/alumni";
@@ -53,15 +52,6 @@ import { EventList } from "./EventList";
  * 那是因為小標是「這一段在講什麼」的標籤，中文讀者需要讀懂它；這五個是產業
  * 類別的標籤雲，五格固定寬，翻成中文會變成五個長度不一的詞而撐壞版面。
  */
-/**
- * 「前往捐贈專區」 and the 系友捐贈 link both land here.
- *
- * NTU's own giving site, not a department page: 農經系 runs no donation channel
- * of its own — there is no giving page anywhere under agec.ntu.edu.tw, and the
- * current official site sends donors to the university as well.
- */
-const GIVING_URL = "https://giving.ntu.edu.tw/Default.html";
-
 const SECTORS = [
   "GOVERNMENT",
   "ACADEMIA",
@@ -73,17 +63,10 @@ const SECTORS = [
 export function Alumni({
   lang,
   events,
-  givingReady,
 }: {
   lang: Lang;
   /** 還沒結束的系友活動，近的在前。空陣列時那一區顯示一句說明，不是空框。 */
   events: AlumniEvent[];
-  /**
-   * 系辦已在後台填了匯款帳號（lib/page-copy/giving.ts 的 `ready`）。true 才印
-   * §3 的第二顆按鈕「匯款帳號資訊」—— 沒填之前那一頁只有「整理中」，按鈕指過去
-   * 是把人送到一句道歉。
-   */
-  givingReady: boolean;
 }) {
   const t = translate(ALUMNI, lang);
   const eb = translate(EYEBROWS, lang);
@@ -212,31 +195,17 @@ export function Alumni({
             </div>
             <div>
               <p>{t.section3.body}</p>
-              {/* 兩顆按鈕一列：臺大捐款平台（金色實心）＋系上匯款帳號（白色
-                  底線文字連結）。`.button.dark` 在深綠底上是隱形的，所以第二顆
-                  用首頁收尾區同一組 `.text-action.light-action`。
-                  ⚠️ 包一層 `.donation-actions` 是安全的：site.css 對這一欄只用
-                  `.donation-grid>div:last-child>p`（直接子 <p>，上面那段仍是）
-                  與 `.donation-grid .button`（後代選擇器，仍命中），margin 由
-                  site-extensions.css 接手。 */}
-              <div className="donation-actions">
-                <MaybeLink
-                  className="button gold"
-                  href={GIVING_URL}
-                  arrow={<span> ↗︎</span>}
-                >
-                  {t.section3.cta}
-                </MaybeLink>
-                {givingReady ? (
-                  <Link
-                    className="text-action light-action"
-                    href={localizePath("/alumni/giving", lang)}
-                  >
-                    {t.section3.bank}
-                    <span>→</span>
-                  </Link>
-                ) : null}
-              </div>
+              {/* 一顆按鈕，連到系上匯款帳號的內頁（/alumni/giving）。原本連臺大
+                  捐款平台、旁邊另有一條「匯款帳號資訊」文字連結；客戶 2026-09-22
+                  改成只留這一顆、直接進系上的頁。站內連結，箭頭用 → 不是 ↗︎
+                  （↗︎ 在這個站是「會離開這一頁」的承諾）。 */}
+              <MaybeLink
+                className="button gold"
+                href={localizePath("/alumni/giving", lang)}
+                arrow={<span> →</span>}
+              >
+                {t.section3.cta}
+              </MaybeLink>
             </div>
           </div>
         </section>

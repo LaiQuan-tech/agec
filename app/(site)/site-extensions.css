@@ -2365,30 +2365,10 @@
 /* ==========================================================================
    支持農經 → 匯款帳號資訊（2026-09-22）
    --------------------------------------------------------------------------
-   /alumni#section-3 多了第二顆按鈕（系上匯款帳號的內頁 /alumni/giving），
+   /alumni#section-3 的按鈕改連系上匯款帳號的內頁 /alumni/giving，
    內頁沿用 `.post-*` 與活動頁的 `.event-details`，只有複製鈕與「值＋鈕同列」
    是新的樣式。顏色只用 site.css 的變數。
    ========================================================================== */
-
-/* §3 右欄的兩顆按鈕。site.css 只給 `.donation-grid .button{margin-top:28px}`，
-   現在按鈕包在 `.donation-actions` 裡，上邊距搬到容器、按鈕自己歸零 ——
-   兩條選擇器同為 (0,2,0)，這個檔在後面載入所以贏。`.text-action` 是 8px 上下
-   內距的底線連結、`.button` 是 16px 內距的實心塊，靠 align-items 對中線。 */
-.donation-actions {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 34px;
-  margin-top: 28px;
-}
-.donation-actions .button {
-  margin-top: 0;
-}
-@media (max-width: 600px) {
-  .donation-actions {
-    gap: 18px;
-  }
-}
 
 /* 複製鈕。外形照 site.css 的 `.filter-tabs button`（細框、膠囊、muted 字），
    縮成 13px／6px 12px，站在 16px 的帳號旁邊才不會搶。hover 綠框、複製成功

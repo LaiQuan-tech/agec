@@ -47,7 +47,7 @@ const AFFECTED_ROUTES = {
   // 這裡加）。/alumni 也在：§3 那顆「匯款帳號資訊」按鈕看 giving 的帳號有沒有
   // 填（components/site/pages.tsx 的 AlumniRoute），系辦第一次填好帳號、按鈕
   // 要立刻出現，而不是等 300 秒。
-  page_copy: ["/students", "/about", "/alumni/giving", "/alumni"],
+  page_copy: ["/students", "/about", "/alumni/giving"],
 } as const;
 
 export type RevalidateEntity = keyof typeof AFFECTED_ROUTES;

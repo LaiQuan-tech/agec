@@ -244,7 +244,7 @@ export const ADMIN_SITE_MAP: AdminPage[] = [
         label: `${section(ALUMNI.nav.items, "#section-3")} · ${GIVING.title.zh}`,
         href: "/admin/giving",
         publicHref: "/alumni/giving",
-        note: "填了帳號，系友專區那顆按鈕才會出現",
+        note: "系友專區「前往支持農經」按鈕與頁尾連結都到這一頁；沒填帳號時頁上印「整理中」",
       },
     ],
   },
