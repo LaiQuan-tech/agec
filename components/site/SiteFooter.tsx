@@ -3,6 +3,7 @@ import { footerColumns } from "./nav";
 import { navHref } from "@/lib/nav";
 import { localizePath, translate, type Lang } from "@/lib/i18n";
 import { COMMON } from "@/lib/i18n/common";
+import { GIVING } from "@/lib/i18n/giving";
 import { MaybeLink } from "./MaybeLink";
 
 /**
@@ -132,6 +133,15 @@ export function SiteFooter({ lang }: { lang: Lang }) {
                   {item.label}
                 </Link>
               ))}
+              {/* 匯款帳號資訊（/alumni/giving）接在第二欄「系友專區」後面：客戶要
+                  它從頁尾也到得了。它是系友專區底下的內頁、不是第九條路線
+                  （加進 lib/nav.ts 會讓每個內頁的「NN / 08」重編號），所以只在
+                  這裡補一條，兩欄剛好 4 / 4。 */}
+              {i === 1 ? (
+                <Link href={localizePath("/alumni/giving", lang)}>
+                  {translate(GIVING, lang).title}
+                </Link>
+              ) : null}
             </div>
           ))}
         </div>
