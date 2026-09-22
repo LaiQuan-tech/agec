@@ -31,6 +31,15 @@ export type CopyField<Group extends string = string> = {
   max: number;
   /** false = 只有一個輸入框（url 存 zh 欄；neutral 存 zh 與 en 同一個值）。 */
   bilingual: boolean;
+  /**
+   * true = 可以留空：bilingual 存 zh=""／en=""，neutral 存 ""。
+   *
+   * 學生專區與本系簡介不設（中文必填）：那兩頁每一格都有字典可退，清空一格的
+   * 結果是「退回字典」，系辦會以為改沒有效。匯款帳號頁（giving.ts）沒有字典
+   * 可退 —— 分行、SWIFT 這種欄位系上不一定有，留空就是「前台不印這一列」，
+   * 所以才需要這個旗標。後台表單的 `required` 與 action 的驗證都看它。
+   */
+  optional?: boolean;
 };
 
 /** page_copy 的一列（page 由呼叫端決定，不在這裡）。 */

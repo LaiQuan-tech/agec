@@ -102,6 +102,7 @@ VS15 強制走文字字體，是唯一在各家瀏覽器都可靠的做法（CSS
 - `format.ts` — `formatNewsDate()`，純字串切片避免時區 hydration 不一致
 - `AdmissionKinds.tsx` + `ExamPapers.tsx` + `lib/admissions-kinds.ts` — /admissions §4 三張入口卡與各學制招生頁的考古題區。約定：簡章／書面資料卡落在該學制**最新一則**標題含關鍵字的招生公告 `/news/<id>`（找不到才退回 `/admissions/<slug>#notices`／`#files`）；考古題卡連 `/admissions/<slug>#exams`，只列 `documents` 裡 `category_zh='考古題'` 有列的學制。`#exams` 依 `description`（年度標題）分組、一年度一列，`label`＝科目；`#files` **不含**考古題。判斷全在 `lib/admissions-kinds.ts` 的純函式，改關鍵字或分組規則去那裡
 - `EventList.tsx` + `EventPage.tsx` + `EventRegistrationForm.tsx`（client）— 活動列表、活動頁、報名表。**同一組元件供兩種對象**：系友活動（`audience = alumni`，/alumni#section-events、`/alumni/events/<slug>`）與一般活動（`audience = general`，/news#section-2「活動報名」、`/news/events/<slug>`）。連結前綴、麵包屑、返回連結一律由每一列自己的 `audience` 經 `lib/alumni-events.ts` 的 `eventBasePath()`／`eventParentPath()` 決定，**不要在呼叫端寫死 `/alumni/events/`**；活動頁的路由在 `pages.tsx` 的 `EventRoute` 裡於 audience 對不上時 404，一場活動只有一個網址。/news 的活動報名區與演講區在分類／年份／分頁**每一種檢視都印**（篩選只影響 `#section-1` 的清單），只在沒有資料時不印（LocalNav 會自己丟掉沒落點的錨點）；演講區是 `#section-3`
+- `GivingPage.tsx` + `CopyButton.tsx`（client）— 匯款帳號資訊 `/alumni/giving`（/alumni#section-3「支持農經」的第二顆按鈕）。值全走 `page_copy`（page=`giving`，`lib/page-copy/giving.ts`，後台 /admin/giving），**沒有字典可退、預設全空**；帳號沒填時整頁只印「整理中」且 /alumni 那顆按鈕不印（`AlumniRoute` 多抓一次 `getPageCopy(GIVING_PAGE)` 算 `givingReady`）。`CopyButton` 是站上唯一碰剪貼簿的元件：`navigator.clipboard` 失敗退回 `execCommand("copy")`，兩條路都失敗**不印「已複製」**
 - `Home.tsx` / `HomeHero.tsx` — 首頁（已完成，可當範例）
 
 ---

@@ -36,6 +36,8 @@ import { Courses } from "./Courses";
 import { Students } from "./Students";
 import { resolveStudentsCopy, STUDENTS_PAGE } from "@/lib/page-copy/students";
 import { Alumni } from "./Alumni";
+import { GivingPage } from "./GivingPage";
+import { resolveGivingCopy, GIVING_PAGE } from "@/lib/page-copy/giving";
 
 /**
  * One renderer per public route, parameterised by language.
@@ -325,6 +327,29 @@ export async function AlumniRoute({ lang }: { lang: Lang }) {
   // 只取還沒結束的**系友**活動，近的在前（一般活動住在 /news）。歷屆活動不列
   // 在這一區：這是「要不要來」的區塊，不是封存。真的需要封存頁時再另開路由，
   // 不要把它塞進同一份清單。
-  const events = await getAlumniEvents(lang, { audience: "alumni" });
-  return <Alumni lang={lang} events={events} />;
+  //
+  // page_copy 的 giving 列只為了一個布林：§3 支持農經那顆「匯款帳號資訊」按鈕
+  // 要不要印。系辦還沒在 /admin/giving 填帳號之前，按鈕指向的是一頁「整理中」，
+  // 不如不印（lib/page-copy/giving.ts 的 `ready`）。
+  const [events, givingRows] = await Promise.all([
+    getAlumniEvents(lang, { audience: "alumni" }),
+    getPageCopy(GIVING_PAGE),
+  ]);
+  return (
+    <Alumni
+      lang={lang}
+      events={events}
+      givingReady={resolveGivingCopy(givingRows, lang).ready}
+    />
+  );
+}
+
+/**
+ * 匯款帳號資訊 (/alumni/giving)。值全部來自 page_copy（後台 /admin/giving）；
+ * 表還沒有 giving 的列時 resolver 回 `ready: false`，頁面印「整理中」而不是
+ * 404 —— 理由見 components/site/GivingPage.tsx 檔頭。
+ */
+export async function GivingRoute({ lang }: { lang: Lang }) {
+  const copyRows = await getPageCopy(GIVING_PAGE);
+  return <GivingPage lang={lang} copy={resolveGivingCopy(copyRows, lang)} />;
 }

@@ -10,6 +10,7 @@ import { ADMISSIONS } from "@/lib/i18n/admissions";
 import { COURSES } from "@/lib/i18n/courses";
 import { STUDENTS } from "@/lib/i18n/students";
 import { ALUMNI } from "@/lib/i18n/alumni";
+import { GIVING } from "@/lib/i18n/giving";
 
 /**
  * The tree 網站導覽 (/sitemap) prints — every public section of the site and
@@ -139,6 +140,14 @@ export function sitemapTree(lang: Lang): SitemapGroup[] {
       {
         href: localizePath("/search", lang),
         label: SITEMAP.more.search[lang],
+        no: null,
+      },
+      // 匯款帳號資訊：/alumni#section-3 的內頁。不是 ALUMNI.nav.items 的一項
+      // （那是頁內錨點的清單，這是另一個網址），所以跟 /search 一樣列在這裡；
+      // 標籤讀那一頁自己的標題，與 <title>、/alumni 上的按鈕同一個來源。
+      {
+        href: localizePath("/alumni/giving", lang),
+        label: GIVING.title[lang],
         no: null,
       },
       // 這一頁自己。列出來不是為了讓人點，而是因為一份漏掉自己的目錄，

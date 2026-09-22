@@ -2361,3 +2361,117 @@
   object-fit: contain;
   width: auto;
 }
+
+/* ==========================================================================
+   支持農經 → 匯款帳號資訊（2026-09-22）
+   --------------------------------------------------------------------------
+   /alumni#section-3 多了第二顆按鈕（系上匯款帳號的內頁 /alumni/giving），
+   內頁沿用 `.post-*` 與活動頁的 `.event-details`，只有複製鈕與「值＋鈕同列」
+   是新的樣式。顏色只用 site.css 的變數。
+   ========================================================================== */
+
+/* §3 右欄的兩顆按鈕。site.css 只給 `.donation-grid .button{margin-top:28px}`，
+   現在按鈕包在 `.donation-actions` 裡，上邊距搬到容器、按鈕自己歸零 ——
+   兩條選擇器同為 (0,2,0)，這個檔在後面載入所以贏。`.text-action` 是 8px 上下
+   內距的底線連結、`.button` 是 16px 內距的實心塊，靠 align-items 對中線。 */
+.donation-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 34px;
+  margin-top: 28px;
+}
+.donation-actions .button {
+  margin-top: 0;
+}
+@media (max-width: 600px) {
+  .donation-actions {
+    gap: 18px;
+  }
+}
+
+/* 複製鈕。外形照 site.css 的 `.filter-tabs button`（細框、膠囊、muted 字），
+   縮成 13px／6px 12px，站在 16px 的帳號旁邊才不會搶。hover 綠框、複製成功
+   （`.is-copied`，兩秒）綠字。用 sans：這是控制項不是內文，`.post-body` 的
+   serif 不該繼承進來。 */
+.copy-button {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  color: var(--muted);
+  cursor: pointer;
+  font: 700 13px/1.2 var(--sans);
+  letter-spacing: 0.04em;
+  padding: 6px 12px;
+  transition: border-color 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+.copy-button:hover {
+  border-color: var(--green);
+  color: var(--green);
+}
+.copy-button:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.copy-button.is-copied {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+/* 帳號列表：值與複製鈕同一列，窄的時候鈕掉到值的下一行。`.giving-details`
+   與 `.event-details` 一起掛在同一個 <dl> 上，兩欄格線、金線、600px 單欄都
+   來自後者；這裡只改 dd 的內部排版，活動頁的 dd 不受影響。 */
+.giving-details dd {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+.giving-details .giving-value {
+  /* 帳號、SWIFT 是連續的數字碼，沒有可以斷行的空白；不加這一條，375px 下
+     長帳號會把格子撐出容器。 */
+  overflow-wrap: anywhere;
+}
+
+/* 「複製全部」在列表底下獨立一行；大一號、深綠實框，與每列的小鈕分得開。 */
+.post-body .giving-actions {
+  margin: 28px 0 0;
+}
+.copy-button-all {
+  border-color: var(--green);
+  color: var(--green);
+  font-size: 14px;
+  padding: 10px 18px;
+}
+.copy-button-all:hover,
+.copy-button-all.is-copied {
+  background: var(--green);
+  color: #fff;
+}
+
+/* 說明是後台的 textarea，換行照印（同 .event-body-text）。 */
+.post-body .giving-note {
+  margin: 36px 0 0;
+  white-space: pre-line;
+}
+.post-body .giving-contact {
+  color: var(--muted);
+  font-size: 16px;
+  margin: 24px 0 0;
+}
+.post-body .giving-contact strong {
+  color: var(--green-deep);
+}
+
+/* 系辦還沒填帳號：整個 body 只有這一句。外形同活動頁的 `.event-closed`
+   （米底、金線），但那一條的 48px 上邊距是給表單後面用的，這裡直接接在
+   標題下。 */
+.post-body .giving-pending {
+  background: var(--cream);
+  border-left: 3px solid var(--gold);
+  font-size: 16px;
+  line-height: 1.9;
+  margin: 0;
+  padding: 20px 24px;
+}

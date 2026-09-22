@@ -10,6 +10,7 @@
  * 新增一頁：在 PAGES 加一筆就好。
  */
 import { ABOUT_COPY_DEFAULTS, ABOUT_COPY_FIELDS, ABOUT_PAGE } from "@/lib/page-copy/about";
+import { GIVING_COPY_DEFAULTS, GIVING_COPY_FIELDS, GIVING_PAGE } from "@/lib/page-copy/giving";
 import {
   STUDENTS_COPY_DEFAULTS,
   STUDENTS_COPY_FIELDS,
@@ -25,6 +26,10 @@ type Seed = {
 const PAGES: Record<string, Seed> = {
   [STUDENTS_PAGE]: { page: STUDENTS_PAGE, fields: STUDENTS_COPY_FIELDS, defaults: STUDENTS_COPY_DEFAULTS },
   [ABOUT_PAGE]: { page: ABOUT_PAGE, fields: ABOUT_COPY_FIELDS, defaults: ABOUT_COPY_DEFAULTS },
+  // 匯款帳號：印得出來，但八列全是空字串 —— 沒有貼進 migration 的理由。帳號
+  // 只有系辦知道，第一筆資料由 /admin/giving 第一次儲存時 upsert（見
+  // lib/page-copy/giving.ts 檔頭「為什麼不種子」）。
+  [GIVING_PAGE]: { page: GIVING_PAGE, fields: GIVING_COPY_FIELDS, defaults: GIVING_COPY_DEFAULTS },
 };
 
 const key = process.argv[2];

@@ -39,6 +39,9 @@ const ROUTES = [
   "/courses",
   "/students",
   "/alumni",
+  // 匯款帳號資訊：/alumni#section-3 的內頁，靜態路段，沒有別的清單會列到它。
+  // 系辦還沒填帳號時那一頁印「整理中」而不是 404，所以列在這裡永遠不會是壞連結。
+  "/alumni/giving",
   // 演講公告 are excluded from /news's paginated list, so without this entry
   // the archive's first page would be reachable only from a link inside the
   // talks block. Its own pages 2..n stay out for the same reason /news/page/N

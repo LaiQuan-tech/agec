@@ -1,5 +1,6 @@
+import Link from "next/link";
 import type { AlumniEvent } from "@/lib/alumni-events";
-import { translate, type Lang } from "@/lib/i18n";
+import { localizePath, translate, type Lang } from "@/lib/i18n";
 import { ALUMNI } from "@/lib/i18n/alumni";
 import { EYEBROWS } from "@/lib/i18n/eyebrows";
 import { ALUMNI_EVENTS } from "@/lib/i18n/alumni-events";
@@ -72,10 +73,17 @@ const SECTORS = [
 export function Alumni({
   lang,
   events,
+  givingReady,
 }: {
   lang: Lang;
   /** 還沒結束的系友活動，近的在前。空陣列時那一區顯示一句說明，不是空框。 */
   events: AlumniEvent[];
+  /**
+   * 系辦已在後台填了匯款帳號（lib/page-copy/giving.ts 的 `ready`）。true 才印
+   * §3 的第二顆按鈕「匯款帳號資訊」—— 沒填之前那一頁只有「整理中」，按鈕指過去
+   * 是把人送到一句道歉。
+   */
+  givingReady: boolean;
 }) {
   const t = translate(ALUMNI, lang);
   const eb = translate(EYEBROWS, lang);
@@ -204,13 +212,31 @@ export function Alumni({
             </div>
             <div>
               <p>{t.section3.body}</p>
-              <MaybeLink
-                className="button gold"
-                href={GIVING_URL}
-                arrow={<span> ↗︎</span>}
-              >
-                {t.section3.cta}
-              </MaybeLink>
+              {/* 兩顆按鈕一列：臺大捐款平台（金色實心）＋系上匯款帳號（白色
+                  底線文字連結）。`.button.dark` 在深綠底上是隱形的，所以第二顆
+                  用首頁收尾區同一組 `.text-action.light-action`。
+                  ⚠️ 包一層 `.donation-actions` 是安全的：site.css 對這一欄只用
+                  `.donation-grid>div:last-child>p`（直接子 <p>，上面那段仍是）
+                  與 `.donation-grid .button`（後代選擇器，仍命中），margin 由
+                  site-extensions.css 接手。 */}
+              <div className="donation-actions">
+                <MaybeLink
+                  className="button gold"
+                  href={GIVING_URL}
+                  arrow={<span> ↗︎</span>}
+                >
+                  {t.section3.cta}
+                </MaybeLink>
+                {givingReady ? (
+                  <Link
+                    className="text-action light-action"
+                    href={localizePath("/alumni/giving", lang)}
+                  >
+                    {t.section3.bank}
+                    <span>→</span>
+                  </Link>
+                ) : null}
+              </div>
             </div>
           </div>
         </section>

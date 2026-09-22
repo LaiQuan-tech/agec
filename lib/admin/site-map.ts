@@ -6,6 +6,7 @@ import { ADMISSIONS } from "@/lib/i18n/admissions";
 import { COURSES } from "@/lib/i18n/courses";
 import { STUDENTS } from "@/lib/i18n/students";
 import { ALUMNI } from "@/lib/i18n/alumni";
+import { GIVING } from "@/lib/i18n/giving";
 
 /**
  * 後台的「網站地圖」：前台每一頁 → 那一頁上可以編輯的區塊 → 後台入口。
@@ -236,6 +237,14 @@ export const ADMIN_SITE_MAP: AdminPage[] = [
         publicHref: "/alumni#section-events",
         note: "對象選「系友活動」；報名表會收畢業年度與學制",
         primary: true,
+      },
+      {
+        // 支持農經 → 系上匯款帳號的內頁（page_copy，page=giving）。標籤前半是
+        // §3 的區塊名、後半是內頁的標題，系辦在前台按鈕上看到的就是後半那幾個字。
+        label: `${section(ALUMNI.nav.items, "#section-3")} · ${GIVING.title.zh}`,
+        href: "/admin/giving",
+        publicHref: "/alumni/giving",
+        note: "填了帳號，系友專區那顆按鈕才會出現",
       },
     ],
   },

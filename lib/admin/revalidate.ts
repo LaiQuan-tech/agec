@@ -42,9 +42,12 @@ const AFFECTED_ROUTES = {
   // 改了哪一列、不知道它是否換過區塊（例如從 courses 改成 admissions ——
   // 那會同時讓兩頁失效），所以兩頁一起重新驗證。
   documents: ["/courses", "/admissions"],
-  // 頁面文案格位（page_copy）。學生專區與本系簡介各存自己的 page，但一次存檔
-  // 兩頁一起重新驗證（多驗證一頁的代價是幾次讀取；下一頁接上時在這裡加）。
-  page_copy: ["/students", "/about"],
+  // 頁面文案格位（page_copy）。學生專區、本系簡介、匯款帳號各存自己的 page，
+  // 但一次存檔全部一起重新驗證（多驗證幾頁的代價是幾次讀取；下一頁接上時在
+  // 這裡加）。/alumni 也在：§3 那顆「匯款帳號資訊」按鈕看 giving 的帳號有沒有
+  // 填（components/site/pages.tsx 的 AlumniRoute），系辦第一次填好帳號、按鈕
+  // 要立刻出現，而不是等 300 秒。
+  page_copy: ["/students", "/about", "/alumni/giving", "/alumni"],
 } as const;
 
 export type RevalidateEntity = keyof typeof AFFECTED_ROUTES;
