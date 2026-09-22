@@ -144,10 +144,11 @@ export function sitemapTree(lang: Lang): SitemapGroup[] {
       },
       // 匯款帳號資訊：/alumni#section-3 的內頁。不是 ALUMNI.nav.items 的一項
       // （那是頁內錨點的清單，這是另一個網址），所以跟 /search 一樣列在這裡；
-      // 標籤讀那一頁自己的標題，與 <title>、/alumni 上的按鈕同一個來源。
+      // 標籤用「前往支持農經」（與 /alumni 上的按鈕、頁尾同一組字），不是那一頁的
+      // <title>「匯款帳號資訊」——客戶要三處都叫同一個名字。
       {
         href: localizePath("/alumni/giving", lang),
-        label: GIVING.title[lang],
+        label: GIVING.linkLabel[lang],
         no: null,
       },
       // 這一頁自己。列出來不是為了讓人點，而是因為一份漏掉自己的目錄，
