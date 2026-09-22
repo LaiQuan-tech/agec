@@ -75,14 +75,11 @@ export function GivingPage({ lang, copy }: { lang: Lang; copy: GivingCopy }) {
                 {rows.map((row) => (
                   <Fragment key={row.key}>
                     <dt>{row.label}</dt>
+                    {/* 每一欄不各放一顆複製鈕：客戶看過第一版說「只留複製全部
+                        匯款資訊就好，其他拿掉」——六顆一樣的小鈕反而讓人不知道
+                        該按哪個。值仍然是純文字，要單獨複製可以自己選取。 */}
                     <dd>
                       <span className="giving-value">{row.value}</span>
-                      <CopyButton
-                        value={row.value}
-                        label={t.copy}
-                        copiedLabel={t.copied}
-                        ariaLabel={t.copyAria.replace("{label}", row.label)}
-                      />
                     </dd>
                   </Fragment>
                 ))}
