@@ -18,11 +18,21 @@ import { pickCopy, type CopyField as CopyFieldOf, type CopyRow } from "./fields"
  * 不開放：頁面標題（是選單名）、各區大寫的 eyebrow（OUR HISTORY…，是排版
  * 元素）、圖片本身與 alt、頁內導覽的四個標籤（/sitemap 也讀它們）。
  *
- * ## 語言中立的格位
+ * ## 雙語欄位（曾經是「語言中立」）
  *
- * 里程碑的年份（1928／NOW）與榮譽的徽章字（TOP 2%／AJAE…）兩邊語言印同一個
- * 字，所以是 `kind: "neutral"`：後台只有一個輸入框，存的時候 zh 與 en 存同一個
- * 值（見 fields.ts）。
+ * 里程碑的年份（1928…／NOW）與榮譽的徽章字（TOP 2%／AJAE…）以前兩邊語言印
+ * 同一個字，是 `bilingual: false`：後台只有一個輸入框，存的時候 zh 與 en 存
+ * 同一個值（見 fields.ts）。
+ *
+ * 🔴 2026-09-28 客戶要求中文站只能出現中文，其中兩格不能再兩邊印同一個字了
+ * （里程碑 5 的「NOW」要變成「現在」、榮譽 4 的「IMPACT」要變成「影響力」），
+ * 所以兩組欄位都改成 `bilingual: true`（後台兩個輸入框，zh／en 分開存、分開
+ * 改）。其餘的年份（數字）與徽章（TOP 2%／AJAE／NSTC）目前 zh 與 en 剛好還是
+ * 同一個值，但那只是值本身相同，不再是型別上的保證——系辦現在可以個別修改
+ * 任何一格的中英文。年份的 `kind` 維持 `"neutral"`（視覺意圖不變：仍是短的
+ * 標籤格），徽章字改成 `kind: "text"`；兩者在 AboutCopyForm.tsx 的
+ * `Control()` 渲染上其實沒有差別（只有 `kind === "textarea"` 會被特別處理），
+ * 真正決定「一格或兩格輸入框」的只有 `bilingual`。
  *
  * ## key 的命名
  *
@@ -66,9 +76,12 @@ const history: CopyField[] = [
         name: `history.milestones.${n}.year`,
         group: "history",
         label: `里程碑 ${n} · 年份`,
+        // kind 維持 "neutral"（視覺意圖：短的標籤格），但 2026-09-28 起
+        // bilingual: true —— 第 5 格「NOW」中文頁要印「現在」，不能再與
+        // 英文共用一個值。見上面檔頭「雙語欄位」那一段。
         kind: "neutral",
         max: 10,
-        bilingual: false,
+        bilingual: true,
       },
       {
         name: `history.milestones.${n}.title`,
@@ -126,9 +139,12 @@ const honors: CopyField[] = [
         name: `honors.items.${n}.label`,
         group: "honors",
         label: `榮譽 ${n} · 徽章字`,
-        kind: "neutral",
+        // 2026-09-28 起 bilingual: true —— 第 4 格「IMPACT」中文頁要印
+        // 「影響力」，不能再與英文共用一個值。kind 改成 "text"（不再是
+        // "neutral"）：見上面檔頭「雙語欄位」那一段。
+        kind: "text",
         max: 12,
-        bilingual: false,
+        bilingual: true,
       },
       {
         name: `honors.items.${n}.body`,
@@ -166,7 +182,11 @@ export const ABOUT_COPY_FIELDS: readonly CopyField[] = [
 /**
  * 每個 key 的字典預設值。這也是 migration 種子的來源 —— 種子是從這張表逐字
  * 抄的（scripts 用它產 SQL，不是手打），改字典之前先想清楚：改了字典不會改到
- * 資料庫裡已經有的值。語言中立的格位（年份、徽章字）zh 與 en 是同一個值。
+ * 資料庫裡已經有的值。年份與徽章字目前多數 zh 與 en 仍是同一個值，但兩格
+ * （里程碑 5 的「NOW」→「現在」、榮譽 4 的「IMPACT」→「影響力」）2026-09-28
+ * 起 zh／en 不同——兩組欄位都已經是 `bilingual: true`，`item.year` /
+ * `item.label` 本身就是 `{ zh, en }`（見 lib/i18n/about.ts 的 Milestone /
+ * Honor 型別），這裡直接引用，不再手動拼一個「兩邊存同一個字」的物件。
  */
 export const ABOUT_COPY_DEFAULTS: Record<string, { zh: string; en: string }> = {
   lead: ABOUT.lead,
@@ -175,7 +195,7 @@ export const ABOUT_COPY_DEFAULTS: Record<string, { zh: string; en: string }> = {
   "history.imageCaption": ABOUT.history.imageCaption,
   ...Object.fromEntries(
     ABOUT.history.milestones.flatMap((item, i) => [
-      [`history.milestones.${i + 1}.year`, { zh: item.year, en: item.year }],
+      [`history.milestones.${i + 1}.year`, item.year],
       [`history.milestones.${i + 1}.title`, item.title],
       [`history.milestones.${i + 1}.body`, item.body],
     ])
@@ -191,7 +211,7 @@ export const ABOUT_COPY_DEFAULTS: Record<string, { zh: string; en: string }> = {
   "honors.heading": ABOUT.honors.heading,
   ...Object.fromEntries(
     ABOUT.honors.items.flatMap((item, i) => [
-      [`honors.items.${i + 1}.label`, { zh: item.label, en: item.label }],
+      [`honors.items.${i + 1}.label`, item.label],
       [`honors.items.${i + 1}.body`, item.body],
     ])
   ),

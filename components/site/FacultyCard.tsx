@@ -96,10 +96,13 @@ export function FacultyCard({
   const t = translate(FACULTY, lang);
 
   /**
-   * The chair gets the full-width banner variant: two name slots (the other
-   * language sits under the heading as `.faculty-english-name`), a portrait on
-   * the left and the text left-aligned beside it. Everyone else keeps the
-   * standard portrait card, which has one name slot and has to pick a language.
+   * The chair gets the full-width banner variant: two name slots, a portrait
+   * on the left and the text left-aligned beside it. `/en` fills both slots
+   * (the Chinese name sits under the heading as `.faculty-english-name`);
+   * the Chinese site fills only the first — 2026-09-28 客戶要求中文站只能
+   * 出現中文，`namePair()` 對 zh 固定回傳 `kicker: null`，第二個名字的位置
+   * 就不印（見 lib/i18n/faculty.ts 的說明）。Everyone else keeps the standard
+   * portrait card, which has one name slot and has to pick a language.
    *
    * The DOM stays flat and in the same order for both — site.css addresses
    * `.faculty-grid article>p` as a *direct* child, so wrapping the banner's

@@ -119,7 +119,7 @@ export function FacultyProfile({
               ) : null}
               {member.email ? (
                 <>
-                  <dt>Email</dt>
+                  <dt>{t.emailLabel}</dt>
                   <dd>
                     <a href={`mailto:${member.email}`}>{member.email}</a>
                   </dd>

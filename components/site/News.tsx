@@ -10,6 +10,7 @@ import {
   NEWS_TITLE,
 } from "@/lib/i18n/news";
 import { EYEBROWS } from "@/lib/i18n/eyebrows";
+import { SHARED } from "@/lib/i18n/shared";
 import { newsPath, slugForCategory } from "@/lib/news-categories";
 import { SiteShell } from "./SiteShell";
 import { InteriorHero } from "./InteriorHero";
@@ -235,11 +236,14 @@ export function News({
                   />
                   {/* Also a direct <div> child, for the same reason. */}
                   <div>
-                    {/* The date keeps its YYYY.MM.DD form on both sites: it is
-                        set as a Latin-caps run beside `FEATURED ·`, and a
-                        localised "Jan 5, 2026" would break that alignment. */}
+                    {/* The date keeps its YYYY.MM.DD form on both sites: it
+                        sits beside the featured-card kicker
+                        (SHARED.featuredKicker — "FEATURED ·" on /en, "精選 ·"
+                        on zh since the client's 2026-09-28 no-Latin-text
+                        instruction), and a localised "Jan 5, 2026" would
+                        still break that alignment. */}
                     <span>
-                      FEATURED · {formatNewsDate(feature.published_at).full}
+                      {translate(SHARED, lang).featuredKicker} {formatNewsDate(feature.published_at).full}
                     </span>
                     <h3>{feature.title}</h3>
                     {/* The reference card carries a standfirst here. `body` is

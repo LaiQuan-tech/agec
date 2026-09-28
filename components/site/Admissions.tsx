@@ -165,14 +165,15 @@ export function Admissions({
                 return (
                   <article key={program.id}>
                     <span>{padNo(i + 1)}</span>
-                    {/* The kicker above the heading is the program's name in
-                        the *other* language — the same rule InteriorHero uses
-                        for its title, and why `Program` exposes `name_en`
-                        alongside the already-resolved `name`. Null `name_en`
-                        renders an empty <small>, as it did before /en existed. */}
-                    <small>
-                      {lang === "en" ? program.name_zh : program.name_en}
-                    </small>
+                    {/* 2026-09-28 之前不論語言都印這顆 <small>：/en 印
+                        program.name_zh，/zh 印 program.name_en（學制的英文
+                        名，null 時是空的 <small>）。客戶要求中文站不得出現
+                        英文，所以中文頁這個元素整個不渲染 —— 不是印空字串。
+                        英文頁不受影響，繼續印 program.name_zh 當作另一種
+                        語言的 kicker，規則與 InteriorHero 的 title 相同。 */}
+                    {lang === "en" ? (
+                      <small>{program.name_zh}</small>
+                    ) : null}
                     <h3>{program.name}</h3>
                     <h4>{copy?.tagline ?? program.description}</h4>
                     <p>{copy?.methods ?? program.description}</p>
@@ -214,7 +215,11 @@ export function Admissions({
               {t.keyDates.map((date) => (
                 <article key={date.code}>
                   <strong>{date.code}</strong>
-                  <span>{date.month}</span>
+                  {/* 大字是月份縮寫、小字是完整月名，在 /en 讀作「SEP · September」。
+                      中文沒有「縮寫 vs 全稱」這層分別：2026-09-28 把 code 的 zh 改成
+                      「9月」之後，兩行會印出一模一樣的字，所以中文只留大字那一行。
+                      `month` 的 zh 值保留在字典裡（型別要成對），目前只有 /en 會印。 */}
+                  {lang === "en" ? <span>{date.month}</span> : null}
                   <p>{date.body}</p>
                 </article>
               ))}

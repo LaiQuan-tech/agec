@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { NewsItem, Program } from "@/lib/data";
 import { localizePath, translate, type Lang } from "@/lib/i18n";
 import { HOME, HOME_STATS, RESEARCH_AREAS } from "@/lib/i18n/home";
+import { SHARED } from "@/lib/i18n/shared";
 import { SiteShell } from "./SiteShell";
 import { HomeHero } from "./HomeHero";
 import { formatNewsDate } from "./format";
@@ -32,6 +33,7 @@ export function Home({
   programs: Program[];
 }) {
   const t = translate(HOME, lang);
+  const shared = translate(SHARED, lang);
   const stats = translate(HOME_STATS, lang);
   const newsHref = localizePath("/news", lang);
   const [feature, ...rest] = newsHome;
@@ -111,9 +113,14 @@ export function Home({
                 alt={feature.cover_url ? feature.title : t.newsFeatureAlt}
               />
               <div className="feature-overlay">
-                {/* `FEATURED` is the reference site's own Latin-caps label on
-                    both sites; the category beside it arrives translated. */}
-                <p>FEATURED · {feature.category}</p>
+                {/* Kicker beside the category (SHARED.featuredKicker, shared
+                    with the matching card on /news). Used to be a hardcoded
+                    "FEATURED ·" printed unchanged on both sites; the client
+                    asked, 2026-09-28, that the Chinese site carry no Latin
+                    text anywhere, so zh now reads "精選 ·" while /en is
+                    untouched. The category beside it still arrives already
+                    localized. */}
+                <p>{shared.featuredKicker} {feature.category}</p>
                 <h3>{feature.title}</h3>
                 {/* The featured item's own page. `newsHref` (the list) is
                     still right for the 全部消息 circle above, but a link
@@ -166,9 +173,13 @@ export function Home({
         </div>
         <div className="container research-list">
           {RESEARCH_AREAS.map((area, i) => (
-            // Both languages are on screen at once, so this row is a swap, not
-            // a lookup: `<h3>` takes the page's language and `<p>` the other.
-            // The key stays the Chinese string, which is the stable identity.
+            // /en still shows both languages at once, a swap not a lookup:
+            // `<h3>` takes the page's language and `<p>` the other. zh no
+            // longer does — the client asked, 2026-09-28, that the Chinese
+            // site carry no Latin text anywhere, so the `<p>` (which used to
+            // hold the English counterpart) is omitted there entirely and
+            // `<h3>` alone carries the row. The key stays the Chinese string
+            // either way, which is the stable identity.
             //
             // 🔴 2026-09：這四列**不再是連結**。
             //
@@ -190,7 +201,7 @@ export function Home({
             <MaybeLink href={null} className="research-item" key={area.zh}>
               <span>{padNo(i + 1)}</span>
               <h3>{lang === "en" ? area.en : area.zh}</h3>
-              <p>{lang === "en" ? area.zh : area.en}</p>
+              {lang === "en" && <p>{area.zh}</p>}
             </MaybeLink>
           ))}
         </div>
@@ -210,14 +221,18 @@ export function Home({
         </div>
         <div className="container admission-grid">
           {cards.map((program, i) => {
-            // `.admission-card small` is the 9px Latin-caps kicker above the
-            // programme name — the counterpart language, not a translation of
-            // the <h3> below it. `Program` therefore exposes all three of
-            // `name` (resolved), `name_zh` and `name_en`, the same exception
-            // `Faculty.name_en` gets: pick whichever one the <h3> is not
-            // showing. Null when that field is empty, so the <small> is
-            // dropped rather than rendered blank.
-            const kicker = lang === "en" ? program.name_zh : program.name_en;
+            // `.admission-card small` is the 9px kicker above the programme
+            // name. On /en it is still the counterpart language, not a
+            // translation of the <h3> below it — `Program` exposes all three
+            // of `name` (resolved), `name_zh` and `name_en`, the same
+            // exception `Faculty.name_en` gets, and /en picks `name_zh`, null
+            // when that field is empty so the <small> is dropped rather than
+            // rendered blank. zh no longer shows a counterpart kicker at all:
+            // the client asked, 2026-09-28, that the Chinese site carry no
+            // Latin text anywhere, so `program.name_en` (English) is never
+            // read here now — the data layer (lib/data.ts) still exposes it,
+            // and /en still reads it.
+            const kicker = lang === "en" ? program.name_zh : null;
             return (
               // `/admissions`, not the `#admissions` band this card is inside.
               <Link
@@ -273,15 +288,21 @@ export function Home({
           <figure className="campus-small">
             <img src="/images/office.jpg" alt={t.campusSmallAlt} />
           </figure>
-          {/* Coordinates and the university's English name: identical on both
-              sites, so they stay out of the dictionary. */}
+          {/* Coordinates stay literal on both sites — the client's
+              2026-09-28 no-Latin-text instruction treats the N/E suffixes as
+              a technical notation, not English copy, so they are kept as-is.
+              The address text below them used to be the university's English
+              name printed unchanged on both sites; zh now prints its own
+              Chinese address (HOME.campusAddressUniversity /
+              campusAddressCity) while /en keeps the original text
+              untouched. */}
           <div className="campus-note">
             <span>25.0173° N</span>
             <span>121.5398° E</span>
             <p>
-              National Taiwan University
+              {t.campusAddressUniversity}
               <br />
-              Taipei, Taiwan
+              {t.campusAddressCity}
             </p>
           </div>
         </div>
@@ -292,8 +313,13 @@ export function Home({
             absolutely-positioned backdrop and renders inline. */}
         <img src="/images/home-closing-agec.jpg" alt={t.closingImageAlt} />
         <div className="container closing-content">
-          {/* Latin-caps kicker with no Chinese half: the same on both sites. */}
-          <p className="eyebrow light">FROM NTU TO THE WORLD</p>
+          {/* Kicker above the closing heading. Used to be a hardcoded "FROM
+              NTU TO THE WORLD" printed unchanged on both sites; the client
+              asked, 2026-09-28, that the Chinese site carry no Latin text
+              anywhere, so zh now prints a Chinese string
+              (HOME.closingEyebrow) while /en keeps the original text
+              untouched. */}
+          <p className="eyebrow light">{t.closingEyebrow}</p>
           <h2>
             {t.closingHeadingTop}
             <br />

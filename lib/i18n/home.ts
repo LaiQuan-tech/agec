@@ -13,13 +13,23 @@ import type { Msg } from "@/lib/i18n";
  *  - `HOME_STATS` and `RESEARCH_AREAS` are lists, and the second one is not a
  *    dictionary at all — see its note.
  *
- * On eyebrows: the reference site writes them as "ENGLISH · 中文", so /en keeps
- * the two-part shape and translates the second half into Latin caps, the same
- * treatment `SHARED.nextRouteKicker` gets. The three kickers that carry no
- * Chinese to begin with — "AGRICULTURAL ECONOMICS · NTU", "FROM NTU TO THE
- * WORLD" — are pure typographic devices and stay inline in the components,
- * unchanged on both sites. (A third, the `.hero-index` list, was removed from
- * the hero entirely.)
+ * On eyebrows: the reference site wrote them as "ENGLISH · 中文". /en keeps
+ * that two-part shape, translating the second half into Latin caps. zh no
+ * longer does: the client asked, 2026-09-28, that the Chinese site carry no
+ * Latin text anywhere, eyebrows included, so every zh eyebrow below drops
+ * the English half and its "·" rather than translating it — the same
+ * instruction `SHARED.nextRouteKicker`, `COMMON.university` and
+ * `COMMON.college` were given, each documented at its own definition.
+ *
+ * That instruction also reached the two kickers that used to carry no
+ * Chinese at all — "AGRICULTURAL ECONOMICS · NTU" (now
+ * `HOME_HERO.heroEyebrow`) and "FROM NTU TO THE WORLD" (now
+ * `HOME.closingEyebrow`) — which had been pure typographic devices printed
+ * inline in the components, unchanged on both sites. They moved into this
+ * file because zh needed an actual Chinese string where before there was
+ * none; /en keeps printing the original Latin-caps text, untouched. (A
+ * third that once lived the same way, the `.hero-index` list, was removed
+ * from the hero entirely and never came back.)
  *
  * On headings: every `<h2>` here is broken across a hard `<br>` that the design
  * depends on, so each one is stored as two lines rather than one string. The
@@ -29,6 +39,14 @@ import type { Msg } from "@/lib/i18n";
 
 /** `section.hero#top` — the only strings HomeHero.tsx sends to the client. */
 export const HOME_HERO = {
+  /**
+   * `.hero-copy .eyebrow` — the kicker above the `<h1>`. Used to be a
+   * hardcoded "AGRICULTURAL ECONOMICS · NTU" printed unchanged on both
+   * sites; the client asked, 2026-09-28, that the Chinese site carry no
+   * Latin text anywhere, so zh now gets its own Chinese string here while
+   * /en keeps the original Latin-caps text untouched.
+   */
+  heroEyebrow: { zh: "國立臺灣大學農業經濟學系", en: "AGRICULTURAL ECONOMICS · NTU" },
   /**
    * The `<h1>`, across two `<br>`s. Three short lines are the whole point of
    * the composition — the type is clamped against the viewport, so a single
@@ -58,7 +76,7 @@ export const HOME_HERO = {
 /** Everything below the hero. */
 export const HOME = {
   /* .intro#about ------------------------------------------------------- */
-  introEyebrow: { zh: "WHO WE ARE · 本系簡介", en: "WHO WE ARE · ABOUT AGEC" },
+  introEyebrow: { zh: "本系簡介", en: "WHO WE ARE · ABOUT AGEC" },
   introHeadingTop: {
     zh: "農業不只關於生產，",
     en: "Agriculture is not only about what we produce,",
@@ -76,7 +94,7 @@ export const HOME = {
   statsLabel: { zh: "本系概況", en: "The department at a glance" },
 
   /* .news-section#news ------------------------------------------------- */
-  newsEyebrow: { zh: "LATEST · 最新動態", en: "LATEST · NEWS & EVENTS" },
+  newsEyebrow: { zh: "最新動態", en: "LATEST · NEWS & EVENTS" },
   newsHeadingTop: { zh: "觀點持續發生，", en: "Ideas keep emerging," },
   newsHeadingBottom: { zh: "知識正在流動。", en: "knowledge keeps moving." },
   /** `.circle-link`: its aria-label, then its own two lines inside the circle. */
@@ -101,7 +119,7 @@ export const HOME = {
 
   /* .research#research ------------------------------------------------- */
   researchEyebrow: {
-    zh: "RESEARCH · 研究領域",
+    zh: "研究領域",
     en: "RESEARCH · FIELDS OF INQUIRY",
   },
   researchHeadingTop: {
@@ -119,7 +137,7 @@ export const HOME = {
 
   /* .admissions#admissions --------------------------------------------- */
   admissionsEyebrow: {
-    zh: "STUDY WITH US · 招生資訊",
+    zh: "招生資訊",
     en: "STUDY WITH US · ADMISSIONS",
   },
   admissionsHeadingTop: {
@@ -146,7 +164,7 @@ export const HOME = {
 
   /* .campus#people ----------------------------------------------------- */
   campusEyebrow: {
-    zh: "OUR PLACE · 我們所在之處",
+    zh: "我們所在之處",
     en: "OUR PLACE · WHERE WE WORK",
   },
   campusHeadingTop: { zh: "扎根臺灣，", en: "Rooted in Taiwan," },
@@ -164,12 +182,31 @@ export const HOME = {
     zh: "農經系辦公室",
     en: "The Department of Agricultural Economics office",
   },
+  /**
+   * `.campus-note p`. Used to be the university's English name printed
+   * unchanged on both sites (see the comment beside its call site in
+   * Home.tsx). The client asked, 2026-09-28, that the Chinese site carry no
+   * Latin text anywhere, so zh now gets its own Chinese address text; /en is
+   * untouched.
+   */
+  campusAddressUniversity: {
+    zh: "國立臺灣大學",
+    en: "National Taiwan University",
+  },
+  campusAddressCity: { zh: "臺北 · 臺灣", en: "Taipei, Taiwan" },
 
   /* .closing#alumni ---------------------------------------------------- */
   closingImageAlt: {
     zh: "國立臺灣大學農業經濟學系識別標誌與苔蘚植栽牆",
     en: "The Department of Agricultural Economics logo on a moss-planted wall",
   },
+  /**
+   * `.closing-content .eyebrow`. Used to be a Latin-caps-only kicker printed
+   * unchanged on both sites; the client asked, 2026-09-28, that the Chinese
+   * site carry no Latin text anywhere, so zh now gets a Chinese string here
+   * while /en is untouched.
+   */
+  closingEyebrow: { zh: "從臺大到世界", en: "FROM NTU TO THE WORLD" },
   closingHeadingTop: {
     zh: "下一個影響農業未來的答案，",
     en: "The next answer that shapes the future of agriculture",
@@ -203,11 +240,13 @@ export const HOME_STATS = [
  * code beats two copies that can drift.
  *
  * ⚠️ Shaped like `Msg` but it is NOT a dictionary entry — never pass it through
- * `translate()`, which would collapse each pair to one string. Both languages
- * are on screen at once: `.research-item h3` takes the page's language and
- * `.research-item p` takes the other, the same swap `InteriorHero` does with
- * its title, so the row keeps its two-line rhythm on /en instead of printing
- * an English caption under an English heading.
+ * `translate()`, which would collapse each pair to one string. On /en both
+ * languages are still on screen at once: `.research-item h3` takes the page's
+ * language and `.research-item p` takes the other, the same swap `InteriorHero`
+ * does with its title, so the row keeps its two-line rhythm instead of printing
+ * an English caption under an English heading. zh no longer renders that `<p>`
+ * at all — the client asked, 2026-09-28, that the Chinese site carry no Latin
+ * text anywhere, so the row is `<h3>` alone there.
  */
 export const RESEARCH_AREAS = [
   { zh: "政策、制度與發展", en: "Policy, Institutions & Development" },

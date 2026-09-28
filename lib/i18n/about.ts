@@ -31,20 +31,29 @@ import type { Msg } from "@/lib/i18n";
  */
 
 /**
- * One `ol.timeline` entry. `year` is a numeral or the literal "NOW" — a glyph,
- * not a word, so it is the same on both sites.
+ * One `ol.timeline` entry. `year` is a numeral for four of the five rows — the
+ * same glyph on both sites — but the fifth row's value is the word "NOW",
+ * which reads as English on the Chinese page.
+ *
+ * 🔴 2026-09-28 客戶要求中文站只能出現中文：「NOW」那一格改成中文「現在」，
+ * `/en` 維持 "NOW"；其餘四格是數字，兩種語言仍然相同。年份因此是 `Msg`
+ * 而不是單一字串 —— 型別上不再保證五格都跨語言相同，只是多數剛好相同。
  */
-type Milestone = { year: string; title: Msg; body: Msg };
+type Milestone = { year: Msg; title: Msg; body: Msg };
 
 /** One `.principle-grid` card. `no` is its "01"–"04" ordinal. */
 type Principle = { no: string; title: Msg; body: Msg };
 
 /**
- * One `.honor-grid` card. `label` is the Latin badge the design prints large
- * (TOP 2% / AJAE / NSTC / IMPACT); all four are acronyms or figures and carry
- * no Chinese to translate.
+ * One `.honor-grid` card. `label` is the Latin badge the design prints large.
+ * Three of the four (TOP 2% / AJAE / NSTC) are acronyms or figures the client
+ * chose to keep exactly as written on both sites — no Chinese translation.
+ *
+ * 🔴 2026-09-28 客戶要求中文站只能出現中文：第四個（IMPACT）是例外，中文頁
+ * 改印「影響力」，`/en` 維持 "IMPACT"。`label` 因此是 `Msg` 而不是單一字串 ——
+ * 型別上不再保證四格都跨語言相同，只是其中三個剛好相同。
  */
-type Honor = { label: string; body: Msg };
+type Honor = { label: Msg; body: Msg };
 
 /** One `.about-photo-grid` figure. `wide` selects `.about-photo-wide`. */
 type Photo = { src: string; wide: boolean; alt: Msg; caption: Msg };
@@ -128,18 +137,20 @@ export const ABOUT = {
       en: "Exterior of the building that houses the Department of Agricultural Economics at NTU",
     },
     /**
-     * `.history-image p` — the italic serif line under the photo. English on
-     * the Chinese site already, in the same spirit as COMMON.tagline, so /en
-     * keeps it word for word rather than inventing a second version of a line
-     * that was written in English to begin with.
+     * `.history-image p` — the italic serif line under the photo.
+     *
+     * 2026-09-28 前 zh 印的是與 en 一字不差的英文句子（在 COMMON.tagline 的
+     * 同一種精神下：整句本來就是用英文寫的，/en 沒有另外造一個版本）。客戶
+     * 要求中文站只能出現中文之後，zh 改成中文翻譯；`/en` 不變，仍是原本那句
+     * 英文。
      */
     imageCaption: {
-      zh: "Knowledge rooted in place, passed forward across generations.",
+      zh: "知識紮根土地，世代相傳。",
       en: "Knowledge rooted in place, passed forward across generations.",
     },
     milestones: [
       {
-        year: "1928",
+        year: { zh: "1928", en: "1928" },
         title: { zh: "農業經濟講座設立", en: "Chair of agricultural economics established" },
         body: {
           zh: "臺北帝國大學時期，開啟農業經濟教學與研究的學術源流。",
@@ -147,7 +158,7 @@ export const ABOUT = {
         },
       },
       {
-        year: "1950",
+        year: { zh: "1950", en: "1950" },
         title: { zh: "農業經濟學系成立", en: "Department of Agricultural Economics founded" },
         body: {
           zh: "國立臺灣大學農學院成立農業經濟學系，奠定人才培育基礎。",
@@ -155,7 +166,7 @@ export const ABOUT = {
         },
       },
       {
-        year: "1960",
+        year: { zh: "1960", en: "1960" },
         title: { zh: "研究所教育展開", en: "Graduate education begins" },
         body: {
           zh: "成立農村社會經濟研究所，招收碩士班研究生。",
@@ -169,7 +180,7 @@ export const ABOUT = {
         },
       },
       {
-        year: "1987",
+        year: { zh: "1987", en: "1987" },
         title: { zh: "博士班成立", en: "Doctoral program established" },
         body: {
           zh: "建構完整高等教育與研究體系，深化國際學術交流。",
@@ -177,7 +188,7 @@ export const ABOUT = {
         },
       },
       {
-        year: "NOW",
+        year: { zh: "現在", en: "NOW" },
         title: { zh: "面向全球挑戰", en: "Facing global challenges" },
         body: {
           zh: "串連 AI、資料科學、永續治理與糧食安全，持續引領農經研究。",
@@ -239,21 +250,21 @@ export const ABOUT = {
     },
     items: [
       {
-        label: "TOP 2%",
+        label: { zh: "TOP 2%", en: "TOP 2%" },
         body: {
           zh: "教師入選史丹佛大學全球前 2% 頂尖科學家",
           en: "Faculty named in Stanford University's list of the world's top 2% of scientists",
         },
       },
       {
-        label: "AJAE",
+        label: { zh: "AJAE", en: "AJAE" },
         body: {
           zh: "研究成果發表於國際農業經濟重要期刊",
           en: "Research published in the leading international journals of agricultural economics",
         },
       },
       {
-        label: "NSTC",
+        label: { zh: "NSTC", en: "NSTC" },
         /**
          * Both awards are named here as their grantor names them in English:
          * 國科會 is the National Science and Technology Council (the "NSTC" of
@@ -265,7 +276,7 @@ export const ABOUT = {
         },
       },
       {
-        label: "IMPACT",
+        label: { zh: "影響力", en: "IMPACT" },
         body: {
           zh: "系友遍布產、官、學、研及國際組織",
           en: "Alumni across industry, government, academia, research institutes and international organizations",
@@ -282,11 +293,11 @@ export const ABOUT = {
     /**
      * `.about-photo-grid` — 1 wide + 2 normal figures, in DOM order.
      *
-     * Each `caption` is an `English · Chinese` pair of the *same* phrase, which
-     * is a bilingual device aimed at a Chinese reader; on /en the second half
-     * would just repeat the first, so the English caption is the English half
-     * alone. `figcaption` carries no positional CSS, so dropping the separator
-     * changes nothing but the words.
+     * 2026-09-28 前 zh `caption` 是 `English · Chinese` 的雙語裝置（同一個
+     * 意思印兩遍），瞄準的是中文讀者；`/en` 從來只有英文那一半，沒有跟著印
+     * 兩遍。客戶要求中文站只能出現中文之後，zh 拿掉英文那一半與分隔符，只
+     * 留中文；`/en` 不受影響，本來就是純英文。`figcaption` carries no
+     * positional CSS, so this changes nothing but the words.
      */
     photos: [
       {
@@ -297,7 +308,7 @@ export const ABOUT = {
           en: "The corridor outside the department office",
         },
         caption: {
-          zh: "Department Corridor · 系辦外廊",
+          zh: "系辦外廊",
           en: "Department Corridor",
         },
       },
@@ -309,7 +320,7 @@ export const ABOUT = {
           en: "Window view and lattice screen in the courtyard of the Agriculture Comprehensive Building",
         },
         caption: {
-          zh: "Architectural Detail · 建築細節",
+          zh: "建築細節",
           en: "Architectural Detail",
         },
       },
@@ -321,7 +332,7 @@ export const ABOUT = {
           en: "The courtyard and lawn of the Agriculture Comprehensive Building",
         },
         caption: {
-          zh: "Courtyard · 中庭環境",
+          zh: "中庭環境",
           en: "Courtyard",
         },
       },

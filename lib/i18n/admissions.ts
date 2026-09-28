@@ -133,13 +133,19 @@ export const ADMISSIONS = {
    * `.schedule-line` — exactly 4 entries; the grid is a fixed
    * repeat(4,1fr) → repeat(2,1fr) → 1fr ladder with per-article borders.
    *
-   * `code` is the uppercase Latin month shown in `<strong>` and is a design
-   * element, identical in both languages; `month` is the readable form beside
-   * it, so on /en the pair reads "SEP · September".
+   * `code` is the short label shown in `<strong>`. Until 2026-09-28 it was a
+   * single uppercase Latin string shared by both languages (a design element,
+   * not copy). The client then asked for zero English on the Chinese site, so
+   * `code` is now a bilingual `Msg`: en keeps the original uppercase
+   * abbreviation ("SEP"), zh is a compact numeric month ("9月") — digits
+   * don't count as English, and these are small fixed-width boxes where a
+   * full Chinese month name would overflow. `month` is the fuller readable
+   * form shown beside it in `<span>`, so on /en the pair still reads
+   * "SEP · September".
    */
   keyDates: [
     {
-      code: "SEP",
+      code: { zh: "9月", en: "SEP" },
       month: { zh: "9 月", en: "September" },
       body: {
         zh: "碩、博士班甄試簡章公告與報名",
@@ -147,7 +153,7 @@ export const ADMISSIONS = {
       },
     },
     {
-      code: "NOV",
+      code: { zh: "11月", en: "NOV" },
       month: { zh: "11 月", en: "November" },
       body: {
         zh: "碩、博士班甄試筆試與口試",
@@ -155,7 +161,7 @@ export const ADMISSIONS = {
       },
     },
     {
-      code: "FEB–MAR",
+      code: { zh: "2–3月", en: "FEB–MAR" },
       month: { zh: "2–3 月", en: "February–March" },
       body: {
         zh: "大學部申請入學、在職專班簡章公告",
@@ -163,7 +169,7 @@ export const ADMISSIONS = {
       },
     },
     {
-      code: "MAY",
+      code: { zh: "5月", en: "MAY" },
       month: { zh: "5 月", en: "May" },
       body: {
         zh: "第二階段口試與正備取名單公告",

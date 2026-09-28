@@ -6,10 +6,14 @@ import type { Msg } from "@/lib/i18n";
  * SiteLoader). They render on every page of both variants, so they sit here
  * rather than in any per-page dictionary beside this file.
  *
- * Some leaves carry the same text in both languages. That is deliberate, not
- * an unfilled row: the reference site already prints those lines in English on
- * the Chinese pages, so "translating" them for /en would be a change to the
- * Chinese site, not to the English one. Each such leaf says so below.
+ * A couple of leaves still carry the same text in both languages —
+ * `copyright` and `tagline` below, each with its own note on why. `college`
+ * and `menuEyebrow` used to as well: the reference site prints those in
+ * English on the Chinese pages too, and this dictionary mirrored that until
+ * the client asked, 2026-09-28, that the Chinese site carry no Latin text
+ * anywhere, `.eyebrow` labels included. Those two now have their own Chinese
+ * strings; /en is unchanged. The leaves that are still deliberately
+ * identical say so where they are defined.
  */
 export const COMMON = {
   /** Institution bar, first span. */
@@ -17,15 +21,16 @@ export const COMMON = {
   /**
    * Institution bar, `.institution-en` (hidden by CSS below 600px).
    *
-   * Same in both languages. The Chinese page already pairs the university's
-   * Chinese name with the college's English one, and read straight through,
-   * "National Taiwan University · College of Bioresources and Agriculture" is
-   * exactly the lockup an English reader expects — so /en keeps the line as
-   * it stands instead of swapping in a Chinese college name that appears
-   * nowhere on the reference site.
+   * Used to be the same string in both languages: the Chinese page paired
+   * the university's Chinese name with the college's English one on purpose,
+   * so the bar read as one bilingual lockup. The client asked 2026-09-28
+   * that the Chinese site carry no Latin text anywhere, this line included,
+   * so zh now holds the college's Chinese name instead. /en is unchanged —
+   * "National Taiwan University · College of Bioresources and Agriculture"
+   * is still exactly the lockup an English reader expects.
    */
   college: {
-    zh: "College of Bioresources and Agriculture",
+    zh: "生物資源暨農學院",
     en: "College of Bioresources and Agriculture",
   },
 
@@ -70,13 +75,18 @@ export const COMMON = {
   openMenu: { zh: "開啟全站選單", en: "Open site menu" },
   closeMenu: { zh: "關閉全站選單", en: "Close site menu" },
   /**
-   * `.eyebrow` above the menu grid. Same in both languages, like
-   * SHARED.nextRouteKicker: the reference site sets its eyebrows in Latin
-   * caps as a typographic device, and this one carries no Chinese to begin
-   * with. "8" is the route count, which is the same list in both languages.
+   * `.eyebrow` above the menu grid.
+   *
+   * Used to be the same Latin-caps string in both languages, like
+   * SHARED.nextRouteKicker used to be — the reference site sets its
+   * eyebrows in Latin caps as a typographic device, and this one carried no
+   * Chinese to begin with. The client asked 2026-09-28 that the Chinese
+   * site carry no Latin text anywhere, so zh is now Chinese; en is
+   * unchanged. "8" / "八" is the route count, the same list in both
+   * languages.
    */
   menuEyebrow: {
-    zh: "EXPLORE AGEC · 8 MAIN PATHS",
+    zh: "探索農經 · 八條主要路線",
     en: "EXPLORE AGEC · 8 MAIN PATHS",
   },
 

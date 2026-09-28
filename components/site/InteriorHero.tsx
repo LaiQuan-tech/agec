@@ -12,11 +12,13 @@ export type InteriorHeroProps = {
   /**
    * English page title, e.g. "About AGEC".
    *
-   * Both languages are always passed because the hero shows both: whichever
-   * one is not the current language becomes the small kicker above the <h1>.
-   * The reference site prints the English title over the Chinese one, and
-   * mirroring that on /en keeps the block's two-line rhythm instead of
-   * leaving a gap where the kicker was.
+   * Both languages are always passed because /en's hero shows both: titleZh
+   * becomes the small kicker above its <h1>, the same lockup the reference
+   * site uses throughout. The Chinese hero used to mirror that — titleEn as
+   * its own kicker above the Chinese <h1> — but the client asked
+   * 2026-09-28 that the Chinese site print no Latin text, so the Chinese
+   * hero no longer renders a kicker at all; titleEn is now used only for
+   * /en's <h1> and breadcrumb.
    */
   titleEn: string;
   /**
@@ -98,7 +100,11 @@ export function InteriorHero({
             route number is addressed as its second child. */}
         <div className="interior-title-row">
           <div>
-            <p>{kicker}</p>
+            {/* zh: no kicker at all — the client asked 2026-09-28 that the
+                Chinese site print no Latin text, and titleEn (the only
+                candidate for a zh kicker) is English. en: unchanged, still
+                prints titleZh as its kicker above the English <h1>. */}
+            {lang === "en" && <p>{kicker}</p>}
             <h1>{title}</h1>
           </div>
           {/* One interpolation, not three. Written as `{routeNo} / {ROUTE_TOTAL}`

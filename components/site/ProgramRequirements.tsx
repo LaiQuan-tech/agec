@@ -72,12 +72,12 @@ export function ProgramRequirements({
           <p className="post-byline">{t.requirements.label}</p>
           <h1>{program.name}</h1>
           {/* 另一種語言的學制名當小標。name_en 不是「取代 name 的翻譯」而是
-              並排印的 Latin kicker（見 lib/data.ts 的 Program.name_en），所以
-              中文頁印英文、英文頁印中文。 */}
+              並排印的 Latin kicker（見 lib/data.ts 的 Program.name_en）。
+              2026-09-28 之前中文頁在 name_en 存在時會印出英文；客戶要求中文
+              站不得出現英文，所以中文頁這個元素整個不渲染 —— 不是印空字串。
+              英文頁不受影響，繼續印 program.name_zh。 */}
           {lang === "en" ? (
             <p className="post-standfirst">{program.name_zh}</p>
-          ) : program.name_en ? (
-            <p className="post-standfirst">{program.name_en}</p>
           ) : null}
 
           {/* 英文頁正在顯示中文原文時才出現。規範性文字硬翻的風險比不翻高，

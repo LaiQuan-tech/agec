@@ -4,10 +4,13 @@ import type { Dict } from "@/lib/i18n";
  * Every string on 系友專區 (/alumni) — the one interior page with no DB reads
  * at all, so the whole page is in here.
  *
- * Two kinds of string deliberately stay identical in both languages: the
- * uppercase Latin eyebrows the design uses as kickers (`SectionTitle`'s
- * `eyebrow`, `PUBLIC LEADERSHIP`, `SUPPORT AGEC`, two of the three
- * `.story-grid` eyebrows and the five `.alumni-sectors` tags) and the dates.
+ * 2026-09-28：客戶要求中文頁不得出現任何英文，含區塊小標。移植時這裡曾刻意
+ * 讓幾組大寫拉丁字串在兩種語言間保持一致 —— `PUBLIC LEADERSHIP`、兩個
+ * `.story-grid` 小標（ALUMNI GATHERING / STAY CONNECTED）、五個
+ * `.alumni-sectors` 標籤 —— 現在全部改成雙語：中文站顯示中文，英文站的原字串
+ * 不變。`SectionTitle` 的 `eyebrow`（見 lib/i18n/eyebrows.ts）與 `SUPPORT AGEC`
+ * 在這次異動之前就已經雙語化，不受影響。真正還維持兩語言相同的只剩非文字
+ * 內容：日期（如 `2026.07.06`）、編號與錨點。
  *
  * Headings that the reference site breaks across two lines are stored as two
  * `Msg`s rather than one string with a marker in it: the `<br />` is a layout
@@ -79,6 +82,12 @@ export const ALUMNI = {
     },
     /** `.alumni-feature` — the .85fr/1.15fr text-and-photo split. */
     feature: {
+      /**
+       * `<span>` kicker above the heading. 2026-09-28 之前中文頁也印英文大寫
+       * "PUBLIC LEADERSHIP"（與 en 共用同一個字串）；客戶要求中文站不得出現
+       * 英文，改成雙語。
+       */
+      kicker: { zh: "公共領導", en: "PUBLIC LEADERSHIP" },
       heading: {
         line1: {
           zh: "以農經訓練理解土地、",
@@ -101,13 +110,31 @@ export const ALUMNI = {
         en: "The Agriculture Complex Building at NTU",
       },
     },
+    /**
+     * `.alumni-sectors` — 5 tags; `grid-template-columns:repeat(5,1fr)`.
+     *
+     * 2026-09-28 之前這五個是寫死在 components/site/Alumni.tsx 的大寫拉丁
+     * 字串（`SECTORS` 常數），兩種語言共用同一組字，理由是「產業類別的標籤雲，
+     * 五格固定寬，翻成中文會撐壞版面」。客戶要求中文站不得出現英文，所以搬進
+     * 字典、改成雙語 —— 中文站印中文詞，英文站的五個大寫英文字串不變。
+     */
+    sectors: [
+      { zh: "政府部門", en: "GOVERNMENT" },
+      { zh: "學術研究", en: "ACADEMIA" },
+      { zh: "金融產業", en: "FINANCE" },
+      { zh: "農企業", en: "AGRIBUSINESS" },
+      { zh: "國際組織", en: "INTERNATIONAL" },
+    ],
   },
   section2: {
     heading: { zh: "持續發生的系友情誼", en: "Alumni ties, still being made" },
     /**
      * `.story-grid` — exactly 3 cards, and not one homogeneous list: the first
-     * is a dated news item, the other two are calls to action whose eyebrows
-     * are Latin labels in the reference design and stay that way in Chinese.
+     * is a dated news item, the other two are calls to action. Cards 2–3's
+     * eyebrows were Latin labels kept identical in both languages until
+     * 2026-09-28; the client then asked for zero English on the Chinese site,
+     * so their zh values are now translated ("系友聚會" / "保持聯繫") while en
+     * keeps the original ALUMNI GATHERING / STAY CONNECTED strings.
      *
      * `url` sits beside the copy the same way `section4.resourcesFallback`
      * carries one, and "#" means the same thing to MaybeLink as an empty
@@ -130,7 +157,7 @@ export const ALUMNI = {
         url: "#",
       },
       {
-        eyebrow: { zh: "ALUMNI GATHERING", en: "ALUMNI GATHERING" },
+        eyebrow: { zh: "系友聚會", en: "ALUMNI GATHERING" },
         title: {
           zh: "跨世代交流，讓經驗成為共同資產",
           en: "Exchange across generations turns experience into shared ground",
@@ -140,7 +167,7 @@ export const ALUMNI = {
         url: "#section-events",
       },
       {
-        eyebrow: { zh: "STAY CONNECTED", en: "STAY CONNECTED" },
+        eyebrow: { zh: "保持聯繫", en: "STAY CONNECTED" },
         title: {
           zh: "更新系友資料，與母系保持聯繫",
           en: "Update your alumni record and stay in touch with the department",

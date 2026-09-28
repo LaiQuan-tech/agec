@@ -62,10 +62,12 @@ export function About({ lang, copy }: { lang: Lang; copy: AboutCopy }) {
       <div className="interior-content">
         <section className="inner-section" id="section-1">
           <div className="container">
-            {/* `eyebrow` is the one prop that never comes from the dictionary:
-                the uppercase Latin kicker is a typographic device and reads
-                identically on /about and /en/about. Same for the other three
-                sections below. */}
+            {/* `eyebrow` comes from the EYEBROWS dictionary (`eb`, translated
+                above) — not a literal, and zh/en are deliberately different
+                words, not the same string on /about and /en/about. Same for
+                the other three sections below. (This comment predated the
+                EYEBROWS dictionary and had gone stale; corrected 2026-09-28 —
+                see lib/i18n/eyebrows.ts's header.) */}
             <SectionTitle
               no="01"
               eyebrow={eb.ourHistory}

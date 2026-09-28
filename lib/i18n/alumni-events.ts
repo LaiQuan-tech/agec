@@ -20,7 +20,6 @@ import type { EventAudience } from "@/lib/alumni-events";
  */
 export const ALUMNI_EVENTS = {
   /* --- /alumni 的活動區塊 ------------------------------------------------ */
-  sectionEyebrow: { zh: "ALUMNI EVENTS", en: "ALUMNI EVENTS" },
   sectionHeading: { zh: "系友回娘家", en: "Alumni Homecoming" },
   sectionDescription: {
     zh: "系上定期舉辦系友回娘家與相關聚會，歡迎歷屆系友報名參加。",

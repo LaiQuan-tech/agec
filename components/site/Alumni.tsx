@@ -25,7 +25,8 @@ import { EventList } from "./EventList";
  *       `eyebrow` and `action_label` columns do not exist (§2.4 table).
  *     - the three cards are not one homogeneous list: card 1 is a dated news
  *       item (`2026.07.06 · 系友榮耀`), cards 2–3 are CTAs whose eyebrows are
- *       English labels, so no single column could feed all three.
+ *       short label copy rather than dates, so no single column could feed
+ *       all three.
  *     - `.story-grid{grid-template-columns:repeat(3,1fr)}` is a fixed 3-up grid
  *       and `.story-grid a{min-height:300px}` + `.story-grid h3{margin:70px 0 20px}`
  *       assume all three children exist; the `alumni` section currently holds 2
@@ -41,24 +42,6 @@ import { EventList } from "./EventList";
  * `<br />` in both languages, so each is two dictionary entries rather than
  * one string — English would not break where Chinese does.
  */
-
-/**
- * `.alumni-sectors` — 5 tags; `grid-template-columns:repeat(5,1fr)`.
- *
- * Not in the dictionary: these are sector names set as uppercase Latin, and the
- * reference design uses them as a typographic row rather than as reading copy.
- *
- * ⚠️ 這一點與區塊小標不同。小標已經改成雙語（見 lib/i18n/eyebrows.ts）——
- * 那是因為小標是「這一段在講什麼」的標籤，中文讀者需要讀懂它；這五個是產業
- * 類別的標籤雲，五格固定寬，翻成中文會變成五個長度不一的詞而撐壞版面。
- */
-const SECTORS = [
-  "GOVERNMENT",
-  "ACADEMIA",
-  "FINANCE",
-  "AGRIBUSINESS",
-  "INTERNATIONAL",
-];
 
 export function Alumni({
   lang,
@@ -106,7 +89,7 @@ export function Alumni({
                 photo must be a direct `<img>` child, not wrapped. */}
             <div className="alumni-feature">
               <div>
-                <span>PUBLIC LEADERSHIP</span>
+                <span>{t.section1.feature.kicker}</span>
                 <h3>
                   {t.section1.feature.heading.line1}
                   <br />
@@ -125,8 +108,13 @@ export function Alumni({
                 alt={t.section1.feature.imageAlt}
               />
             </div>
+            {/* `.alumni-sectors` — 5 tags, `grid-template-columns:repeat(5,1fr)`.
+                2026-09-28 之前這五個是這裡寫死的大寫拉丁字串（不在字典裡），
+                兩種語言共用；客戶要求中文站不得出現英文，所以搬進
+                ALUMNI.section1.sectors 改成雙語 —— 中文站印中文詞，英文站的
+                五個大寫英文字串不變。 */}
             <div className="alumni-sectors">
-              {SECTORS.map((sector) => (
+              {t.section1.sectors.map((sector) => (
                 <span key={sector}>{sector}</span>
               ))}
             </div>

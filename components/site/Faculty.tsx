@@ -129,11 +129,13 @@ function LegacyResumeList({
       {members.map((member) => (
         <article key={member.id}>
           <div className="legacy-person-name">
-            {/* Both names always show — `name_en` is the person's own English
-                name shown beside their Chinese one, not a translation that
-                replaces it. Which one is the <h4> follows the same mirroring
-                rule as InteriorHero and the admission cards: the heading is
-                the page's language, the small line above it is the other. */}
+            {/* `/en` shows both names — `name_en` is the person's own English
+                name shown beside their Chinese one as a kicker, not a
+                translation that replaces it, the same mirroring rule as
+                InteriorHero and the admission cards (heading = the page's
+                language, kicker = the other). 中文站 2026-09-28 起只印中文
+                姓名：`namePair()` 對 zh 固定回傳 `kicker: null`，這裡就不印
+                第二行（見 lib/i18n/faculty.ts 的 namePair 說明）。 */}
             {namePair(member, lang).kicker ? (
               <p>{namePair(member, lang).kicker}</p>
             ) : null}
@@ -251,9 +253,12 @@ export function Faculty({
       <div className="interior-content">
         <section className="inner-section" id="section-1">
           <div className="container">
-            {/* `eyebrow` stays a literal here and in the three sections below:
-                the uppercase Latin kicker is a typographic device and is the
-                same string on /faculty and /en/faculty. */}
+            {/* `eyebrow` comes from the EYEBROWS dictionary (`eb`, translated
+                above) here and in the three sections below — not a literal,
+                and zh/en are deliberately different words, not the same
+                string on /faculty and /en/faculty. (This comment predated the
+                EYEBROWS dictionary and had gone stale; corrected 2026-09-28 —
+                see lib/i18n/eyebrows.ts's header.) */}
             <SectionTitle
               no="01"
               eyebrow={eb.fullTimeFaculty}
@@ -343,8 +348,9 @@ export function Faculty({
                         ) : null}
                       </figure>
                       <div>
-                        {/* Both names, heading in the page's language — see
-                            LegacyResumeList above. */}
+                        {/* `/en` shows both names, heading in the page's
+                            language; 中文站只印中文姓名 — see LegacyResumeList
+                            above for why. */}
                         {namePair(member, lang).kicker ? (
                           <p>{namePair(member, lang).kicker}</p>
                         ) : null}

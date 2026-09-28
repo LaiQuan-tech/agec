@@ -162,8 +162,13 @@ export function HomeHero({ lang }: { lang: Lang }) {
 
       <div className="container hero-content" id="content">
         <div className="hero-copy">
-          {/* Latin-caps kicker, not copy: printed the same on both sites. */}
-          <p className="eyebrow light">AGRICULTURAL ECONOMICS · NTU</p>
+          {/* Kicker above the h1. Used to be a hardcoded "AGRICULTURAL
+              ECONOMICS · NTU" printed unchanged on both sites; the client
+              asked, 2026-09-28, that the Chinese site carry no Latin text
+              anywhere, so zh now prints the department's Chinese name
+              (HOME_HERO.heroEyebrow) while /en keeps the original text
+              untouched. */}
+          <p className="eyebrow light">{t.heroEyebrow}</p>
           <h1>
             {t.titleLine1}
             <br />

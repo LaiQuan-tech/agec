@@ -7,9 +7,12 @@ import type { Lang, Msg } from "@/lib/i18n";
  * one language by `lib/data.ts` — this file holds only what the page says
  * *around* them: section headings, the accordion titles and field labels.
  *
- * The `eyebrow`s (FULL-TIME FACULTY, VISITING FACULTY, …) stay literal props
- * in the component: they are Latin-caps typographic devices that already read
- * as English on the Chinese site.
+ * The `eyebrow`s (FULL-TIME FACULTY, VISITING FACULTY, …) are looked up from
+ * the EYEBROWS dictionary (lib/i18n/eyebrows.ts) via `translate()` in the
+ * component, not literal props — zh and en are deliberately different words
+ * (中文小標／英文大寫), not the same string on /faculty and /en/faculty.
+ * (This comment used to say the opposite; corrected 2026-09-28 — see
+ * eyebrows.ts's own header for why the dictionary exists.)
  */
 
 type FacultyDict = {
@@ -76,6 +79,14 @@ type FacultyDict = {
    * 資訊，網址不是 —— 一長串 https:// 在 9px 的卡片底部只會換行三次。
    */
   homepageLabel: Msg;
+  /**
+   * 站內個人頁 `.profile-facts` `<dl>` 的 Email 標籤。四種卡片版型不需要這個
+   * 字——信箱本身就是可點的 mailto 連結，整段文字已經在說「這是信箱」；只有
+   * 個人頁把它放進定義清單，需要一個標籤字搭配 `<dd>`。同一個 `<dl>` 其他
+   * 標籤（領域、分機、個人網站、重要經歷）本來就走字典，這裡原本寫死英文
+   * "Email"，2026-09-28 客戶要求中文站全中文，一併移進來。
+   */
+  emailLabel: Msg;
   /** 個人頁底部回到 /faculty 的連結。 */
   backToList: Msg;
 };
@@ -152,6 +163,7 @@ export const FACULTY = {
   extensionLabel: { zh: "分機", en: "Ext." },
   profileLabel: { zh: "個人網頁", en: "Profile" },
   homepageLabel: { zh: "個人網站", en: "Website" },
+  emailLabel: { zh: "電子郵件", en: "Email" },
   backToList: { zh: "← 回到系所成員", en: "← Back to Faculty & Staff" },
 } satisfies FacultyDict;
 
@@ -218,9 +230,11 @@ export function fill(
  * The name to print where a layout has only one name slot — the standard
  * portrait card and the administration card.
  *
- * The legacy layouts (名譽/退休/客座) do *not* use this: they have two slots
- * and print `name_en` above the Chinese name on both sites, because that pair
- * is how the reference site shows those people.
+ * The legacy layouts (名譽/退休/客座) and the chair's banner do *not* use
+ * this: they have two slots. On `/en` both are filled — `name_en` prints
+ * above the Chinese name, because that pair is how the reference site shows
+ * those people. 中文頁 2026-09-28 起只用第一個位置（見下面 `namePair` 的
+ * 說明），第二個位置固定不印。
  *
  * Falls back to the Chinese name when `name_en` is null. That is one real row
  * today — the staff member whose English name the department's own English
@@ -235,16 +249,23 @@ export function displayName(
 }
 
 /**
- * The two names a legacy card shows at once (名譽 / 退休 / 客座).
+ * The name(s) a legacy card shows (名譽 / 退休 / 客座) — and the chair's
+ * banner card, the other layout with two name slots.
  *
- * Unlike `displayName`, nothing is dropped here — those layouts have a slot
- * for each. What changes with the language is which one is the heading: the
- * page's own language leads and the other sits above it as a kicker, the same
- * mirroring InteriorHero applies to page titles and the admission cards apply
- * to programme names.
+ * On `/en`, nothing is dropped: those layouts have a slot for each name, the
+ * page's own language leads as the heading and the other sits above it as a
+ * kicker, the same mirroring InteriorHero applies to page titles and the
+ * admission cards apply to programme names.
  *
- * `kicker` is null when the pair would repeat itself — a legacy row with no
- * `name_en`, where there is only one name to show.
+ * 🔴 2026-09-28 客戶要求中文站只能出現中文：中文頁固定不帶 kicker，即使
+ * 資料庫的 `name_en` 有值也不印在姓名旁邊——這一頁以前拿 `name_en` 當中文頁
+ * 的旁註（英文姓名），現在只有 `/en` 會用到 `name_en`。`kicker: null` 的四個
+ * 呼叫點都已經是 `kicker ? (<p>…</p>) : null` 的寫法，所以中文頁不會留下
+ * 空元素，只是那一行不印。
+ *
+ * `/en` 缺 `name_en` 時同樣沒有第二個名字可以當 kicker，退回單一中文姓名
+ * （與 `displayName` 同一條退回規則）——這個情況本來就會落到 `kicker: null`，
+ * 與中文頁的新規則殊途同歸，所以下面只有一個 fallback 分支。
  */
 export function namePair(
   member: { name: string; name_en: string | null },
@@ -253,5 +274,5 @@ export function namePair(
   if (lang === "en" && member.name_en) {
     return { heading: member.name_en, kicker: member.name };
   }
-  return { heading: member.name, kicker: member.name_en };
+  return { heading: member.name, kicker: null };
 }
