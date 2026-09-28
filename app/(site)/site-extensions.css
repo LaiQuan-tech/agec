@@ -2473,27 +2473,31 @@
 /* 學制卡（/admissions §1、/courses/[program]）編號與學制名之間那道留白，原本
    整個掛在英文小標的 `margin-top:75px` 上。中文頁沒有那個 `small`，`h3` 只剩
    自己的 7px，編號會緊貼標題。
-   96px = 75（小標的上邊距）+ 14（小標 12px 的行高，見上面的 a11y 字級覆寫）
-   + 7（h3 原本的上邊距），所以中文卡的標題落在與英文卡完全相同的位置。
+   100px = 75（小標的上邊距）+ 18（小標的實際行高：a11y 覆寫把字級拉到 12px，
+   沒有宣告 line-height，吃到的是全域的 1.5 倍）+ 7（h3 原本的上邊距），所以中文
+   卡的標題落在與英文卡完全相同的位置。數字是在 1440px 量 /en 的實際距離定出來
+   的，不是從樣式表推算的 —— 推算過一次，少算了行高。
    `span + h3` 只有在「編號緊接標題」——也就是沒有小標——時才命中；英文站是
    `span + small + h3`，不會命中。 */
 .program-grid article > span + h3 {
-  margin-top: 96px;
+  margin-top: 100px;
 }
 
 /* 重要時程的四格：大字是月份、下面一行小字原本是完整月名（/en 讀作
    「SEP · September」）。中文兩行會一模一樣，所以中文頁不印那行小字（見
    components/site/Admissions.tsx）。那行小字的 `margin:10px 0 70px` 是大字與
    說明之間唯一的留白來源，少了它說明會貼到月份底下 —— 由 `strong + p`
-   （大字緊接說明＝沒有小字）補回同樣的距離。93px = 10 + 13（11px 小字的行高）
-   + 70。英文站是 `strong + span + p`，不會命中。 */
+   （大字緊接說明＝沒有小字）補回同樣的距離。101px = 10 + 21（小字的實際行高：
+   a11y 覆寫後字級 14px、沒有宣告 line-height，吃到全域的 1.5 倍）+ 70。數字是在
+   1440px 量 /en 的實際距離定出來的。英文站是 `strong + span + p`，不會命中。 */
 .schedule-line strong + p {
-  margin-top: 93px;
+  margin-top: 101px;
 }
 
-/* ≤600px 時 site.css 把那行小字的下邊距收成 45px，中文頁要跟著收。 */
+/* ≤600px 時 site.css 把那行小字的下邊距收成 45px，中文頁要跟著收：
+   76px = 10 + 21 + 45，同樣在 390px 量過 /en 的實際距離。 */
 @media (max-width: 600px) {
   .schedule-line strong + p {
-    margin-top: 68px;
+    margin-top: 76px;
   }
 }
