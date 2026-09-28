@@ -10,23 +10,34 @@ import { HOME_HERO } from "@/lib/i18n/home";
  *
  * The clip is the department's 2026 introduction film (YouTube AAx8Y3xxYck,
  * channel 臺大農經系), re-encoded for the web: 1920×1080, **no audio track**,
- * `+faststart`, capped at 1.1 Mbit/s (40 MB for 302s — streamed, so a visitor
+ * `+faststart`, capped at 1.1 Mbit/s (39 MB for 298s — streamed, so a visitor
  * only ever fetches what they watch). Stripping the audio is not an
  * optimisation — browsers refuse to autoplay a video with sound, and a muted
  * track is bytes nobody will ever hear.
  *
- * ⚠️ The film is shipped **whole** — opening title card, burned-in interview
- * captions and the three-logo end card included. The department asked for
- * all three to stay (2026-09-14), after a first cut had trimmed them:
- *  - the opening title ("Dept. of Agriculture Economics / National Taiwan
- *    University") is centred and white, and sits under the hero's own white
- *    headline for the first ~3.5s of every loop. Known and accepted.
- *  - the captions run along the bottom edge, which is the hero's bottom edge:
- *    on viewports shorter than the hero's 920px minimum they are below the
- *    fold until the visitor scrolls; on a phone the portrait crop clips long
- *    lines at both sides. Both are the film's framing, not a bug.
- *  - the end card loops straight back into the opening shot.
- *  Do not "clean up" any of the three in a re-encode without asking.
+ * ⚠️ The file starts at the source film's **4.000s mark**: the opening title
+ * card ("Dept. of Agriculture Economics / National Taiwan University", white
+ * and centred, burned into the first ~3.5s of footage) is gone. That reverses
+ * the 2026-09-14 decision to ship the film whole — the client asked for the
+ * cut on 2026-09-28, when the Chinese site was cleared of English copy: the
+ * card is English, it is the first thing a visitor sees, and it landed under
+ * the hero's own Chinese headline. The cut is at a keyframe, so it was a
+ * stream copy (`-c copy`), not a re-encode — the picture is untouched.
+ *
+ * The other two things the department asked to keep on 2026-09-14 are still
+ * here, and **must not be "cleaned up" in a re-encode without asking**:
+ *  - the burned-in interview captions along the bottom edge, which is the
+ *    hero's bottom edge: on viewports shorter than the hero's 920px minimum
+ *    they are below the fold until the visitor scrolls; on a phone the
+ *    portrait crop clips long lines at both sides. That is the film's own
+ *    framing, not a bug. They are Chinese, so the 2026-09-28 pass left them.
+ *  - the three-logo end card, which loops straight back into the new opening
+ *    shot (the chair's first interview line).
+ *
+ * The poster is deliberately *not* the new first frame: it is the campus-gate
+ * establishing shot the film opens on, which has no title card of its own and
+ * is the better still for a visitor who has autoplay blocked or reduced motion
+ * on. The trade is a visible jump from gate to interview when playback starts.
  *
  *  The one edit that stays is the AGEC watermark in the top-left corner
  *  (ffmpeg `delogo`): its lower half peeked out under the site header at
