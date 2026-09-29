@@ -51,4 +51,7 @@ supabase/.temp/
 scripts/data/news-list.json
 scripts/data/news-parsed.json
 scripts/data/news-prepared.json
+# 增量匯入抓下來的舊站內頁快取（可重抓；同目錄的 written-*.json 是稽核
+# 紀錄，要進版控——那是舊站文章 id 對到 news.id 的唯一憑據）。
+scripts/data/incremental/cache/
 .rehost-cache/

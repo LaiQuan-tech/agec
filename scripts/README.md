@@ -94,6 +94,47 @@ false）、手工填的英文欄、所有草稿（`id=gt.0` 連草稿一起刪�
 `legacy_id` 欄加 unique index，改用 `Prefer: resolution=merge-duplicates` upsert。
 還沒做——下一次搬運之前應該先做。
 
+## scripts/import-news-incremental.ts — 增量匯入（不必等 legacy_id 欄位）
+
+上面那句「還沒做」在 2026-09 這次要用到之前，先用一個不改 schema 的過渡做法
+頂著：`scripts/import-news-incremental.ts`。跟第 5 步的差別只在怎麼判斷
+「這筆是不是已經匯入過」——沒有 `legacy_id` 可以查，改成拿 `(title,
+published_at)` 去對現有的 `news` 資料，一樣就跳過，不一樣就當新資料處理。
+
+**為什麼不能直接用 `import-news.ts`**：純 `--write` 會先清空整張表（見上面
+整段說明），這次不能用；`--append --only <分類>` 只在該分類還是空的時候才
+放行，而現在五個分類（最新公告／演講公告／求職徵才／活動剪影／招生）全部
+已經有資料，guard 會直接擋下來，兩條路都走不通。
+
+```bash
+npx tsx scripts/import-news-incremental.ts --since 2026-09-01 --dry     # 預設；只印報告，不寫入
+npx tsx scripts/import-news-incremental.ts --since 2026-09-01 --write   # 真的寫入
+```
+
+`--since` 必填，只處理該日（含）之後貼出的消息。腳本自己逐頁翻舊站列表頁，
+翻到整頁都比 `--since` 舊為止，不假設固定頁數（也不假設列表本身完全照日期
+排序——置頂消息會插在最前面，順序可能亂，所以是整頁一起判斷，不是看到第一筆
+舊的就停）。
+
+**去重規則**：查 `news?select=id,title,published_at,category`，`(title,
+published_at)` 完全相同就視為已匯入、跳過。只比 `title` 不夠——舊站會把同一
+件事同時貼進兩個分類（例如「最新公告」與「活動剪影」各一則，標題相同、日期
+差一兩天），這是兩筆該收的獨立記錄，不是重複；既有 584 列裡就有 4 組同標題
+的先例，其中 3 組連 `published_at` 都一樣，一樣是當年匯入了兩筆獨立資料，不
+是誤植。跟 `import-forms.py`／`import-exams.py` 用 `file_url` 判斷已匯入是
+同一類「沒有專屬 id 欄位，只能比內容」的權宜做法，差別是 `news` 連一個能拿
+來比對的 URL 欄位都沒有，只剩標題和日期可用。
+
+英文標題不在腳本裡翻譯——從 `scripts/data/titles-en-september.json`（舊站
+數字 id → 英文標題）讀；找不到對應的那一筆會被列進報告的「缺英文標題」區，
+且拒絕寫入，不會用機器翻譯頂著先發。
+
+`--dry` 只打唯讀請求（舊站列表頁/內頁、`news` 的去重查詢），報告裡的圖片數/
+附件數是直接算舊站內頁解析出來的數量。下載圖片與附件、上傳 Storage、消毒
+HTML、寫入 `news`——這一整段只在 `--write` 才會執行。暫存檔（內頁快取、
+`--write` 之後「舊站 id ↔ 新 news.id」的對照紀錄）放在 `scripts/data/
+incremental/`，不會動這個子目錄以外、原本就在 `data/` 裡的既有檔案。
+
 ## 第 6 步在做什麼
 
 舊 CMS 存的是上傳者丟進去的原檔。搬過來的 376 張圖裡，有 100 張寬度超過

@@ -1,0 +1,17 @@
+{
+  "_note": "2026 年 9 月增量匯入的英文標題對照表，key 是舊站內頁網址結尾的數字 id。新站慣例是每一則消息都有 title_en、但內文不翻（584 列全部有 title_en、content_html_en 是 0 列）。人名用消息標題既有的寫法（姓在前，如 Chang Hung-hao），不是 faculty 表的 name_en（Hung-Hao Chang）。民國年一律換成西元。",
+
+  "88966709": "NTU Asia Bank Scholarship, 2026 academic year",
+  "95282084": "Kuo Hsi-liu Foundation scholarship for professional talent, first semester of the 2026 academic year",
+  "4769417": "Amended regulations for use of the Department of Agricultural Economics lecture hall and seminar rooms",
+  "74656931": "[Event gallery] Orientation for new students and their parents, 6 September 2026",
+  "15093565": "[Event gallery] Opening ceremony and first session of Corporate Leadership in Practice, 7 September 2026",
+  "14748528": "[Event gallery] Orientation for new students and their parents, 6 September 2026",
+  "98954555": "Ma Pao-chih Memorial Scholarship, 2026 academic year",
+  "32056853": "[Event gallery] Yuanta Futures president Kao Yi-jui on workplace competitiveness from a corporate perspective, 14 September 2026",
+  "547762": "NTU Alumni Association outstanding student scholarship, 2026 academic year",
+  "13871855": "Known-You Social Welfare Foundation scholarship",
+  "88601022": "[Congratulations] Vice Dean Chang Hung-hao receives an international journal paper award",
+  "98509492": "[Admissions] Applications for direct progression to the doctoral programme: master's students (115-2) and graduating bachelor's students (116-1)",
+  "60555236": "[Undergraduate] NTU President's Award applications open (closes 12:00, 29 September)"
+}
