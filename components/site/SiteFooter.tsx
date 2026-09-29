@@ -62,8 +62,10 @@ export function SiteFooter({ lang }: { lang: Lang }) {
               一次同樣的名字對讀屏只是重複。這一張純粹是視覺上的識別。
 
               2026-09-29 客戶給了這枚舊徽章的向量原稿（Illustrator 匯出、
-              viewBox 1024x1024、背景透明），所以直接放 SVG：不管螢幕密度多高
-              都不會糊，也不用為不同倍率準備多份點陣圖。
+              viewBox 1032.7x1034.5），所以直接放 SVG：不管螢幕密度多高都不會
+              糊，也不用為不同倍率準備多份點陣圖。白色圓形底盤是**做在向量檔
+              裡的**（`<circle r="419.4" fill="#FFFFFF">`），不是 CSS 加的，
+              換檔時要留意新檔有沒有帶著它。
 
               在那之前這裡是點陣圖，踩過兩個坑，日後換檔請避開：
               ① 第一版只有 79x80（從舊官網那張 345x80 的 logo 裡裁出來的），
@@ -78,8 +80,8 @@ export function SiteFooter({ lang }: { lang: Lang }) {
             src="/brand/footer_agec_logo_legacy.svg"
             alt=""
             aria-hidden="true"
-            width={76}
-            height={76}
+            width={83}
+            height={83}
           />
         </div>
         <div className="footer-contact">
